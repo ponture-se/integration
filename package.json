@@ -1,0 +1,38 @@
+{
+  "name": "integration",
+  "version": "1.0.0",
+  "description": "Ponture.com integration services",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ponture-se/integration.git"
+  },
+  "keywords": [
+    "Ponutre",
+    "Finance"
+  ],
+  "author": "Fakhreddin Rezaei",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ponture-se/integration/issues"
+  },
+  "homepage": "https://github.com/ponture-se/integration#readme",
+  "dependencies": {
+    "async": "2.6.1",
+    "bcrypt-nodejs": "0.0.3",
+    "body-parser": "1.18.3",
+    "compression": "1.7.3",
+    "cookie-parser": "1.4.3",
+    "cors": "2.8.5",
+    "express": "4.16.4",
+    "express-validator": "5.3.1",
+    "helmet": "3.15.0",
+    "http": "0.0.0",
+    "jsforce": "1.9.1",
+    "jsonwebtoken": "8.4.0",
+    "morgan": "1.9.1"
+  }
+}
