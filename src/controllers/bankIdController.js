@@ -1,5 +1,6 @@
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
+const cnf = require('../config');
 
 exports.authenticate = function(req, res, next)
 {
@@ -17,7 +18,7 @@ exports.authenticate = function(req, res, next)
       }
     };
     axios(config).then(function (response) {
-      var token = jwt.sign({ orderRef: response.data.orderRef}, process.env.TOKEN_SECRETKEY || "asdfasofjadncasorfnasldnasldnfaslkfjnalfsk", {
+      var token = jwt.sign({ orderRef: response.data.orderRef}, cnf.secret, {
         expiresIn: process.env.AUTHENTICATIONTOKEN_EXPIRE_TIME || 30 * 60 // expires in 30 minutes
       });
         res.status(200).send({orderRef : token});
@@ -52,7 +53,7 @@ exports.collect = function(req, res, next)
   var apiRoot = process.env.API_ROOT || "https://test.zignsec.com/v2"; // for prod set to https://api.zignsec.com/v2
   console.log(req);
 
-  jwt.verify(req.query.orderRef, process.env.TOKEN_SECRETKEY || "asdfasofjadncasorfnasldnasldnfaslkfjnalfsk", function(err, decoded) {
+  jwt.verify(req.query.orderRef, cnf.secret, function(err, decoded) {
     if (err)
     {
     console.log(err);
@@ -114,7 +115,7 @@ exports.sign = function(req, res, next)
     }
   };
   axios(config).then(function (response) {
-      var token = jwt.sign({ orderRef: response.data.orderRef}, process.env.TOKEN_SECRETKEY || "asdfasofjadncasorfnasldnasldnfaslkfjnalfsk", {
+      var token = jwt.sign({ orderRef: response.data.orderRef}, cnf.secret, {
         expiresIn: process.env.AUTHENTICATIONTOKEN_EXPIRE_TIME || 30 * 60 // expires in 30 minutes
       });
         res.status(200).send({orderRef : token});
@@ -145,7 +146,7 @@ exports.sign = function(req, res, next)
 
 exports.cancel = function(req, res, next)
 {
-  jwt.verify(req.body.orderRef, process.env.TOKEN_SECRETKEY || "asdfasofjadncasorfnasldnasldnfaslkfjnalfsk", function(err, decoded) {
+  jwt.verify(req.body.orderRef, cnf.secret, function(err, decoded) {
     if (err)
     {
       console.log(err);

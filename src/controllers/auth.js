@@ -1,21 +1,19 @@
 const axios = require('axios');
 const qs = require('qs');
 const jwt = require('jsonwebtoken');
+const cnf = require('../config');
 function verifyToken(req, res, next) {
     var token = req.headers['token'];
     if (!token || token == null)
       return res.status(403).send({ auth: false, message: 'No token provided.' });
-    jwt.verify(token, process.env.TOKEN_SECRETKEY, function(err, decoded) {
+    jwt.verify(token, cnf.secret, function(err, decoded) {
         if (err)
         return res.status(401).send({ auth: false, message: 'Failed to authenticate token. ' });
         // if everything good, save to request for use in other routes 
         console.log("decoded : ", decoded);
-        if (req.headers.spaceid)
-          req.spaceid = req.headers.spaceid;
-        req.userId = decoded.id;
+        req.orderRef = decoded.orderRef;
         next();
       });
-    req.orderRef = token;
     next();
 }
 
