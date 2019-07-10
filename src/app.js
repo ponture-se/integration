@@ -13,6 +13,7 @@ app.use(helmet());
 app.use(cors());
 
 var bankid = require('./routes/bankId');
+var opportunity = require('./routes/opportunity');
 // a middleware function with no mount path. This code is executed for every request to the router
 
 app.use(logger('dev'));
@@ -21,4 +22,5 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use("/auth", bankid);
+app.use("/apply", opportunity);
 module.exports = app;
