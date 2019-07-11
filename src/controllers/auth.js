@@ -78,6 +78,7 @@ function getSFToken(req, res, next) {
   };
   console.log(config);
   axios(config).then(function (response) {
+    console.log("token : " + response.data.access_token)
       req.access_token = response.data.access_token;
       next();
     })

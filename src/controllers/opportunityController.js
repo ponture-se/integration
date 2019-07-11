@@ -27,17 +27,17 @@ exports.getCompanies = function(req, res, next)
 
 exports.submit = function(req, res, next)
 {
-  var accessToken = process.env.ACCESS_TOKEN || "1059b83f-72da-47ae-a4f2-5db923545fbd";
-  var apiRoot = process.env.API_ROOT || "https://test.zignsec.com/v2"; // for prod set to https://api.zignsec.com/v2
+  var accessToken = req.access_token;
+  var apiRoot = process.env.API_ROOT || "https://crmdev-ponture-crmdev.cs84.force.com"; // for prod set to https://api.zignsec.com/v2
   console.log(req);
   var refid = req.query.orderRef;
   var config = {
-    url : "/bankidse/collect",
+    url : "/services/apexrest/submit",
     baseURL : apiRoot,
-    method : "get",
-    params : {"orderRef" : refid},
+    method : "post",
+    data : req.body,
     headers : {
-        'Authorization' : accessToken
+        'Authorization' : "Bearer " + accessToken
     }
   };
   axios(config).then(function (response) {
