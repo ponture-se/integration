@@ -2,19 +2,15 @@ const axios = require('axios');
 
 exports.getCompanies = function(req, res, next)
 {
-    var apiRoot = process.env.APPLY_API_ROOT || "https://crmdev-ponture-crmdev.cs84.force.com";
-    var d = {
-        pid : req.personalNumber,
-        orderRef : req.orderRef
-      };
-    
+  console.log(req.query)
+  var token = req.access_token;
+    var apiRoot = process.env.ROARING_API_ROOT || "https://api.roaring.io/se";
     var config = {
-      url : "/services/apexrest/roaringRest/getCmpOfPid",
+      url : "/company/engagement/2.0/" + req.query.personalNumber,
       baseURL : apiRoot,
       method : "get",
-      params : d,
       headers : {
-          'Authorization' : "Bearer " + req.token
+          'Authorization' : "Bearer " + token
       }
     };
     console.log(config);
@@ -23,7 +19,7 @@ exports.getCompanies = function(req, res, next)
       })
       .catch(function (error) {
         console.log(error);
-        res.status(400).send(error);
+        res.send(error);
       });
 }
 
