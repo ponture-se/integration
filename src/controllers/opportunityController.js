@@ -15,7 +15,9 @@ exports.getCompanies = function(req, res, next)
     };
     console.log(config);
     axios(config).then(function (response) {
-        res.status(200).send(response.data)
+      if (response && response.data && response.data.engagements)
+      var output = response.data.engagements.filter(function(x){return x.statusCode==100}); 
+        res.status(200).send(output)
       })
       .catch(function (error) {
         console.log(error);
