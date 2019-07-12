@@ -29,7 +29,6 @@ exports.submit = function(req, res, next)
 {
   var accessToken = req.access_token;
   var apiRoot = process.env.API_ROOT || "https://crmdev-ponture-crmdev.cs84.force.com"; // for prod set to https://api.zignsec.com/v2
-  console.log(req.body);
   var config = {
     url : "/services/apexrest/submit",
     baseURL : apiRoot,
@@ -39,7 +38,10 @@ exports.submit = function(req, res, next)
         'Authorization' : "Bearer " + accessToken
     }
   };
+  console.log(config);
   axios(config).then(function (response) {
+    console.log(response.data);
+    console.log(response.status);
       res.send(response.data);
     })
     .catch(function (error) {
