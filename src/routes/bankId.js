@@ -3,9 +3,9 @@ var router = express.Router();
 var controller = require('../controllers/bankIdController');
 var auth = require('../controllers/auth');
 
-router.post("/start", controller.authenticate);
-router.get("/collect", controller.collect);
-router.post("/cancel", controller.cancel);
+router.post("/token", controller.authenticate);
+router.get("/collect", auth.verifyToken, controller.collect);
+router.post("/cancel", auth.verifyToken, controller.cancel);
 router.post("/sign", controller.sign);
 
 module.exports = router;
