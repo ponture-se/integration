@@ -40,7 +40,7 @@ exports.submit = function(req, res, next)
     }
   };
   axios(config).then(function (response) {
-      res.status(200).send(response.data);
+      res.send(response.data);
     })
     .catch(function (error) {
       if (error.response) {
