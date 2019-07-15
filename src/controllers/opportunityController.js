@@ -15,10 +15,15 @@ exports.getCompanies = function(req, res, next)
     };
     console.log(config);
     axios(config).then(function (response) {
-      if (response && response.data && response.data.engagements)
-      var output = response.data.engagements.filter(function(x){return x.statusCode==100}); 
-        res.status(200).send(output)
-      })
+        if (response && response.data && response.data.engagements && response.data.engagements.length > 0)
+        {
+          var output = response.data.engagements.filter(function(x){return x.statusCode==100}); 
+            res.status(200).send(output);
+        }
+        else
+          res.status(404).send(response.data);
+      }
+      )
       .catch(function (error) {
         console.log(error);
         res.send(error);
