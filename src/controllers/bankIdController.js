@@ -5,7 +5,7 @@ const cnf = require('../config');
 exports.authenticate = function(req, res, next)
 {
     var accessToken = process.env.ACCESS_TOKEN || "1059b83f-72da-47ae-a4f2-5db923545fbd";
-    var apiRoot = process.env.LOGIN_API_ROOT || "https://test.zignsec.com/v2"; // for prod set to https://api.zignsec.com/v2
+    var apiRoot = process.env.API_ROOT || "https://test.zignsec.com/v2"; // for prod set to https://api.zignsec.com/v2
 
     var pno = req.body.personalNumber;
     var config = {
