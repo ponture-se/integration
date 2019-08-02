@@ -25,7 +25,7 @@ function verifyToken(req, res, next) {
 function getRoaringToken(req, res, next) {
     var username = process.env.ROARING_USERNAME || "7WdiQzeZHTNUbReQMt4dwUpAYNoa";
     var password = process.env.ROARING_PASSWORD || "_Mk3choT6cARfmaXdwymWKROpE0a";
-    var apiRoot = process.env.ROARING_API_ROOT || "https://api.roaring.io";
+    var apiRoot = process.env.ROARING_LOGIN_API_ROOT || "https://api.roaring.io";
     var data = username + ":" + password;  
     var buff = new Buffer(data);  
     var base64data = buff.toString('base64');
