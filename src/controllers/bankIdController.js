@@ -4,7 +4,7 @@ const cnf = require('../config');
 
 exports.authenticate = function(req, res, next)
 {
-    var accessToken = process.env.ACCESS_TOKEN || "1059b83f-72da-47ae-a4f2-5db923545fbd";
+    var accessToken = process.env.ACCESS_TOKEN;
     var apiRoot = process.env.API_ROOT || "https://test.zignsec.com/v2"; // for prod set to https://api.zignsec.com/v2
 
     var pno = req.body.personalNumber;
@@ -49,7 +49,7 @@ exports.authenticate = function(req, res, next)
 
 exports.collect = function(req, res, next)
 {
-  var accessToken = process.env.ACCESS_TOKEN || "1059b83f-72da-47ae-a4f2-5db923545fbd";
+  var accessToken = process.env.ACCESS_TOKEN ;
   var apiRoot = process.env.API_ROOT || "https://test.zignsec.com/v2"; // for prod set to https://api.zignsec.com/v2
   var refid = req.orderRef;
   var config = {
@@ -90,7 +90,7 @@ exports.collect = function(req, res, next)
 
 exports.sign = function(req, res, next)
 {
-  var accessToken = process.env.ACCESS_TOKEN || "1059b83f-72da-47ae-a4f2-5db923545fbd";
+  var accessToken = process.env.ACCESS_TOKEN;
   var apiRoot = process.env.API_ROOT || "https://test.zignsec.com/v2"; // for prod set to https://api.zignsec.com/v2
 
   var pno = req.body.personalNumber;
@@ -136,7 +136,7 @@ exports.sign = function(req, res, next)
 exports.cancel = function(req, res, next)
 {
     var refid = req.orderRef;
-    var accessToken = process.env.ACCESS_TOKEN || "1059b83f-72da-47ae-a4f2-5db923545fbd";
+    var accessToken = process.env.ACCESS_TOKEN;
     var apiRoot = process.env.API_ROOT || "https://test.zignsec.com/v2"; // for prod set to https://api.zignsec.com/v2
     var config = {
       url : "/bankidse/cancel",
