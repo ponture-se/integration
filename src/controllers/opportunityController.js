@@ -90,7 +90,7 @@ function callRoaring(
       } else callback({ error: error, code: invalid_response_error }, undefined);
     })
     .catch(function(error) {
-      //console.log(error);
+      console.log(error);
       callback(
         { error: JSON.stringify(error), code: apicall_error },
         undefined
