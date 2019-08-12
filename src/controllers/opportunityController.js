@@ -360,9 +360,13 @@ exports.getNeedsList = function(req, res, next) {
       } else {
         // Something happened in setting up the request that triggered an Error
         console.log("Error", error.message);
-        res.status(500).send(error.message);
+        res
+          .status(500)
+          .send({ error: "Error in loading needs list from salesforce" });
       }
       console.log(error.config);
-      res.status(400).send(error.config);
+      res
+        .status(400)
+        .send({ error: "Error in loading needs list from salesforce" });
     });
 };
