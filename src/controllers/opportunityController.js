@@ -28,9 +28,9 @@ exports.getCompanies = [
       return;
     } else {
       var token = req.access_token;
-      var apiRoot = process.env.ROARING_API_ROOT || "https://api.roaring.io/se";
+      var apiRoot = process.env.ROARING_API_ROOT || "https://api.roaring.io";
       var config = {
-        url: "/company/engagement/2.0/" + req.query.personalNumber,
+        url: "/se/company/engagement/2.0/" + req.query.personalNumber,
         baseURL: apiRoot,
         method: "get",
         headers: {
