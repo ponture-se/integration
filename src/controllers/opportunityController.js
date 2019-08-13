@@ -279,7 +279,7 @@ exports.submit = [
         //console.log(results);
         for (var attr in results) req.body[attr] = results[attr].value;
         token = req.sf_access_token;
-        console.log(req.body);
+        console.log(JSON.stringify(req.body));
         var apiRoot =
           process.env.SALESFORCE_API_ROOT || "https://cs85.salesforce.com"; // for prod set to https://api.zignsec.com/v2
         var config = {
