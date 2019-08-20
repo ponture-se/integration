@@ -336,7 +336,7 @@ exports.getNeedsList = function(req, res, next) {
     method: "get",
     params: req.query,
     headers: {
-      Authorization: "Bearer " + token
+      Authorization: "Bearer " + accessToken
     }
   };
   console.log(config);
