@@ -3,7 +3,7 @@ var router = express.Router();
 var controller = require("../controllers/opportunityController");
 var auth = require("../controllers/auth");
 
-router.get("/needslist", controller.getNeedsList);
+router.get("/needslist", auth.getSalesForceToken, controller.getNeedsList);
 router.get(
   "/companies",
   auth.verifyToken,

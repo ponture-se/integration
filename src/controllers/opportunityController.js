@@ -328,13 +328,16 @@ exports.submit = [
 exports.getNeedsList = function(req, res, next) {
   var accessToken = req.access_token;
   var apiRoot =
-    process.env.SALESFORCE_API_PUBLIC ||
+    process.env.SALESFORCE_API_ROOT ||
     "https://crmdev-ponture-crmdev.cs84.force.com"; // for prod set to https://api.zignsec.com/v2
   var config = {
-    url: "/needs/services/apexrest/getNeedsFields",
+    url: "/services/apexrest/getNeedsFields",
     baseURL: apiRoot,
     method: "get",
-    params: req.query
+    params: req.query,
+    headers: {
+      Authorization: "Bearer " + token
+    }
   };
   console.log(config);
   axios(config)
