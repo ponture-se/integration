@@ -18,4 +18,35 @@ router.post(
   controller.submit
 );
 
+router.get(
+  "/requests",
+  auth.verifyToken,
+  auth.getSalesForceToken,
+  controller.myrequests
+);
+
+router.get(
+  "/:oppId/offers",
+  auth.verifyToken,
+  auth.getSalesForceToken,
+  controller.getOffers
+);
+router.put(
+  "/acceptoffer",
+  auth.verifyToken,
+  auth.getSalesForceToken,
+  controller.acceptOffer
+);
+router.put(
+  "/rejectoffer",
+  auth.verifyToken,
+  auth.getSalesForceToken,
+  controller.rejectOffer
+);
+router.put(
+  "/:oppId/cancel",
+  auth.verifyToken,
+  auth.getSalesForceToken,
+  controller.cancel
+);
 module.exports = router;
