@@ -53,7 +53,6 @@ exports.getCompanies = [
           } else res.status(404).send(response.data);
         })
         .catch(function(error) {
-          console.log(error);
           res.send(error);
         });
     }
@@ -90,7 +89,6 @@ function callRoaring(
       } else callback({ error: error, code: invalid_response_error }, undefined);
     })
     .catch(function(error) {
-      console.log(error);
       callback(
         { error: JSON.stringify(error), code: apicall_error },
         undefined
@@ -164,7 +162,6 @@ exports.submit = [
     .escape(),
   (req, res, next) => {
     var errors = validationResult(req);
-    console.log(errors);
     if (!errors.isEmpty()) {
       //There are errors. send error result
       return res.status(422).json({
@@ -175,7 +172,6 @@ exports.submit = [
       return;
     } else {
       var token = req.roaring_access_token;
-      console.log(token);
       var tasks = {
         overview: function(callback) {
           callRoaring(
@@ -275,11 +271,8 @@ exports.submit = [
       };
       var roaring;
       async.parallel(async.reflectAll(tasks), function(errors, results) {
-        console.log(errors);
-        //console.log(results);
         for (var attr in results) req.body[attr] = results[attr].value;
         token = req.sf_access_token;
-        console.log(JSON.stringify(req.body));
         var apiRoot =
           process.env.SALESFORCE_API_ROOT || "https://cs85.salesforce.com"; // for prod set to https://api.zignsec.com/v2
         var config = {
@@ -294,30 +287,23 @@ exports.submit = [
         //console.log(config);
         axios(config)
           .then(function(response) {
-            console.log(response.data);
-            console.log(response.status);
             res.send(response.data);
           })
           .catch(function(error) {
             if (error.response) {
               // The request was made and the server responded with a status code
               // that falls out of the range of 2xx
-              console.log(error.response.data);
-              console.log(error.response.status);
-              console.log(error.response.headers);
               res.status(error.response.status).send(error.response.data);
             } else if (error.request) {
               // The request was made but no response was received
               // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
               // http.ClientRequest in node.js
-              console.log(error.request);
               res.status(204).send("No response from BankID server");
             } else {
               // Something happened in setting up the request that triggered an Error
               console.log("Error", error.message);
               res.status(500).send(error.message);
             }
-            console.log(error.config);
             res.status(400).send(error.config);
           });
       });
@@ -342,23 +328,17 @@ exports.getNeedsList = function(req, res, next) {
   console.log(config);
   axios(config)
     .then(function(response) {
-      console.log(response.data);
-      console.log(response.status);
       res.send(response.data);
     })
     .catch(function(error) {
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
-        console.log(error.response.data);
-        console.log(error.response.status);
-        console.log(error.response.headers);
         res.status(error.response.status).send(error.response.data);
       } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
         // http.ClientRequest in node.js
-        console.log(error.request);
         res.status(204).send("No response from BankID server");
       } else {
         // Something happened in setting up the request that triggered an Error
@@ -367,7 +347,6 @@ exports.getNeedsList = function(req, res, next) {
           .status(500)
           .send({ error: "Error in loading needs list from salesforce" });
       }
-      console.log(error.config);
       res
         .status(400)
         .send({ error: "Error in loading needs list from salesforce" });
@@ -391,23 +370,17 @@ exports.myrequests = function(req, res, next) {
   console.log(config);
   axios(config)
     .then(function(response) {
-      console.log(response.data);
-      console.log(response.status);
       res.send(response.data);
     })
     .catch(function(error) {
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
-        console.log(error.response.data);
-        console.log(error.response.status);
-        console.log(error.response.headers);
         res.status(error.response.status).send(error.response.data);
       } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
         // http.ClientRequest in node.js
-        console.log(error.request);
         res.status(204).send("No response from BankID server");
       } else {
         // Something happened in setting up the request that triggered an Error
@@ -416,7 +389,6 @@ exports.myrequests = function(req, res, next) {
           .status(500)
           .send({ error: "Error in loading needs list from salesforce" });
       }
-      console.log(error.config);
       res
         .status(400)
         .send({ error: "Error in loading needs list from salesforce" });
@@ -440,23 +412,17 @@ exports.acceptOffer = function(req, res, next) {
   console.log(config);
   axios(config)
     .then(function(response) {
-      console.log(response.data);
-      console.log(response.status);
       res.send(response.data);
     })
     .catch(function(error) {
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
-        console.log(error.response.data);
-        console.log(error.response.status);
-        console.log(error.response.headers);
         res.status(error.response.status).send(error.response.data);
       } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
         // http.ClientRequest in node.js
-        console.log(error.request);
         res.status(204).send("No response from BankID server");
       } else {
         // Something happened in setting up the request that triggered an Error
@@ -465,7 +431,6 @@ exports.acceptOffer = function(req, res, next) {
           .status(500)
           .send({ error: "Error in loading needs list from salesforce" });
       }
-      console.log(error.config);
       res
         .status(400)
         .send({ error: "Error in loading needs list from salesforce" });
@@ -489,23 +454,17 @@ exports.getOffers = function(req, res, next) {
   console.log(config);
   axios(config)
     .then(function(response) {
-      console.log(response.data);
-      console.log(response.status);
       res.send(response.data);
     })
     .catch(function(error) {
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
-        console.log(error.response.data);
-        console.log(error.response.status);
-        console.log(error.response.headers);
         res.status(error.response.status).send(error.response.data);
       } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
         // http.ClientRequest in node.js
-        console.log(error.request);
         res.status(204).send("No response from BankID server");
       } else {
         // Something happened in setting up the request that triggered an Error
@@ -514,7 +473,6 @@ exports.getOffers = function(req, res, next) {
           .status(500)
           .send({ error: "Error in loading needs list from salesforce" });
       }
-      console.log(error.config);
       res
         .status(400)
         .send({ error: "Error in loading needs list from salesforce" });
@@ -537,23 +495,17 @@ exports.rejectOffer = function(req, res, next) {
   console.log(config);
   axios(config)
     .then(function(response) {
-      console.log(response.data);
-      console.log(response.status);
       res.send(response.data);
     })
     .catch(function(error) {
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
-        console.log(error.response.data);
-        console.log(error.response.status);
-        console.log(error.response.headers);
         res.status(error.response.status).send(error.response.data);
       } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
         // http.ClientRequest in node.js
-        console.log(error.request);
         res.status(204).send("No response from BankID server");
       } else {
         // Something happened in setting up the request that triggered an Error
@@ -562,7 +514,6 @@ exports.rejectOffer = function(req, res, next) {
           .status(500)
           .send({ error: "Error in loading needs list from salesforce" });
       }
-      console.log(error.config);
       res
         .status(400)
         .send({ error: "Error in loading needs list from salesforce" });
@@ -586,23 +537,17 @@ exports.cancel = function(req, res, next) {
   console.log(config);
   axios(config)
     .then(function(response) {
-      console.log(response.data);
-      console.log(response.status);
       res.send(response.data);
     })
     .catch(function(error) {
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
-        console.log(error.response.data);
-        console.log(error.response.status);
-        console.log(error.response.headers);
         res.status(error.response.status).send(error.response.data);
       } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
         // http.ClientRequest in node.js
-        console.log(error.request);
         res.status(204).send("No response from BankID server");
       } else {
         // Something happened in setting up the request that triggered an Error
@@ -611,7 +556,6 @@ exports.cancel = function(req, res, next) {
           .status(500)
           .send({ error: "Error in loading needs list from salesforce" });
       }
-      console.log(error.config);
       res
         .status(400)
         .send({ error: "Error in loading needs list from salesforce" });

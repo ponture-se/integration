@@ -56,13 +56,11 @@ function getRoaringToken(req, res, next) {
   console.log(config);
   axios(config)
     .then(function(response) {
-      console.log(response.data.access_token);
       req.access_token = response.data.access_token;
       req.roaring_access_token = response.data.access_token;
       next();
     })
     .catch(function(error) {
-      console.log(error);
       res.status(400).send(error);
     });
 }
@@ -93,13 +91,11 @@ function getSFToken(req, res, next) {
   console.log(config);
   axios(config)
     .then(function(response) {
-      console.log("token : " + response.data.access_token);
       req.access_token = response.data.access_token;
       req.sf_access_token = response.data.access_token;
       next();
     })
     .catch(function(error) {
-      console.log(error);
       res.status(400).send(error);
     });
 }
@@ -121,23 +117,17 @@ var login = function(req, res, next) {
   console.log(config);
   axios(config)
     .then(function(response) {
-      console.log(response.data);
-      console.log(response.status);
       res.send(response.data);
     })
     .catch(function(error) {
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
-        console.log(error.response.data);
-        console.log(error.response.status);
-        console.log(error.response.headers);
         res.status(error.response.status).send(error.response.data);
       } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
         // http.ClientRequest in node.js
-        console.log(error.request);
         res.status(204).send("No response from BankID server");
       } else {
         // Something happened in setting up the request that triggered an Error
@@ -146,7 +136,6 @@ var login = function(req, res, next) {
           .status(500)
           .send({ error: "Error in loading needs list from salesforce" });
       }
-      console.log(error.config);
       res
         .status(400)
         .send({ error: "Error in loading needs list from salesforce" });
