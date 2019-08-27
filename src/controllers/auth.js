@@ -117,7 +117,24 @@ var login = function(req, res, next) {
   console.log(config);
   axios(config)
     .then(function(response) {
-      res.send(response.data);
+      if (response.data.success) {
+        console.log(response.data);
+        var token = jwt.sign(
+          {
+            access_token: req.access_token,
+            personalNumber: response.data.data.personalNumber
+          },
+          cnf.secret,
+          {
+            expiresIn: process.env.AUTHENTICATIONTOKEN_EXPIRE_TIME || 120 * 60 // expires in 30 minutes
+          }
+        );
+        res
+          .status(200)
+          .send({ access_token: token, userInfo: response.data.data });
+      } else {
+        res.status(response.statusCode).send(response);
+      }
     })
     .catch(function(error) {
       if (error.response) {
