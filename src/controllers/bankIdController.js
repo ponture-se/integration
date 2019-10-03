@@ -65,8 +65,7 @@ exports.authenticate = [
           if (response && response.data && response.data.orderRef) {
             var token = jwt.sign(
               {
-                orderRef: response.data.orderRef,
-                autoStartToken: response.data.autoStartToken
+                orderRef: response.data.orderRef
               },
               cnf.secret,
               {
@@ -74,7 +73,12 @@ exports.authenticate = [
                   process.env.AUTHENTICATIONTOKEN_EXPIRE_TIME || 30 * 60 // expires in 30 minutes
               }
             );
-            res.status(200).send({ access_token: token });
+            res
+              .status(200)
+              .send({
+                access_token: token,
+                autoStartToken: response.data.autoStartToken
+              });
           } else {
             res.status(500).json({
               success: false,
