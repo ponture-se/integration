@@ -64,7 +64,10 @@ exports.authenticate = [
         .then(function(response) {
           if (response && response.data && response.data.orderRef) {
             var token = jwt.sign(
-              { orderRef: response.data.orderRef },
+              {
+                orderRef: response.data.orderRef,
+                autoStartToken: response.data.autoStartToken
+              },
               cnf.secret,
               {
                 expiresIn:
