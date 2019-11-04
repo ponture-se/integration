@@ -43,17 +43,21 @@ function callRoaring(
 
 exports.getcompanyinfo = [
   // Validate fields
-  body("orgNumber", "Organization number is required")
-    .isNumeric()
-    .not()
-    .isEmpty()
-    .isLength({ min: 9, max: 10 })
-    .withMessage("Organization number is invalid"),
-  sanitizeBody("orgNumber")
-    .trim()
-    .escape(),
   (req, res, next) => {
-    var errors = validationResult(req);
+    if (!req.query.orgNumber) {
+      return res.status(422).json({
+        success: false,
+        code: "INVALID_ORGNUMBER",
+        errors: ["OrgNumber is required."]
+      });
+    }
+    if (req.query.orgNumber.length < 10) {
+      return res.status(422).json({
+        success: false,
+        code: "INVALID_ORGNUMBER",
+        errors: ["OrgNumber is invalid."]
+      });
+    }
     if (!errors.isEmpty()) {
       //There are errors. send error result
       return res.status(422).json({
@@ -68,7 +72,7 @@ exports.getcompanyinfo = [
         overview: function(callback) {
           callRoaring(
             callback,
-            "/se/company/overview/1.1/" + req.body.orgNumber,
+            "/se/company/overview/1.1/" + req.query.orgNumber,
             "get",
             undefined,
             "COMPANY_OVERVIEW_INVALID_RESPONSE",
@@ -79,7 +83,7 @@ exports.getcompanyinfo = [
         ecoOverview: function(callback) {
           callRoaring(
             callback,
-            "/se/company/economy-overview/1.1/" + req.body.orgNumber,
+            "/se/company/economy-overview/1.1/" + req.query.orgNumber,
             "get",
             undefined,
             "COMPANY_ECOOVERVIEW_INVALID_RESPONSE",
@@ -90,7 +94,7 @@ exports.getcompanyinfo = [
         boardMembers: function(callback) {
           callRoaring(
             callback,
-            "/se/company/board-members/1.1/" + req.body.orgNumber,
+            "/se/company/board-members/1.1/" + req.query.orgNumber,
             "get",
             undefined,
             "COMPANY_BOARDMEMBERS_INVALID_RESPONSE",
@@ -101,7 +105,7 @@ exports.getcompanyinfo = [
         beneficialOwners: function(callback) {
           callRoaring(
             callback,
-            "/se/beneficialowner/1.0/company/" + req.body.orgNumber,
+            "/se/beneficialowner/1.0/company/" + req.query.orgNumber,
             "get",
             undefined,
             "COMPANY_BENEFICIAL_INVALID_RESPONSE",
@@ -112,7 +116,7 @@ exports.getcompanyinfo = [
         signatory: function(callback) {
           callRoaring(
             callback,
-            "/se/company/signatory/1.1/" + req.body.orgNumber,
+            "/se/company/signatory/1.1/" + req.query.orgNumber,
             "get",
             undefined,
             "COMPANY_SIGNATORY_INVALID_RESPONSE",
@@ -126,7 +130,7 @@ exports.getcompanyinfo = [
             "/global/sanctions-lists/1.0/search",
             "get",
             {
-              name: req.body.orgName
+              name: req.query.orgName
             },
             "COMPANY_SANCTION_INVALID_RESPONSE",
             "COMPANY_SANCTION_API_ERROR",
