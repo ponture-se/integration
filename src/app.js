@@ -23,6 +23,6 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use("/auth", bankid);
-app.use("/accounts", bankid);
+app.use("/accounts", account);
 app.use("/apply", opportunity);
 module.exports = app;
