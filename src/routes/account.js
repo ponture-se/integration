@@ -3,7 +3,7 @@ var router = express.Router();
 var controller = require("../controllers/accountController");
 var auth = require("../controllers/auth");
 
-router.post(
+router.get(
   "/getcompanyinfo",
   auth.noAuthNeeded,
   auth.getRoaringToken,
