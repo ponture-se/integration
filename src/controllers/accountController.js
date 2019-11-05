@@ -144,6 +144,10 @@ exports.getcompanyinfo = (req, res, next) => {
   async.parallel(async.reflectAll(tasks), function(errors, results) {
     if (errors && errors.length > 0) {
       res.status(400).send(errors);
-    } else res.status(200).send(results);
+    } else {
+      var value = {};
+      for (var attr in results) value[attr] = results[attr].value;
+      res.status(200).send(value);
+    }
   });
 };
