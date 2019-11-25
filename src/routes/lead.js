@@ -5,9 +5,16 @@ const leadController = require('../controllers/leadController');
 const sfConn = require("../middlewares/sfMiddleware");
 const validate = require("../middlewares/validate");
 const leadValidationRules = require("../models/leadModel");
+// var auth = require("../controllers/auth");
 
 router.get('/:id', sfConn, leadController.getLead);
-router.post('/create', sfConn, leadValidationRules(), validate,  leadController.createLead);
+router.post('/create', 
+            sfConn,
+            leadValidationRules(), 
+            validate,
+            // auth.noAuthNeeded,
+            // auth.getRoaringToken,
+            leadController.createLead);
 
 
 module.exports = router;
