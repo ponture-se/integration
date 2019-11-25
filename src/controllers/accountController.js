@@ -91,6 +91,20 @@ async function getAccountFromExternalService(orgNumber, orgName = '*** NOTHING *
 }
 
 
+function getLegalFormApiName(legalText) {
+  const legalTextMap = {
+      'Privat aktiebolag': 'Private Aktiebolag',
+      'Handelsbolag' : 'Handelsbolag',
+      'Enskild firma' : 'Enskildfirma',
+      'Övriga' : 'Other'
+  };
+
+  return legalTextMap[legalText];
+}
+
+
+exports.getLegalFormApiName = getLegalFormApiName;
+exports.getAccountFromExternalService = getAccountFromExternalService;
 
 exports.getcompanyinfo = async (req, res, next) => {
   // Validate fields
