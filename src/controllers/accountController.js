@@ -1,6 +1,4 @@
 const axios = require("axios");
-const { validationResult, body, check } = require("express-validator/check");
-const { sanitizeBody } = require("express-validator/filter");
 const async = require("async");
 const reflectAll = require("async/reflectAll");
 const {callRoaring, getRoaringToken} = require('./roaring');

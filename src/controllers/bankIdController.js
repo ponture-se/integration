@@ -1,8 +1,8 @@
 const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const cnf = require("../config");
-const { check, validationResult } = require("express-validator/check");
-const { sanitizeBody } = require("express-validator/filter");
+const { check, validationResult } = require("express-validator");
+const { sanitizeBody } = require("express-validator");
 
 exports.authenticate = [
   // Validate fields
