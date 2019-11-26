@@ -91,13 +91,13 @@ async function getAccountFromExternalService(orgNumber, orgName = '*** NOTHING *
 
 function getLegalFormApiName(legalText) {
   const legalTextMap = {
-      'Privat aktiebolag': 'Private Aktiebolag',
-      'Handelsbolag' : 'Handelsbolag',
-      'Enskild firma' : 'Enskildfirma',
-      'Övriga' : 'Other'
+      'privat aktiebolag': 'Private Aktiebolag',
+      'handelsbolag' : 'Handelsbolag',
+      'enskild firma' : 'Enskildfirma',
+      'övriga' : 'Other'
   };
 
-  return legalTextMap[legalText];
+  return (legalTextMap[legalText.toLowerCase()] || null);
 }
 
 
