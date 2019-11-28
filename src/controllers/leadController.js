@@ -18,7 +18,7 @@ async function createLead(req, res, next){
     }
 
     
-    accountCrtl.getAccountFromExternalService(req.body.orgNumber, req.body.companyName, (errors, results) => {
+    accountCrtl.getAccountFromExternalService(req.body.organization_number, req.body.Lead_Company__c, (errors, results) => {
         if (errors && errors.length > 0) {
             resBody = response(false, null, 500, 'Error When Getting Company Info From External Service.', errors);
             return res.status(500).send(resBody);
@@ -34,28 +34,33 @@ async function createLead(req, res, next){
 
 function insertLeadInSF(req, res, customerLeadRecordTypeId, accountInfo) {
     let payload = {
-        firstName: req.body.firstName,
-        lastName: req.body.lastName,
-        Company: req.body.companyName,
-        Organization_Number__c: req.body.orgNumber,
+        recordTypeId: customerLeadRecordTypeId,
+        Organization_Number__c: req.body.organization_number,
         Phone: myToolkit.fixPhoneNumber(req.body.phone),
         Email: req.body.email,
-        Description : req.body.description,
-        recordTypeId: customerLeadRecordTypeId,
-        Problem__c: req.body.interest.join(';'),
-        UTM_Source__c: "Objektvision",
+        Situation__c: req.body.situation,
+        Lead_Revenue__c: req.body.lead_revenue,
+        Lead_Company__c: req.body.lead_company,
+        lastName: req.body.last_name,
+        firstName: req.body.first_name,
+        MobilePhone: myToolkit.fixPhoneNumber(req.body.mobile),
+        Problem__c: req.body.problem.join(';'),
+        Need_Payoff__c: req.body.need_payoff.join(';'),
+        Need_Description__c : req.body.need_description,
+        SPIN_Stage__c: req.body.spin_stage,
+        Marketing_Email_Opt_Out__c: req.body.marketing_email_opt_out,
+        Sales_Email_Opt_Out__c: req.body.sales_email_opt_out,
+        Status: req.body.lead_status,
+        UTM_Source__c: req.body.utm_source,
         UTM_Medium__c: req.body.utm_medium,
         UTM_Campaign__c: req.body.utm_campaign,
         Referral_ID__c: req.body.referral_id,
         Last_Referral_Date__c: req.body.last_referral_date,
-        LeadSource: "Partner Rreferral",
-        Lead_Action__c: "Intresseanmälan",
-        Status: "New",
-        Need_Payoff__c: "Business Loan",
-        Marketing_Email_Opt_Out__c: false,
-        Sales_Email_Opt_Out__c: false,
+        LeadSource: req.body.lead_source,
+        Lead_Action__c: req.body.lead_action,
         Last_Marketing_Consent_Date__c: Date.now(),
         Last_Sales_Consent_Date__c: Date.now(),
+        Company: ((accountInfo.overview) ? accountInfo.overview.companyName: null),
         AnnualRevenue: ((accountInfo.ecoOverview) ? parseFloat(accountInfo.ecoOverview.netTurnover) : null),
         Operating_Profit__c: ((accountInfo.ecoOverview) ?parseFloat(accountInfo.ecoOverview.plOperatingProfit): null),
         Registration_Date__c: ((accountInfo.overview) ? Date.parse(accountInfo.overview.companyRegistrationDate): null),
