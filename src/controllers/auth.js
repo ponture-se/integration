@@ -2,6 +2,9 @@ const axios = require("axios");
 const qs = require("qs");
 const jwt = require("jsonwebtoken");
 const cnf = require("../config");
+const roaring = require('./roaring');
+
+
 function verifyToken(req, res, next) {
   var token = req.headers["x-access-token"];
   if (token == null || !token) {
@@ -34,35 +37,45 @@ function noAuthNeeded(req, res, next) {
   next();
 }
 
-function getRoaringToken(req, res, next) {
-  var username = process.env.ROARING_USERNAME;
-  var password = process.env.ROARING_PASSWORD;
-  var apiRoot = process.env.ROARING_LOGIN_API_ROOT || "https://api.roaring.io";
-  var data = username + ":" + password;
-  var buff = new Buffer(data);
-  var base64data = buff.toString("base64");
-  var config = {
-    url: "/token",
-    baseURL: apiRoot,
-    method: "post",
-    data: qs.stringify({
-      grant_type: "client_credentials"
-    }),
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: "Basic " + base64data
-    }
-  };
-  console.log(config);
-  axios(config)
-    .then(function(response) {
-      req.access_token = response.data.access_token;
-      req.roaring_access_token = response.data.access_token;
-      next();
-    })
-    .catch(function(error) {
-      res.status(400).send(error);
-    });
+async function getRoaringToken(req, res, next) {
+  // var username = process.env.ROARING_USERNAME;
+  // var password = process.env.ROARING_PASSWORD;
+  // var apiRoot = process.env.ROARING_LOGIN_API_ROOT || "https://api.roaring.io";
+  // var data = username + ":" + password;
+  // var buff = new Buffer(data);
+  // var base64data = buff.toString("base64");
+  // var config = {
+  //   url: "/token",
+  //   baseURL: apiRoot,
+  //   method: "post",
+  //   data: qs.stringify({
+  //     grant_type: "client_credentials"
+  //   }),
+  //   headers: {
+  //     "Content-Type": "application/x-www-form-urlencoded",
+  //     Authorization: "Basic " + base64data
+  //   }
+  // };
+  // console.log(config);
+  // axios(config)
+  //   .then(function(response) {
+  //     req.access_token = response.data.access_token;
+  //     req.roaring_access_token = response.data.access_token;
+  //     next();
+  //   })
+  //   .catch(function(error) {
+  //     res.status(400).send(error);
+  //   });
+  const response =  await roaring.getRoaringToken();
+
+  if (response.success){
+    req.access_token = response.data;
+    req.roaring_access_token = response.data;
+    next();
+  } else {
+    res.status(400).send(response.data);
+  }
+
 }
 
 function getSFToken(req, res, next) {

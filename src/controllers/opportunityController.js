@@ -1,6 +1,6 @@
 const axios = require("axios");
-const { validationResult, body, check } = require("express-validator/check");
-const { sanitizeBody } = require("express-validator/filter");
+const { validationResult, body, check } = require("express-validator");
+const { sanitizeBody } = require("express-validator");
 const async = require("async");
 const reflectAll = require("async/reflectAll");
 
