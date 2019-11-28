@@ -37,6 +37,7 @@
     "jsforce": "^1.9.3",
     "jsonwebtoken": "8.4.0",
     "morgan": "1.9.1",
+    "nock": "^11.7.0",
     "qs": "6.7.0"
   },
   "devDependencies": {
