@@ -38,7 +38,7 @@ function insertLeadInSF(req, res, customerLeadRecordTypeId, accountInfo) {
         lastName: req.body.lastName,
         Company: req.body.companyName,
         Organization_Number__c: req.body.orgNumber,
-        Phone: req.body.phone,
+        Phone: myToolkit.fixPhoneNumber(req.body.phone),
         Email: req.body.email,
         Description : req.body.description,
         recordTypeId: customerLeadRecordTypeId,
