@@ -1,5 +1,6 @@
 const response = require("../controllers/myResponse");
 const bodyParser = require("body-parser");
+const _ = require('lodash');
 
 async function getRecordTypeId(sfConn, sObjName, recordTypeName){
     let result;
@@ -36,8 +37,20 @@ function isJSON(req, res, next){
 }
 
 
+function fixPhoneNumber(phone){
+    let result = '';
+    if (_.startsWith(phone,'0')){
+        result = '+46' + _.trimStart(phone, '0');
+    } else {
+        result = phone;
+    }
+    return result;
+}
+
+
 
 module.exports = {
     getRecordTypeId,
-    isJSON
+    isJSON,
+    fixPhoneNumber
 }
