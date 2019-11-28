@@ -43,7 +43,7 @@ function insertLeadInSF(req, res, customerLeadRecordTypeId, accountInfo) {
         Description : req.body.description,
         recordTypeId: customerLeadRecordTypeId,
         Problem__c: req.body.interest.join(';'),
-        UTM_Source__c: req.body.utm_source,
+        UTM_Source__c: "Objektvision",
         UTM_Medium__c: req.body.utm_medium,
         UTM_Campaign__c: req.body.utm_campaign,
         Referral_ID__c: req.body.referral_id,
