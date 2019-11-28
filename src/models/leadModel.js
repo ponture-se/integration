@@ -38,19 +38,31 @@ const { body } = require('express-validator');
 
 function leadValidationRules() {
   return [
-    body('companyName').isString().withMessage("Value Must be String.").exists().withMessage("Required Key/Value Pair"),
-    body('orgNumber').isString().withMessage("Value Must be String.").exists().withMessage("Required Key/Value Pair"),
-    body('firstName').isString().withMessage("Value Must be String.").exists().withMessage("Required Key/Value Pair"),
-    body('lastName').isString().withMessage("Value Must be String.").exists().withMessage("Required Key/Value Pair"),
+    body('organization_number').isString().withMessage("Value Must be String.").exists().withMessage("Required Key/Value Pair"),
     body('phone').isString().withMessage("Value Must be String.").exists().withMessage("Required Key/Value Pair"),
     body('email').isString().withMessage("Value Must be String.").exists().withMessage("Required Key/Value Pair"),
-    body('interest').isArray().withMessage("Value Must be Array").isLength({ min: 1 }).withMessage("At least one value should exist").exists().withMessage("Required Key/Value Pair"),
-    body('description').isString().withMessage("Value Must be String.").exists().withMessage("Required Key/Value Pair"),
+    body('situation').isString().withMessage("Value Must be String.").exists().withMessage("Required Key/Value Pair"),
+    body('lead_revenue').isNumeric().withMessage("Value Must be Numeric."),
+    body('lead_company').isString().withMessage("Value Must be String."),
+    body('last_name').isString().withMessage("Value Must be String.").exists().withMessage("Required Key/Value Pair"),
+    body('first_name').isString().withMessage("Value Must be String."),
+    body('mobile').isString().withMessage("Value Must be String."),
+    body('problem').isArray().withMessage("Value Must be Array").isLength({ min: 1 }).withMessage("At least one value should exist").exists().withMessage("Required Key/Value Pair"),
+    body('need_payoff').isArray().withMessage("Value Must be Array"),
+    body('need_description').isString().withMessage("Value Must be String."),
+    body('spin_stage').isString().withMessage("Value Must be String."),
+    body('marketing_email_opt_out').isBoolean().withMessage("Value Must be Boolean"),
+    body('sales_email_opt_out').isBoolean().withMessage("Value Must be Boolean"),
+    body('lead_status').isString().withMessage("Value Must be String."),
     body('utm_source').isString().withMessage("Value Must be String."),
     body('utm_medium').isString().withMessage("Value Must be String."),
     body('utm_campaign').isString().withMessage("Value Must be String."),
     body('referral_id').isString().withMessage("Value Must be String."),
-    body('last_referral_date')
+    body('last_referral_date').isString().withMessage("Value Must be String"),
+    body('lead_source').isString().withMessage("Value Must be Array"),
+    body('lead_action').isString().withMessage("Value Must be String."),
+    body('specific_lead_source').isString().withMessage("Value Must be Array")
+    // body('description').isString().withMessage("Value Must be String.").exists().withMessage("Required Key/Value Pair"),
   ];
 }
 
