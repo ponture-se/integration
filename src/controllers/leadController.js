@@ -36,14 +36,14 @@ function insertLeadInSF(req, res, customerLeadRecordTypeId, accountInfo) {
     let payload = {
         recordTypeId: customerLeadRecordTypeId,
         Organization_Number__c: req.body.organization_number,
-        Phone: myToolkit.fixPhoneNumber(req.body.phone),
+        Phone: req.body.phone,
         Email: req.body.email,
         Situation__c: req.body.situation,
         Lead_Revenue__c: req.body.lead_revenue,
         Lead_Company__c: req.body.lead_company,
         lastName: req.body.last_name,
         firstName: req.body.first_name,
-        MobilePhone: myToolkit.fixPhoneNumber(req.body.mobile),
+        MobilePhone: req.body.mobile,
         Problem__c: req.body.problem.join(';'),
         Need_Payoff__c: req.body.need_payoff.join(';'),
         Need_Description__c : req.body.need_description,
@@ -68,7 +68,8 @@ function insertLeadInSF(req, res, customerLeadRecordTypeId, accountInfo) {
         Status_Date__c: ((accountInfo.overview) ? Date.parse(accountInfo.overview.statusDateFrom): null),
         NumberOfEmployees: ((accountInfo.overview) ? parseInt(accountInfo.overview.numberEmployees): null),
         Legal_form__c: ((accountInfo.overview) ? accountCrtl.getLegalFormApiName(accountInfo.overview.legalGroupText): null),
-        Industry_Code__c: ((accountInfo.overview) ? accountInfo.overview.industryCode : null)
+        Industry_Code__c: ((accountInfo.overview) ? accountInfo.overview.industryCode : null),
+        Auto_Notification_Enabled__c: true
 
     };
 
