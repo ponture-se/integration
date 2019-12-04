@@ -39,11 +39,15 @@ function isJSON(req, res, next){
 
 function fixPhoneNumber(phone){
     let result = '';
-    if (_.startsWith(phone,'0')){
-        result = '+46' + _.trimStart(phone, '0');
+    if (phone.startsWith('00')){
+        result = '+' + phone.slice(2);
+    } else if (phone.startsWith('0')){
+        result = '+46' + phone.slice(1);
     } else {
+        // phone must be start with +46
         result = phone;
     }
+
     return result;
 }
 
