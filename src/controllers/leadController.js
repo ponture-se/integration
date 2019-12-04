@@ -58,6 +58,7 @@ function insertLeadInSF(req, res, customerLeadRecordTypeId, accountInfo) {
         Last_Referral_Date__c: req.body.last_referral_date,
         LeadSource: req.body.lead_source,
         Lead_Action__c: req.body.lead_action,
+        Specific_Lead_Source__c: req.body.specific_lead_source,
         Last_Marketing_Consent_Date__c: Date.now(),
         Last_Sales_Consent_Date__c: Date.now(),
         Company: ((accountInfo.overview) ? accountInfo.overview.companyName: "** Automatic: Cannot get value from external service **"),
