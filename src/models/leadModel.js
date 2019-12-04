@@ -51,7 +51,7 @@ function leadValidationRules() {
                     .exists().withMessage("Required Key/Value Pair")
                     .notEmpty().withMessage("Can not be Empty"),
     body('first_name').isString().withMessage("Value Must be String.").optional(),
-    body('mobile').isNumeric().withMessage("Value Must be Mobilephone.").optional().matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[02369]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.'),
+    body('mobile').isNumeric().withMessage("Value Must be Numeric.").optional().matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[02369]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.'),
     body('problem').isArray().withMessage("Value Must be Array")
                             .isLength({ min: 1 }).withMessage("At least one value should exist")
                             .exists().withMessage("Required Key/Value Pair"),
