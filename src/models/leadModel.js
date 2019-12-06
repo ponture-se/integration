@@ -38,20 +38,26 @@ const { body } = require('express-validator');
 
 function leadValidationRules() {
   return [
-    body('organization_number').isNumeric().withMessage("Value Must be Numeric.")
-                              .exists().withMessage("Required Key/Value Pair")
-                              .notEmpty().withMessage("Can not be Empty"),
-    body('phone').isNumeric().withMessage("Value Must be Numeric.").optional().matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[02369]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.'),
+    body('organization_number').isNumeric().withMessage("Value Must be Numeric.").optional({ checkFalsy: true }),
+    body('phone').isNumeric().withMessage("Value Must be Numeric.")
+                  .exists().withMessage("Required Key/Value Pair")
+                  .notEmpty().withMessage("Can not be Empty")
+                  .matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[02369]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.'),
     body('email').isEmail().withMessage("Value Must be Email.").optional(),
     body('situation').isString().withMessage("Value Must be String.")
                     .exists().withMessage("Required Key/Value Pair"),
     body('lead_revenue').isNumeric().withMessage("Value Must be Numeric.").optional(),
-    body('lead_company').isString().withMessage("Value Must be String.").optional(),
+    body('lead_company').isString().withMessage("Value Must be String.")
+                        .exists().withMessage("Required Key/Value Pair")
+                        .notEmpty().withMessage("Can not be Empty"),
     body('last_name').isString().withMessage("Value Must be String.")
                     .exists().withMessage("Required Key/Value Pair")
                     .notEmpty().withMessage("Can not be Empty"),
     body('first_name').isString().withMessage("Value Must be String.").optional(),
-    body('mobile').isNumeric().withMessage("Value Must be Numeric.").optional().matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[02369]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.'),
+    body('mobile').isNumeric().withMessage("Value Must be Numeric.")
+                  .exists().withMessage("Required Key/Value Pair")
+                  .notEmpty().withMessage("Can not be Empty")
+                  .matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[02369]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.'),
     body('problem').isArray().withMessage("Value Must be Array")
                             .isLength({ min: 1 }).withMessage("At least one value should exist")
                             .exists().withMessage("Required Key/Value Pair"),
