@@ -17,22 +17,28 @@ async function createLead(req, res, next){
         return res.status(500).send(resBody);
     }
 
-    
-    accountCrtl.getAccountFromExternalService(req.body.organization_number, req.body.Lead_Company__c, (errors, results) => {
-        if (errors && errors.length > 0) {
-            resBody = response(false, null, 500, 'Error When Getting Company Info From External Service.', errors);
-            return res.status(500).send(resBody);
-        }
-        else {
-            var accountInfo = {};
-            for (var attr in results) accountInfo[attr] = results[attr].value;
-            insertLeadInSF(req, res, customerLeadRecordTypeId, accountInfo);
-        }
-        
-    });
+    let orgNum = req.body.organization_number;
+
+    if (orgNum == null || orgNum == undefined | orgNum == ''){
+        insertLeadInSF(req, res, customerLeadRecordTypeId, null);
+    } else {
+        accountCrtl.getAccountFromExternalService(orgNum, req.body.Lead_Company__c, (errors, results) => {
+            if (errors && errors.length > 0) {
+                resBody = response(false, null, 500, 'Error When Getting Company Info From External Service.', errors);
+                return res.status(500).send(resBody);
+            }
+            else {
+                var accountInfo = {};
+                for (var attr in results) accountInfo[attr] = results[attr].value;
+                insertLeadInSF(req, res, customerLeadRecordTypeId, accountInfo);
+            }
+            
+        });
+    }
 }
 
 function insertLeadInSF(req, res, customerLeadRecordTypeId, accountInfo) {
+    let roaringPayload = {};
     let payload = {
         recordTypeId: customerLeadRecordTypeId,
         Organization_Number__c: req.body.organization_number,
@@ -61,22 +67,39 @@ function insertLeadInSF(req, res, customerLeadRecordTypeId, accountInfo) {
         Specific_Lead_Source__c: req.body.specific_lead_source,
         Last_Marketing_Consent_Date__c: Date.now(),
         Last_Sales_Consent_Date__c: Date.now(),
-        Company: ((accountInfo.overview) ? accountInfo.overview.companyName: "** Automatic: Cannot get value from external service **"),
-        AnnualRevenue: ((accountInfo.ecoOverview) ? parseFloat(accountInfo.ecoOverview.netTurnover) : null),
-        Operating_Profit__c: ((accountInfo.ecoOverview) ?parseFloat(accountInfo.ecoOverview.plOperatingProfit): null),
-        Registration_Date__c: ((accountInfo.overview) ? Date.parse(accountInfo.overview.companyRegistrationDate): null),
-        Status__c: ((accountInfo.overview) ? accountInfo.overview.statusTextHigh: null),
-        Status_Date__c: ((accountInfo.overview) ? Date.parse(accountInfo.overview.statusDateFrom): null),
-        NumberOfEmployees: ((accountInfo.overview) ? parseInt(accountInfo.overview.numberEmployees): null),
-        Legal_form__c: ((accountInfo.overview) ? accountCrtl.getLegalFormApiName(accountInfo.overview.legalGroupText): null),
-        Industry_Code__c: ((accountInfo.overview) ? accountInfo.overview.industryCode : null),
         Auto_Notification_Enabled__c: true
-
     };
+
+    if (accountInfo != null) {
+        roaringPayload = {
+            Company: ((accountInfo.overview) ? accountInfo.overview.companyName: "** Automatic: Cannot get value from external service **"),
+            AnnualRevenue: ((accountInfo.ecoOverview) ? parseFloat(accountInfo.ecoOverview.netTurnover) : null),
+            Operating_Profit__c: ((accountInfo.ecoOverview) ?parseFloat(accountInfo.ecoOverview.plOperatingProfit): null),
+            Registration_Date__c: ((accountInfo.overview) ? Date.parse(accountInfo.overview.companyRegistrationDate): null),
+            Status__c: ((accountInfo.overview) ? accountInfo.overview.statusTextHigh: null),
+            Status_Date__c: ((accountInfo.overview) ? Date.parse(accountInfo.overview.statusDateFrom): null),
+            NumberOfEmployees: ((accountInfo.overview) ? parseInt(accountInfo.overview.numberEmployees): null),
+            Legal_form__c: ((accountInfo.overview) ? accountCrtl.getLegalFormApiName(accountInfo.overview.legalGroupText): null),
+            Industry_Code__c: ((accountInfo.overview) ? accountInfo.overview.industryCode : null),
+        };
+    } else {
+        roaringPayload = {
+            Company: req.body.lead_company
+        };
+    }
+    
+
+    payload = Object.assign(payload, roaringPayload);
 
     req.sfConn.sobject("Lead").create(payload, 
         function(err, ret) {
         if (err || !ret.success) {
+            // use this with winston, to save in a file
+            // let error = {
+            //     "errorCode" : err.errorCode,
+            //     "message" : err.message,
+            //     "name": err.name
+            // };
             if (err.errorCode === 'INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST'){
                 resBody = response(false, null, 400, 'One or more Picklist Values are incorrect.', [err]);
                 return res.status(400).send(resBody);
@@ -113,7 +136,6 @@ function getLead(req, res, next){
     }
     //next();
 }
-
 
 
 exports.createLead = createLead;
