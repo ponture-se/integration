@@ -80,11 +80,12 @@ function insertLeadInSF(req, res, customerLeadRecordTypeId, accountInfo) {
             Status_Date__c: ((accountInfo.overview) ? Date.parse(accountInfo.overview.statusDateFrom): null),
             NumberOfEmployees: ((accountInfo.overview) ? parseInt(accountInfo.overview.numberEmployees): null),
             Legal_form__c: ((accountInfo.overview) ? accountCrtl.getLegalFormApiName(accountInfo.overview.legalGroupText): null),
-            Industry_Code__c: ((accountInfo.overview) ? accountInfo.overview.industryCode : null),
+            Industry_Code__c: ((accountInfo.overview) ? accountInfo.overview.industryCode : null)
         };
     } else {
         roaringPayload = {
-            Company: req.body.lead_company
+            Company: req.body.lead_company,
+            AnnualRevenue: req.body.lead_revenue
         };
     }
     
