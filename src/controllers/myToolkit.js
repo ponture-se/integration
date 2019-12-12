@@ -1,6 +1,8 @@
 const response = require("../controllers/myResponse");
 const bodyParser = require("body-parser");
-const _ = require('lodash');
+const jsforce = require('jsforce');
+const dotenv = require('dotenv');
+dotenv.config();
 
 async function getRecordTypeId(sfConn, sObjName, recordTypeName){
     let result;
@@ -52,9 +54,25 @@ function fixPhoneNumber(phone){
 }
 
 
+async function makeSFConnection(){
+    const conn = new jsforce.Connection({loginUrl : process.env.LOGIN_API_ROOT,
+                                        clientId : process.env.SALESFORCE_CLIENTID,
+                                        clientSecret: process.env.SALESFORCE_CLIENT_SECRET});
+
+    try{
+        const sfConnection = await conn.login(process.env.SALESFORCE_USERNAME, process.env.SALESFORCE_PASSWORD);
+        return conn;
+    } catch (err) {
+        console.log(err);
+        return null;
+    }
+}
+
+
 
 module.exports = {
     getRecordTypeId,
     isJSON,
-    fixPhoneNumber
+    fixPhoneNumber,
+    makeSFConnection
 }
