@@ -301,36 +301,28 @@ exports.submit = [
           }
         };
         //console.log(config);
-
         axios(config)
           .then(function(response) {
             res.send(response.data);
           })
           .catch(function(error) {
+            console.log(error.toJSON());
             if (error.response) {
               // The request was made and the server responded with a status code
               // that falls out of the range of 2xx
-              // The request was made and the server responded with a status code
-              // that falls out of the range of 2xx
-              console.log(error.response.data);
-              console.log(error.response.status);
-              console.log(error.response.headers);
               res.status(error.response.status).send(error.response.data);
             } else if (error.request) {
               // The request was made but no response was received
               // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
               // http.ClientRequest in node.js
-              console.log(error.request);
               res.status(204).send("No response from BankID server");
             } else {
               // Something happened in setting up the request that triggered an Error
               console.log("Error", error.message);
               res.status(500).send(error.message);
             }
-            console.log(error.config);
             res.status(400).send(error.config);
-          })
-          .finally(() => {});
+          });
       });
     }
   }
