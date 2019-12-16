@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node ./src/bin/www",
-    "test": "mocha tests"
+    "test": "jest --watchAll --verbose --coverage"
   },
   "repository": {
     "type": "git",
@@ -38,11 +38,15 @@
     "jsonwebtoken": "8.4.0",
     "lodash": "^4.17.15",
     "morgan": "1.9.1",
-    "nock": "^11.7.0",
     "qs": "6.7.0"
   },
   "devDependencies": {
-    "chai": "4.2.0",
-    "mocha": "6.1.4"
+    "@babel/core": "^7.7.5",
+    "@babel/node": "^7.7.4",
+    "@types/jest": "^24.0.23",
+    "babel-jest": "^24.9.0",
+    "jest": "^24.9.0",
+    "nock": "^11.7.0",
+    "supertest": "^4.0.2"
   }
 }
