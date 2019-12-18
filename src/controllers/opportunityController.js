@@ -310,6 +310,7 @@ exports.submit = [
           //console.log(config);
           axios(config)
             .then(function(response) {
+              console.log(JSON.stringify(response.data));
               res.send(response.data);
             })
             .catch(function(error) {
@@ -338,13 +339,13 @@ exports.submit = [
                 // The request was made but no response was received
                 // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
                 // http.ClientRequest in node.js
-                res.status(204).send("No response from BankID server");
+                return Promise.reject("No response from BankID server");
               } else {
                 // Something happened in setting up the request that triggered an Error
                 console.log("Error", error.message);
-                res.status(500).send(error.message);
+                return Promise.reject(error.message);
               }
-              res.status(400).send(error.config);
+              return Promise.reject(error.response);
             });
         }
       });
