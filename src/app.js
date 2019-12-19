@@ -1,3 +1,5 @@
+const winston = require('winston');
+require('winston-mongodb');
 var express = require("express");
 var cors = require("cors");
 var logger = require("morgan");
@@ -5,8 +7,14 @@ var cookieParser = require("cookie-parser");
 var bodyParser = require("body-parser");
 var helmet = require("helmet");
 var compression = require("compression");
+const dotenv = require('dotenv');
+dotenv.config();
 
 var app = express();
+
+// winston.add(new winston.transports.MongoDB, {db: 'mongodb+srv://' + process.env.MONGODB_USER + ':' + process.env.MONGODB_PASS + '@cluster0-ljo1h.mongodb.net/test?retryWrites=true&w=majority'});
+// winston.add(new winston.transports.MongoDB, {db: 'mongodb+srv://abbas:bbs5277906@cluster0-ljo1h.mongodb.net/test?retryWrites=true&w=majority'});
+winston.add(new winston.transports.File({filename: 'apiLogs.log'} ));
 
 app.use(compression()); //Compress all routes
 app.use(helmet());
@@ -27,5 +35,6 @@ app.use("/auth", bankid);
 app.use("/accounts", account);
 app.use("/apply", opportunity);
 app.use('/leads', lead);
+
 
 module.exports = app;
