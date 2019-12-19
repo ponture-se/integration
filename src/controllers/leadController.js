@@ -14,30 +14,34 @@ async function createLead(req, res, next){
 
     if (customerLeadRecordTypeId == null || customerLeadRecordTypeId == ''){
         resBody = response(false, null, 500, 'sObjName or RecordType was set incorrectly. Please Inform the developer team.');
-        return res.status(500).send(resBody);
+        // return res.status(500).send(resBody);
+        res.status(500).send(resBody);
+        return next();
     }
 
     let orgNum = req.body.organization_number;
 
     if (orgNum == null || orgNum == undefined | orgNum == ''){
-        insertLeadInSF(req, res, customerLeadRecordTypeId, null);
+        insertLeadInSF(req, res, next, customerLeadRecordTypeId, null);
     } else {
         accountCrtl.getAccountFromExternalService(orgNum, req.body.Lead_Company__c, (errors, results) => {
             if (errors && errors.length > 0) {
                 resBody = response(false, null, 500, 'Error When Getting Company Info From External Service.', errors);
-                return res.status(500).send(resBody);
+                // return res.status(500).send(resBody);
+                res.status(500).send(resBody);
+                return next();
             }
             else {
                 var accountInfo = {};
                 for (var attr in results) accountInfo[attr] = results[attr].value;
-                insertLeadInSF(req, res, customerLeadRecordTypeId, accountInfo);
+                insertLeadInSF(req, res, next, customerLeadRecordTypeId, accountInfo);
             }
             
         });
     }
 }
 
-function insertLeadInSF(req, res, customerLeadRecordTypeId, accountInfo) {
+function insertLeadInSF(req, res, next, customerLeadRecordTypeId, accountInfo) {
     let roaringPayload = {};
     let payload = {
         recordTypeId: customerLeadRecordTypeId,
@@ -103,14 +107,20 @@ function insertLeadInSF(req, res, customerLeadRecordTypeId, accountInfo) {
             // };
             if (err.errorCode === 'INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST'){
                 resBody = response(false, null, 400, 'One or more Picklist Values are incorrect.', [err]);
-                return res.status(400).send(resBody);
+                // return res.status(400).send(resBody);
+                res.status(400).send(resBody);
+                return next();
             } else {
                 resBody = response(false, null, 500, 'Error Occured When Creating Lead.', [err]);
-                return res.status(500).send(resBody);
+                // return res.status(500).send(resBody);
+                res.status(500).send(resBody);
+                return next();
             }
         } else {
             let resBody = response(true, {id: ret.id}, 200, 'Lead Created.');
-            return res.status(200).send(resBody);
+            // return res.status(200).send(resBody);
+            res.status(200).send(resBody);
+            return next();
         }
     
     });
