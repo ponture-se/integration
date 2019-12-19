@@ -16,6 +16,7 @@ var bankid = require("./routes/bankId");
 var account = require("./routes/account");
 var opportunity = require("./routes/opportunity");
 const lead =  require('./routes/lead');
+const factoring =  require('./routes/factoring');
 // a middleware function with no mount path. This code is executed for every request to the router
 
 app.use(logger("dev"));
@@ -27,5 +28,6 @@ app.use("/auth", bankid);
 app.use("/accounts", account);
 app.use("/apply", opportunity);
 app.use('/leads', lead);
+app.use('/factoring', factoring);
 
 module.exports = app;
