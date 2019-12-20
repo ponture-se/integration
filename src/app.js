@@ -1,5 +1,6 @@
 const winston = require('winston');
 require('winston-mongodb');
+const apiLogger = require('./middlewares/apiLogger');
 var express = require("express");
 var cors = require("cors");
 var logger = require("morgan");
@@ -12,8 +13,7 @@ dotenv.config();
 
 var app = express();
 
-// winston.add(new winston.transports.MongoDB, {db: 'mongodb+srv://' + process.env.MONGODB_USER + ':' + process.env.MONGODB_PASS + '@cluster0-ljo1h.mongodb.net/test?retryWrites=true&w=majority'});
-// winston.add(new winston.transports.MongoDB, {db: 'mongodb+srv://abbas:bbs5277906@cluster0-ljo1h.mongodb.net/test?retryWrites=true&w=majority'});
+winston.add(new winston.transports.MongoDB({db: 'mongodb+srv://' + process.env.MONGODB_USER + ':' + process.env.MONGODB_PASS + '@cluster0-ljo1h.mongodb.net/Logs?retryWrites=true&w=majority'}));
 winston.add(new winston.transports.File({filename: 'apiLogs.log'} ));
 
 app.use(compression()); //Compress all routes
@@ -35,6 +35,8 @@ app.use("/auth", bankid);
 app.use("/accounts", account);
 app.use("/apply", opportunity);
 app.use('/leads', lead);
+
+app.use(apiLogger);
 
 
 module.exports = app;
