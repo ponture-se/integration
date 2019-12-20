@@ -2,9 +2,34 @@ const winston = require("winston");
 
 
 function logger(req, res, next){
-    winston.log('info', `#Request : ${JSON.stringify(req.body,null,2)}\n#Response : ${JSON.stringify(res.body,null,2)}`);
-    // console.log('#req', req);
-    // console.log('#res', res);
+    let reqLog = {
+        url: req.url,
+        method: req.method,
+        params: req.params,
+        query: req.query,
+        body: req.body
+    }
+    , resLog = {
+        body: res.body,
+        status: res.statusCode
+    };
+
+    let logLevel = null;
+    if (res.statusCode >= 500) {
+        logLevel = 'error';
+    } else if (res.statusCode >= 400) {
+        logLevel = 'warn';
+    } else if (res.statusCode >= 100) {
+        logLevel = 'info';
+    }
+
+    winston.log(logLevel, 
+                    `{` +
+                    `"req" : ${JSON.stringify(reqLog, null, 2)}` +
+                    `, "res" : ${JSON.stringify(resLog, null, 2)}` +
+                    `}`
+                );
+    
     return next();
 }
 
