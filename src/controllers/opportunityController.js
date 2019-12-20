@@ -290,9 +290,12 @@ exports.submit = [
       var roaring;
       async.parallel(async.reflectAll(tasks), function(errors, results) {
         console.log(JSON.stringify(results));
-        if (errors && errors.length > 0) {
-          console.log(JSON.stringify(errors));
-          res.status(400).send(errors);
+        if (!results || (results && results.length == 0)) {
+          console.log(
+            "No response from roaring api. Results array is empty. Errors : " +
+              JSON.stringify(errors)
+          );
+          return Promise.reject(errors);
         } else {
           for (var attr in results) req.body[attr] = results[attr].value;
           token = req.sf_access_token;
@@ -334,7 +337,7 @@ exports.submit = [
               if (error.response) {
                 // The request was made and the server responded with a status code
                 // that falls out of the range of 2xx
-                res.status(error.response.status).send(error.response.data);
+                return Promise.reject(error.response);
               } else if (error.request) {
                 // The request was made but no response was received
                 // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
