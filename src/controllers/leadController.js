@@ -16,6 +16,7 @@ async function createLead(req, res, next){
         resBody = response(false, null, 500, 'sObjName or RecordType was set incorrectly. Please Inform the developer team.');
         // return res.status(500).send(resBody);
         res.status(500).send(resBody);
+        res.body = resBody;
         return next();
     }
 
@@ -29,6 +30,7 @@ async function createLead(req, res, next){
                 resBody = response(false, null, 500, 'Error When Getting Company Info From External Service.', errors);
                 // return res.status(500).send(resBody);
                 res.status(500).send(resBody);
+                res.body = resBody;
                 return next();
             }
             else {
@@ -109,17 +111,20 @@ function insertLeadInSF(req, res, next, customerLeadRecordTypeId, accountInfo) {
                 resBody = response(false, null, 400, 'One or more Picklist Values are incorrect.', [err]);
                 // return res.status(400).send(resBody);
                 res.status(400).send(resBody);
+                res.body = resBody;
                 return next();
             } else {
                 resBody = response(false, null, 500, 'Error Occured When Creating Lead.', [err]);
                 // return res.status(500).send(resBody);
                 res.status(500).send(resBody);
+                res.body = resBody;
                 return next();
             }
         } else {
             let resBody = response(true, {id: ret.id}, 200, 'Lead Created.');
             // return res.status(200).send(resBody);
             res.status(200).send(resBody);
+            res.body = resBody;
             return next();
         }
     
