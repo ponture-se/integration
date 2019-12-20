@@ -13,8 +13,15 @@ dotenv.config();
 
 var app = express();
 
-winston.add(new winston.transports.MongoDB({db: 'mongodb+srv://' + process.env.MONGODB_USER + ':' + process.env.MONGODB_PASS + '@cluster0-ljo1h.mongodb.net/Logs?retryWrites=true&w=majority'}));
-winston.add(new winston.transports.File({filename: 'apiLogs.log'} ));
+winston.add(new winston.transports.MongoDB({
+    db: 'mongodb+srv://' + process.env.MONGODB_USER + ':' + process.env.MONGODB_PASS + '@cluster0-ljo1h.mongodb.net/Logs?retryWrites=true&w=majority',
+    options: {
+        useUnifiedTopology: true
+    }
+}));
+winston.add(new winston.transports.File({
+    filename: 'apiLogs.log'
+}));
 
 app.use(compression()); //Compress all routes
 app.use(helmet());
@@ -23,12 +30,14 @@ app.use(cors());
 var bankid = require("./routes/bankId");
 var account = require("./routes/account");
 var opportunity = require("./routes/opportunity");
-const lead =  require('./routes/lead');
+const lead = require('./routes/lead');
 // a middleware function with no mount path. This code is executed for every request to the router
 
 app.use(logger("dev"));
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({
+    extended: false
+}));
 app.use(cookieParser());
 
 app.use("/auth", bankid);
