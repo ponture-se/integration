@@ -18,7 +18,8 @@ winston.add(new winston.transports.MongoDB({
     db: 'mongodb+srv://' + process.env.MONGODB_USER + ':' + process.env.MONGODB_PASS + '@cluster0-ljo1h.mongodb.net/' + logDbName + '?retryWrites=true&w=majority',
     options: {
         useUnifiedTopology: true
-    }
+    },
+    collection: 'apiLogs'
 }));
 winston.add(new winston.transports.File({
     filename: 'apiLogs.log'
