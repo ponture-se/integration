@@ -15,7 +15,7 @@ var app = express();
 
 const logDbName = process.env.LOG_DATABASE_NAME || "defaultLogDB";
 winston.add(new winston.transports.MongoDB({
-    db: 'mongodb+srv://' + process.env.MONGODB_USER + ':' + process.env.MONGODB_PASS + '@cluster0-ljo1h.mongodb.net/' + logDbName + '?retryWrites=true&w=majority',
+    db: 'mongodb+srv://' + process.env.LOG_DB_USER + ':' + process.env.LOG_DB_PASS + '@cluster0-ljo1h.mongodb.net/' + logDbName + '?retryWrites=true&w=majority',
     options: {
         useUnifiedTopology: true
     },
