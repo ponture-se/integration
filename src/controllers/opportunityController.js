@@ -310,7 +310,7 @@ exports.submit = [
               Authorization: "Bearer " + token
             }
           };
-          //console.log(config);
+          console.log("Sending submit to salesforce : " + config);
           axios(config)
             .then(function(response) {
               console.log(JSON.stringify(response.data));
