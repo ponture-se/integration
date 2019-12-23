@@ -3,37 +3,51 @@ const qs = require("qs");
 const jwt = require("jsonwebtoken");
 const cnf = require("../config");
 const roaring = require('./roaring');
+const apiLogger = require('../middlewares/apiLogger');
 
 
 function verifyToken(req, res, next) {
   var token = req.headers["x-access-token"];
+  let resBody = null;
   if (token == null || !token) {
     token = req.headers["authorization"];
     if (token) token = token.replace("Bearer ", "");
   }
-  if (!token || token == null)
-    return res.status(403).send({ auth: false, message: "No token provided." });
+  if (!token || token == null){
+    resBody = { auth: false, message: "No token provided." };
+    res.status(403).send(resBody);
+    res.body = resBody;
+    
+    return apiLogger(req, res, () => {return;});
+  }
   jwt.verify(token, cnf.secret, function(err, decoded) {
-    if (err)
-      return res
-        .status(401)
-        .send({ auth: false, message: "Failed to authenticate token. " });
+    if (err){
+      resBody = { auth: false, message: "Failed to authenticate token. " };
+      res.status(401).send(resBody);
+      res.body = resBody;
+
+      return apiLogger(req, res, () => {return;});
+    }
     // if everything good, save to request for use in other routes
     console.log("decoded : ", decoded);
     req.orderRef = decoded.orderRef;
     next();
   });
 }
+
 function noAuthNeeded(req, res, next) {
   var token = req.headers["x-access-token"];
   if (token == null || !token) {
     token = req.headers["authorization"];
     if (token) token = token.replace("Bearer ", "");
   }
-  if (token)
-    return res
-      .status(400)
-      .send({ auth: false, message: "No authentication needed." });
+  if (token) {
+    let resBody = { auth: false, message: "No authentication needed." };
+    res.status(400).send(resBody);
+    res.body = resBody;
+
+    return apiLogger(req, res, () => {return;});
+  }
   next();
 }
 
