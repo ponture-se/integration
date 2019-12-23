@@ -127,6 +127,8 @@ function getSFToken(req, res, next) {
     })
     .catch(function(error) {
       res.status(400).send(error);
+      res.body = error;
+      return apiLogger(req,res, () => {return;});
     });
 }
 
