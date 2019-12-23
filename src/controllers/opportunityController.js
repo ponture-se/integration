@@ -532,28 +532,35 @@ exports.getOffers = function(req, res, next) {
   console.log(config);
   axios(config)
     .then(function(response) {
-      res.send(response.data);
+      res.status(200).send(response.data);
+      res.body = response.data;
+      return next();
     })
     .catch(function(error) {
+      let resBody = null;
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
         res.status(error.response.status).send(error.response.data);
+        res.body = error.response.data;
       } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
         // http.ClientRequest in node.js
-        res.status(204).send("No response from BankID server");
+        resBody = "No response from BankID server";
+        res.status(204).send(resBody);
+        res.body = resBody;
       } else {
         // Something happened in setting up the request that triggered an Error
         console.log("Error", error.message);
-        res
-          .status(500)
-          .send({ error: "Error in loading needs list from salesforce" });
+        resBody = { error: "Error in loading needs list from salesforce" };
+        res.status(500).send(resBody);
+        res.body = resBody;
       }
-      res
-        .status(400)
-        .send({ error: "Error in loading needs list from salesforce" });
+      // res
+      //   .status(400)
+      //   .send({ error: "Error in loading needs list from salesforce" });
+      return next();
     });
 };
 exports.rejectOffer = function(req, res, next) {
