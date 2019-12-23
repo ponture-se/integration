@@ -17,15 +17,19 @@ exports.getCompanies = [
     .trim()
     .escape(),
   (req, res, next) => {
+    let resBody = null;
+
     var errors = validationResult(req);
     if (!errors.isEmpty()) {
       //There are errors. send error result
-      return res.status(422).json({
+      resBody = {
         success: false,
         code: "INVALID_PERSONALNUMBER",
         errors: errors.array()
-      });
-      return;
+      };
+      res.status(422).json(resBody);
+      res.body = resBody;
+      return next();
     } else {
       var token = req.access_token;
       var apiRoot = process.env.ROARING_API_ROOT || "https://api.roaring.io";
@@ -50,26 +54,38 @@ exports.getCompanies = [
               return x.statusCode == 100;
             });
             res.status(200).send(output);
-          } else res.status(200).send([]);
+            res.body = output;
+          } else {
+            res.status(200).send([]);
+            res.body = [];
+          }
+
+          return next();
         })
         .catch(function(error) {
           if (error.response) {
             // The request was made and the server responded with a status code
             // that falls out of the range of 2xx
             res.status(error.response.status).send(error.response.data);
+            res.body = error.response.data;
           } else if (error.request) {
             // The request was made but no response was received
             // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
             // http.ClientRequest in node.js
-            res.status(204).send("No response from Roaring server");
+            resBody = "No response from Roaring server";
+            res.status(204).send(resBody);
+            res.body = resBody;
           } else {
             // Something happened in setting up the request that triggered an Error
             console.log("Error", error.message);
-            res.status(500).send({ error: "Error in loading companioes" });
+            resBody = { error: "Error in loading companioes" };
+            res.status(500).send(resBody);
+            res.body = resBody;
           }
-          res
-            .status(400)
-            .send({ error: "Error in loading companioes from roaring" });
+          // res
+          //   .status(400)
+          //   .send({ error: "Error in loading companioes from roaring" });
+          return next();
         });
     }
   }
