@@ -88,6 +88,9 @@ async function getRoaringToken(req, res, next) {
     next();
   } else {
     res.status(400).send(response.data);
+    res.body = response.data;
+    
+    return apiLogger(req, res, () => {return;});
   }
 
 }
