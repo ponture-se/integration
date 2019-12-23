@@ -135,22 +135,27 @@ function insertLeadInSF(req, res, next, customerLeadRecordTypeId, accountInfo) {
 function getLead(req, res, next){
     if (!req.params.id){
         resBody = response(false, null, 400, 'ID Parameter Is Not Set.');
-        return res.status(400).send(resBody);
+        res.status(400).send(resBody);
+        res.body = resBody;     // for logging purpose
+        return next();
     }
     else {
         req.sfConn.sobject("Lead").retrieve(req.params.id, 
             function(err, lead) {
                 if (err) {
                     resBody = response(false, null, 500, null, [err]);
-                    return res.status(500).send(resBody);
+                    res.status(500).send(resBody);
+                    res.body = resBody;
+                    return next();
                 }else {
                     resBody = response(true, lead, 200);
-                    return res.status(200).send(resBody);
+                    res.status(200).send(resBody);
+                    res.body = resBody;
+                    return next();
                 }
             }
         );
     }
-    //next();
 }
 
 
