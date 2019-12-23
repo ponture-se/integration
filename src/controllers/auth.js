@@ -114,6 +114,7 @@ function getSFToken(req, res, next) {
 }
 
 var login = function(req, res, next) {
+  let resBody = null;
   var accessToken = req.access_token;
   var apiRoot =
     process.env.SALESFORCE_API_ROOT ||
@@ -142,35 +143,52 @@ var login = function(req, res, next) {
             expiresIn: process.env.AUTHENTICATIONTOKEN_EXPIRE_TIME || 120 * 60 // expires in 30 minutes
           }
         );
+
+        resBody = { access_token: token, userInfo: response.data.data };
         res
           .status(200)
-          .send({ access_token: token, userInfo: response.data.data });
+          .send(resBody);
+
+        res.body = resBody;
       } else {
         res.status(response.statusCode).send(response);
+        res.body = response;
       }
+      return next();
     })
     .catch(function(error) {
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
         res.status(error.response.status).send(error.response.data);
+        res.body = error.response.data;
       } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
         // http.ClientRequest in node.js
-        res.status(204).send("No response from BankID server");
+        let msg = "No response from BankID server";
+        res.status(204).send(msg);
+        res.body = msg;
       } else {
         // Something happened in setting up the request that triggered an Error
         console.log("Error", error.message);
+        resBody = { error: "Error in loading needs list from salesforce" };
         res
           .status(500)
-          .send({ error: "Error in loading needs list from salesforce" });
+          .send(resBody);
+        
+        res.body = resBody;
       }
-      res
-        .status(400)
-        .send({ error: "Error in loading needs list from salesforce" });
+      // res
+      //   .status(400)
+      //   .send({ error: "Error in loading needs list from salesforce" });
+
+      return next();
     });
+    
 };
+
+
 exports.noAuthNeeded = noAuthNeeded;
 exports.verifyToken = verifyToken;
 exports.getSalesForceToken = getSFToken;
