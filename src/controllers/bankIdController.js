@@ -17,19 +17,23 @@ exports.authenticate = [
     .trim()
     .escape(),
   (req, res, next) => {
+    let resBody = null;
+
     var errors = validationResult(req);
     if (!errors.isEmpty()) {
       //There are errors. send error result
-      return res.status(422).json({
+      resBody = {
         success: false,
         code: "INVALID_PERSONALNUMBER",
         errors: errors.array()
-      });
-      return;
+      };
+      res.status(422).json(resBody);
+      res.body = resBody;
+      return next();
     } else {
       var accessToken = process.env.ACCESS_TOKEN;
       if (!accessToken) {
-        res.status(500).json({
+        resBody = {
           success: false,
           code: "INVALID_BANKID_TOKEN",
           errors: [
@@ -40,8 +44,10 @@ exports.authenticate = [
               msg: "BankID access token not found."
             }
           ]
-        });
-        return;
+        };
+        res.status(500).json(resBody);
+        res.body = resBody;
+        return next();
       }
       var apiRoot = process.env.API_ROOT;
       if (!apiRoot) {
@@ -73,14 +79,16 @@ exports.authenticate = [
                   process.env.AUTHENTICATIONTOKEN_EXPIRE_TIME || 30 * 60 // expires in 30 minutes
               }
             );
+            resBody = {
+              access_token: token,
+              autoStartToken: response.data.autoStartToken
+            };
             res
               .status(200)
-              .send({
-                access_token: token,
-                autoStartToken: response.data.autoStartToken
-              });
+              .send(resBody);
+            res.body = resBody;
           } else {
-            res.status(500).json({
+            resBody = {
               success: false,
               code: "INVALID_BANKID_RESPONSE",
               errors: [
@@ -91,26 +99,33 @@ exports.authenticate = [
                   msg: "BankID response is invalid."
                 }
               ]
-            });
-            return;
+            };
+            res.status(500).json(resBody);
+            res.body = resBody;
           }
+          return next();
         })
         .catch(function(error) {
           if (error.response) {
             // The request was made and the server responded with a status code
             // that falls out of the range of 2xx
             res.status(error.response.status).send(error.response.data);
+            res.body = error.response.data;
           } else if (error.request) {
             // The request was made but no response was received
             // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
             // http.ClientRequest in node.js
-            res.status(204).send("No response from BankID server");
+            let msg = "No response from BankID server";
+            res.status(204).send(msg);
+            res.body = msg;
           } else {
             // Something happened in setting up the request that triggered an Error
             console.log("Error", error.message);
             res.status(500).send(error.message);
+            res.body = error.message;
           }
-          res.status(400).send(error.config);
+          // res.status(400).send(error.config);
+          return next();
         });
     }
   }
@@ -118,16 +133,23 @@ exports.authenticate = [
 exports.collect = [
   // Validate fields
   (req, res, next) => {
+    let resBody = null;
+
     if (!req.orderRef) {
-      return res.status(422).json({
+      resBody = {
         success: false,
         code: "INVALID_ORDERREF",
         errors: errors.array()
-      });
+      };
+      
+      res.status(422).json(resBody);
+      res.body = resBody();
+      return next();
     }
+    
     var accessToken = process.env.ACCESS_TOKEN;
     if (!accessToken) {
-      res.status(500).json({
+      resBody = {
         success: false,
         code: "INVALID_BANKID_TOKEN",
         errors: [
@@ -138,9 +160,12 @@ exports.collect = [
             msg: "BankID access token not found."
           }
         ]
-      });
-      return;
+      };
+      res.status(500).json(resBody);
+      res.body = resBody;
+      return next();
     }
+
     var apiRoot = process.env.API_ROOT;
     if (!apiRoot) {
       if (process.env.NODE_ENV == "production") {
@@ -159,9 +184,11 @@ exports.collect = [
     };
     axios(config)
       .then(function(response) {
-        if (response && response.data) res.status(200).send(response.data);
-        else {
-          res.status(500).json({
+        if (response && response.data){
+          res.status(200).send(response.data);
+          res.body = response.data;
+        } else {
+          resBody = {
             success: false,
             code: "INVALID_BANKID_RESPONSE",
             errors: [
@@ -172,27 +199,35 @@ exports.collect = [
                 msg: "BankID response is invalid."
               }
             ]
-          });
-          return;
+          };
+          
+          res.status(500).json(resBody);
+          res.body = resBody;
         }
+        return next();
       })
       .catch(function(error) {
         if (error.response) {
           // The request was made and the server responded with a status code
           // that falls out of the range of 2xx
           res.status(error.response.status).send(error.response.data);
+          res.body = error.response.data;
         } else if (error.request) {
           // The request was made but no response was received
           // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
           // http.ClientRequest in node.js
-          res.status(204).send("No response from BankID server");
+          let msg = "No response from BankID server";
+          res.status(204).send(msg);
+          res.body = msg;
         } else {
           // Something happened in setting up the request that triggered an Error
           console.log("Error", error.message);
           res.status(500).send(error.message);
+          res.body = error.message;
         }
-        console.log(error.config);
-        res.status(400).send(error.config);
+        // console.log(error.config);
+        // res.status(400).send(error.config);
+        return next();
       });
   }
 ];
@@ -310,16 +345,22 @@ exports.sign = [
 exports.cancel = [
   // Validate fields
   (req, res, next) => {
+    let resBody = null;
+
     if (!req.orderRef) {
-      return res.status(422).json({
+      resBody = {
         success: false,
         code: "INVALID_ORDERREF",
         errors: errors.array()
-      });
+      };
+      res.status(422).json(resBody);
+      res.body = resBody;
+
+      return next();
     }
     var accessToken = process.env.ACCESS_TOKEN;
     if (!accessToken) {
-      res.status(500).json({
+      resBody = {
         success: false,
         code: "INVALID_BANKID_TOKEN",
         errors: [
@@ -330,9 +371,13 @@ exports.cancel = [
             msg: "BankID access token not found."
           }
         ]
-      });
-      return;
+      };
+      
+      res.status(500).json(resBody);
+      res.body = resBody;
+      return next();
     }
+
     var apiRoot = process.env.API_ROOT;
     if (!apiRoot) {
       if (process.env.NODE_ENV == "production") {
@@ -352,9 +397,12 @@ exports.cancel = [
     };
     axios(config)
       .then(function(response) {
-        if (response && response.data) res.status(200).send(response.data);
+        if (response && response.data) {
+          res.status(200).send(response.data);
+          res.body = response.data;
+        }
         else {
-          res.status(500).json({
+          resBody = {
             success: false,
             code: "INVALID_BANKID_RESPONSE",
             errors: [
@@ -365,27 +413,35 @@ exports.cancel = [
                 msg: "BankID response is invalid."
               }
             ]
-          });
-          return;
+          };
+          res.status(500).json(resBody);
+          res.body = resBody;
         }
+        return next();
       })
       .catch(function(error) {
         if (error.response) {
           // The request was made and the server responded with a status code
           // that falls out of the range of 2xx
           res.status(error.response.status).send(error.response.data);
+          res.body = error.response.data;
         } else if (error.request) {
           // The request was made but no response was received
           // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
           // http.ClientRequest in node.js
-          res.status(204).send("No response from BankID server");
+          let msg = "No response from BankID server";
+          res.status(204).send(msg);
+          res.body = msg;
         } else {
           // Something happened in setting up the request that triggered an Error
           console.log("Error", error.message);
           res.status(500).send(error.message);
+          res.body = error.message;
         }
-        console.log(error.config);
-        res.status(400).send(error.config);
+
+        return next();
+        // console.log(error.config);
+        // res.status(400).send(error.config);
       });
   }
 ];
