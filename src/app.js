@@ -1,3 +1,6 @@
+const winston = require('winston');
+require('winston-mongodb');
+const apiLogger = require('./middlewares/apiLogger');
 var express = require("express");
 var cors = require("cors");
 var logger = require("morgan");
@@ -5,8 +8,22 @@ var cookieParser = require("cookie-parser");
 var bodyParser = require("body-parser");
 var helmet = require("helmet");
 var compression = require("compression");
+const dotenv = require('dotenv');
+dotenv.config();
 
 var app = express();
+
+const logDbName = process.env.LOG_DATABASE_NAME || "defaultLogDB";
+winston.add(new winston.transports.MongoDB({
+    db: 'mongodb+srv://' + process.env.LOG_DB_USER + ':' + process.env.LOG_DB_PASS + '@cluster0-ljo1h.mongodb.net/' + logDbName + '?retryWrites=true&w=majority',
+    options: {
+        useUnifiedTopology: true
+    },
+    collection: 'apiLogs'
+}));
+winston.add(new winston.transports.File({
+    filename: 'apiLogs.log'
+}));
 
 app.use(compression()); //Compress all routes
 app.use(helmet());
@@ -21,7 +38,9 @@ const factoring =  require('./routes/factoring');
 
 app.use(logger("dev"));
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({
+    extended: false
+}));
 app.use(cookieParser());
 
 app.use("/auth", bankid);
@@ -29,5 +48,8 @@ app.use("/accounts", account);
 app.use("/apply", opportunity);
 app.use('/leads', lead);
 app.use('/factoring', factoring);
+
+app.use(apiLogger);
+
 
 module.exports = app;
