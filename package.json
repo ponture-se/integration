@@ -37,8 +37,11 @@
     "jsforce": "^1.9.3",
     "jsonwebtoken": "8.4.0",
     "lodash": "^4.17.15",
+    "mongoose": "^5.8.1",
     "morgan": "1.9.1",
-    "qs": "6.7.0"
+    "qs": "6.7.0",
+    "winston": "^3.2.1",
+    "winston-mongodb": "^5.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.7.5",
