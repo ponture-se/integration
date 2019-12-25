@@ -67,7 +67,7 @@ function hasRecordTypeInWhereClause(where){
     }
 }
 
-function getQueryResult(sfConn, sObj, where, setRecordTypeId = false,  rTypeId = null){
+async function getQueryResult(sfConn, sObj, where, setRecordTypeId = false,  rTypeId = null){
     if (setRecordTypeId && rTypeId != null) {
         let newWhere = addRecordType2WhereClause(where, rTypeId);
         if (newWhere.succuss) {
@@ -79,7 +79,7 @@ function getQueryResult(sfConn, sObj, where, setRecordTypeId = false,  rTypeId =
 
     try{
         let records = [];
-        records = sfConn.sobject(sObj)
+        records = await sfConn.sobject(sObj)
                         .select("*")
                         .where(where)
                         .execute();
