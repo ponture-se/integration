@@ -50,7 +50,7 @@ async function addRecordType2WhereClause(where, rTypeId){
             where += " AND recordTypeId = '" + rTypeId + "'";
         }
     }
-    
+
     result.succuss = true;
     result.value = where;
     return result;
@@ -67,8 +67,32 @@ function hasRecordTypeInWhereClause(where){
     }
 }
 
+function getQueryResult(sfConn, sObj, where, setRecordTypeId = false,  rTypeId = null){
+    if (setRecordTypeId && rTypeId != null) {
+        let newWhere = addRecordType2WhereClause(where, rTypeId);
+        if (newWhere.succuss) {
+            where = newWhere.value;
+        } else {
+            return undefined;
+        }
+    }
+
+    try{
+        let records = [];
+        records = sfConn.sobject(sObj)
+                        .select("*")
+                        .where(where)
+                        .execute();
+        return records;
+    } catch (e) {
+        console.log('## getQueryResult ##', e);
+        return undefined;
+    }
+}
+
 
 module.exports = {
     hasRecordTypeInWhereClause,
-    addRecordType2WhereClause
+    addRecordType2WhereClause,
+    getQueryResult
 }
