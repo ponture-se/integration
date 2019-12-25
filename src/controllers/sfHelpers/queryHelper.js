@@ -1,5 +1,62 @@
 const myToolkit = require("../myToolkit");
 
+
+async function addRecordType2WhereClause(where, sObj, recordTypeName){
+    let result = new Object();
+    
+    if (hasRecordTypeInWhereClause(where)){
+        result.succuss = true;
+        result.value = where;
+        return result;
+    }
+
+    const sfConn = await myToolkit.makeSFConnection();
+    if (sfConn == null) {
+        result.succuss = false;
+        result.value = "Couldn't Connect to Salesforce.";
+        return result;
+    }
+
+    const rTypeId = await myToolkit.getRecordTypeId(sfConn, sObj, recordTypeName);
+    if (rTypeId == null) {
+        result.succuss = false;
+        result.value = "Wrong RecordTypeId.";
+        return result;
+    }
+
+
+    if (!where){
+        where.recordTypeId = rTypeId;
+    } else if (typeof(where) == 'object'){
+        where.recordTypeId = rTypeId;
+    } else if (typeof(where) == 'string'){
+        where += " AND recordTypeId = '" + rTypeId + "'";
+    }
+
+    result.succuss = true;
+    result.value = where;
+    return result;
+}
+
+async function addRecordType2WhereClause(where, rTypeId){
+    let result = new Object();
+
+    if (!hasRecordTypeInWhereClause(where)){
+        if (!where){
+            where.recordTypeId = rTypeId;
+        } else if (typeof(where) == 'object'){
+            where.recordTypeId = rTypeId;
+        } else if (typeof(where) == 'string'){
+            where += " AND recordTypeId = '" + rTypeId + "'";
+        }
+    }
+    
+    result.succuss = true;
+    result.value = where;
+    return result;
+}
+
+
 function hasRecordTypeInWhereClause(where){
     if (!where){
         return false;
@@ -12,5 +69,6 @@ function hasRecordTypeInWhereClause(where){
 
 
 module.exports = {
-    hasRecordTypeInWhereClause
+    hasRecordTypeInWhereClause,
+    addRecordType2WhereClause
 }
