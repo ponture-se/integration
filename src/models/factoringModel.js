@@ -1,6 +1,6 @@
-const { body } = require('express-validator');
+const { body,query } = require('express-validator');
 
-function factoringValidationRules() {
+function factoringSubmitValidationRules() {
     return [
       body('name').isString().withMessage("Value Must be String.").exists().withMessage("Required Key/Value Pair")
     //   body('organization_number').isNumeric().withMessage("Value Must be Numeric.").optional({ checkFalsy: true }),
@@ -42,9 +42,20 @@ function factoringValidationRules() {
     //   body('specific_lead_source').isURL().withMessage("Value Must be URL").optional()
     ];
   }
+
+  function factoringRequestsValidation(){
+    return [
+      query('customerId').isNumeric().withMessage('It Should be Numeric')
+                        .exists().withMessage("Required Key/Value Pair")
+                        .notEmpty().withMessage("Can not be Empty")
+    ];
+  }
   
   
   
   
   
-  module.exports = factoringValidationRules;
+  module.exports = {
+    factoringSubmitValidationRules,
+    factoringRequestsValidation
+  }
