@@ -73,7 +73,7 @@ async function getQueryResult(sfConn, sObj, where, setRecordTypeId = false,  rTy
         if (newWhere.succuss) {
             where = newWhere.value;
         } else {
-            return undefined;
+            return null;
         }
     }
 
@@ -84,9 +84,10 @@ async function getQueryResult(sfConn, sObj, where, setRecordTypeId = false,  rTy
                         .where(where)
                         .execute();
         return records;
+    
     } catch (e) {
         console.log('## getQueryResult ##', e);
-        return undefined;
+        return null;
     }
 }
 
