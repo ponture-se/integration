@@ -16,5 +16,9 @@ router.get('/requests',
             validate,
             factoringController.getCustomerFactoringApplications);
 
+router.get('/open',
+            factoringModel.factoringOpenDetailsValidation(),
+            validate,
+            factoringController.openFactoringOpp);
 
 module.exports = router;
