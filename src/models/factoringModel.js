@@ -41,31 +41,41 @@ function factoringSubmitValidationRules() {
     //   body('lead_action').isString().withMessage("Value Must be String.").optional(),
     //   body('specific_lead_source').isURL().withMessage("Value Must be URL").optional()
     ];
-  }
+}
 
-  function factoringRequestsValidation(){
-    return [
-      query('customerId').isNumeric().withMessage('It Should be Numeric')
-                        .exists().withMessage("Required Key/Value Pair")
-                        .notEmpty().withMessage("Can not be Empty")
-    ];
-  }
+function factoringRequestsValidation(){
+  return [
+    query('customerId').isNumeric().withMessage('It Should be Numeric')
+                      .exists().withMessage("Required Key/Value Pair")
+                      .notEmpty().withMessage("Can not be Empty")
+  ];
+}
 
 
-  function factoringOpenDetailsValidation(){
-    return [
-      query('oppId').isString().withMessage('It Should be String')
-                        .exists().withMessage("Required Key/Value Pair")
-                        .notEmpty().withMessage("Can not be Empty")
-    ];
-  }
+function factoringOpenDetailsValidation(){
+  return [
+    query('oppId').isString().withMessage('It Should be String')
+                      .exists().withMessage("Required Key/Value Pair")
+                      .notEmpty().withMessage("Can not be Empty")
+  ];
+}
+
+
+function factoringCancelAppValidation(){
+  return [
+    query('oppId').isString().withMessage('It Should be String')
+                      .exists().withMessage("Required Key/Value Pair")
+                      .notEmpty().withMessage("Can not be Empty")
+  ];
+}
   
   
   
   
-  
-  module.exports = {
-    factoringSubmitValidationRules,
-    factoringRequestsValidation,
-    factoringOpenDetailsValidation
-  }
+
+module.exports = {
+  factoringSubmitValidationRules,
+  factoringRequestsValidation,
+  factoringOpenDetailsValidation,
+  factoringCancelAppValidation
+}
