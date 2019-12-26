@@ -50,6 +50,15 @@ function factoringSubmitValidationRules() {
                         .notEmpty().withMessage("Can not be Empty")
     ];
   }
+
+
+  function factoringOpenDetailsValidation(){
+    return [
+      query('oppId').isString().withMessage('It Should be String')
+                        .exists().withMessage("Required Key/Value Pair")
+                        .notEmpty().withMessage("Can not be Empty")
+    ];
+  }
   
   
   
@@ -57,5 +66,6 @@ function factoringSubmitValidationRules() {
   
   module.exports = {
     factoringSubmitValidationRules,
-    factoringRequestsValidation
+    factoringRequestsValidation,
+    factoringOpenDetailsValidation
   }
