@@ -1,4 +1,7 @@
 const jsforce = require('jsforce');
+const response = require("../controllers/myResponse");
+const apiLogger = require("./apiLogger");
+const myToolkit = require("../controllers/myToolkit");
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -7,18 +10,22 @@ const conn = new jsforce.Connection({loginUrl : process.env.LOGIN_API_ROOT,
                                     clientId : process.env.SALESFORCE_CLIENTID,
                                   clientSecret: process.env.SALESFORCE_CLIENT_SECRET});
 
-function connect(req, res, next){
-    conn.login(process.env.SALESFORCE_USERNAME, process.env.SALESFORCE_PASSWORD, function (err, userInfo){
-      if (err) { 
-        res.status(500).send("Error occured when logging in salesforce.");
-      } else {
-        req.sfConnect = true;
-        req.userInfo = userInfo;
-        req.sfConn = conn;
+async function getSFConnection(req, res, next){
+  try{
+    await conn.login(process.env.SALESFORCE_USERNAME, process.env.SALESFORCE_PASSWORD);
+    myToolkit.addPairToReqNeeds(req, 'sfConn', conn);
+    return next();
+  
+  } catch (err) {
+    console.log(err);
 
-        next();
-      }
-    });
+    resBody = response(false, null, 500, 'Error occured when logging in salesforce.');
+    res.status(500).send(resBody);
+    res.body = resBody;			// For logging purpose
+    
+    return apiLogger(req,res, () => {return;});     //instead of calling next()
+  }
+
 }
 
-module.exports = connect;
+module.exports = getSFConnection;
