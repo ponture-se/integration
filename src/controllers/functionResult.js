@@ -1,4 +1,4 @@
-function fResult(success, data = null, error = null, errorCode = null, msg = null){
+function fResult(success, data = null, error = null, msg = null, errorCode = null){
     let result = {};
 
     result.success = success;
