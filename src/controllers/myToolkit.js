@@ -68,11 +68,22 @@ async function makeSFConnection(){
     }
 }
 
+function addPairToReqNeeds(req, key, value){
+    if (req.hasOwnProperty('needs')){
+        req.needs[key] = value;
+    } else {
+        req.needs = {};
+        req.needs[key] = value;
+    }
+    return;
+}
+
 
 
 module.exports = {
     getRecordTypeId,
     isJSON,
     fixPhoneNumber,
-    makeSFConnection
+    makeSFConnection,
+    addPairToReqNeeds
 }
