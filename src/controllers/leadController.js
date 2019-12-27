@@ -10,7 +10,9 @@ async function createLead(req, res, next){
     // if (error) res.status(400).send(error.details[0].message);
     let resBody = {};
 
-    let customerLeadRecordTypeId = await myToolkit.getRecordTypeId(req.sfConn, 'Lead', 'Customer Lead');
+    let sfConn = req.needs.sfConn;
+
+    let customerLeadRecordTypeId = await myToolkit.getRecordTypeId(sfConn, 'Lead', 'Customer Lead');
 
     if (customerLeadRecordTypeId == null || customerLeadRecordTypeId == ''){
         resBody = response(false, null, 500, 'sObjName or RecordType was set incorrectly. Please Inform the developer team.');
@@ -45,6 +47,8 @@ async function createLead(req, res, next){
 
 function insertLeadInSF(req, res, next, customerLeadRecordTypeId, accountInfo) {
     let roaringPayload = {};
+    let sfConn = req.needs.sfConn;
+
     let payload = {
         recordTypeId: customerLeadRecordTypeId,
         Organization_Number__c: req.body.organization_number,
@@ -98,7 +102,7 @@ function insertLeadInSF(req, res, next, customerLeadRecordTypeId, accountInfo) {
 
     payload = Object.assign(payload, roaringPayload);
 
-    req.sfConn.sobject("Lead").create(payload, 
+    sfConn.sobject("Lead").create(payload, 
         function(err, ret) {
         if (err || !ret.success) {
             // use this with winston, to save in a file
@@ -140,7 +144,9 @@ function getLead(req, res, next){
         return next();
     }
     else {
-        req.sfConn.sobject("Lead").retrieve(req.params.id, 
+        let sfConn = req.needs.sfConn;
+        
+        sfConn.sobject("Lead").retrieve(req.params.id, 
             function(err, lead) {
                 if (err) {
                     resBody = response(false, null, 500, null, [err]);
