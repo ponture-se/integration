@@ -111,7 +111,7 @@ async function getAttachedFilesinfo(targetIds, sfConn = undefined){
 }
 
 
-exports = {
+module.exports = {
     getAttachedFilesinfo,
     insertFileInSf
 }
