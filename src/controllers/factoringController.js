@@ -8,23 +8,11 @@ const _ = require('lodash');
 async function submitFactoring(req, res, next){
     let resBody = {};
 
-    // Get SF Connection Object, and check if it fails or not.
-    const sfConn = await myToolkit.makeSFConnection();
-    if (sfConn == null) {
-        resBody = response(false, null, 500, 'Error occured when logging in salesforce.');
-        res.status(500).send(resBody);
-        res.body = resBody;
-        return next();
-    }
+    // Get SF Connection Object
+    const sfConn = req.needs.sfConn;
 
     // Get 'Factoring' Record Type, and check if it fails or not.
-    let factoringRecordTypeId = await myToolkit.getRecordTypeId(sfConn, 'Opportunity', 'Factoring');
-    if (factoringRecordTypeId == null || factoringRecordTypeId == '') {
-        resBody = response(false, null, 500, 'sObjName or RecordType was set incorrectly. Please Inform the developer team.');
-        res.status(500).send(resBody);
-        res.body = resBody;
-        return next();
-    }
+    let factoringRecordTypeId = req.needs.recordTypeId;
 
     // Do CRUD Operation in SF.
     resBody = await insertFactoringInSf(sfConn, req, res, factoringRecordTypeId);
@@ -82,23 +70,11 @@ async function getCustomerFactoringApplications(req, res, next) {
     const wantedKeys = ["Id", "Name", "StageName", "CreatedDate", "CloseDate", "Type",
                                 "Opportunity_Number__c", "LeadSource"];
     
-    // Get SF Connection Object, and check if it fails or not.
-    const sfConn = await myToolkit.makeSFConnection();
-    if (sfConn == null) {
-        resBody = response(false, null, 500, 'Error occured when logging in salesforce.');
-        res.status(500).send(resBody);
-        res.body = resBody;
-        return next();
-    }
+    // Get SF Connection Object
+    const sfConn = req.needs.sfConn;
 
     // Get 'Factoring' Record Type, and check if it fails or not.
-    let factoringRecordTypeId = await myToolkit.getRecordTypeId(sfConn, 'Opportunity', 'Factoring');
-    if (factoringRecordTypeId == null || factoringRecordTypeId == '') {
-        resBody = response(false, null, 500, 'sObjName or RecordType was set incorrectly. Please Inform the developer team.');
-        res.status(500).send(resBody);
-        res.body = resBody;
-        return next();
-    }
+    let factoringRecordTypeId = req.needs.recordTypeId;
     
     // Do core operations
     let factoringRecords;
@@ -156,23 +132,11 @@ async function getCustomerFactoringRecordsFromSf(customerId, factoringRecordType
 async function openFactoringOpp(req, res, next){
     let resBody;
     
-    // Get SF Connection Object, and check if it fails or not.
-    const sfConn = await myToolkit.makeSFConnection();
-    if (sfConn == null) {
-        resBody = response(false, null, 500, 'Error occured when logging in salesforce.');
-        res.status(500).send(resBody);
-        res.body = resBody;
-        return next();
-    }
+    // Get SF Connection Object
+    const sfConn = req.needs.sfConn;
 
     // Get 'Factoring' Record Type, and check if it fails or not.
-    let factoringRecordTypeId = await myToolkit.getRecordTypeId(sfConn, 'Opportunity', 'Factoring');
-    if (factoringRecordTypeId == null || factoringRecordTypeId == '') {
-        resBody = response(false, null, 500, 'sObjName or RecordType was set incorrectly. Please Inform the developer team.');
-        res.status(500).send(resBody);
-        res.body = resBody;
-        return next();
-    }
+    let factoringRecordTypeId = req.needs.recordTypeId;
     
     // Do core operations
     let factoringRecords, recordIds, files;
@@ -219,13 +183,12 @@ async function openFactoringOpp(req, res, next){
         resBody = response(false, null, 500, 'Something Wents Wrong When Getting Factoring Extended Details. Please Try Again.', [e]);
         res.status(500).send(resBody);
         res.body = resBody;
-        return;
+        return next();
     }
 }
 
 
 async function getFacoringExtendedDetailsById(oppId, factoringRecordTypeId = undefined, sfConn = undefined){
-    console.log("getFacoringExtendedDetailsById");
     if (sfConn == undefined) {
         sfConn = await myToolkit.makeSFConnection();
         if (sfConn == null) {
@@ -250,10 +213,76 @@ async function getFacoringExtendedDetailsById(oppId, factoringRecordTypeId = und
     return factoringRecords;
 }
 
+
+async function cancelFactoringApp(req, res, next){
+    let resBody;
+    
+    // Get SF Connection Object
+    const sfConn = req.needs.sfConn;
+
+    // Get 'Factoring' Record Type, and check if it fails or not.
+    let factoringRecordTypeId = req.needs.recordTypeId;
+
+    // Do core operations
+    try{
+        let records = await getFacoringExtendedDetailsById(req.query.oppId, factoringRecordTypeId, sfConn);
+        if (records == null){
+            resBody = response(false, null, 500, "Something Went Wrong");
+            res.status(500).send(resBody);
+        } else if (!records.length) {
+            resBody = response(false, null, 404, "Nothing Found. 'oppId' may be incorrect.");
+            res.status(404).send(resBody);
+        } else {
+            resBody = await cancelFactoringAppInSF(records[0], sfConn);
+            res.status(resBody.statusCode).send(resBody);
+        }
+
+    } catch (e) {
+        resBody = response(false, null, 500, 'Something Wents Wrong When Canceling Factoring Opp. Please Try Again.', [e]);
+        res.status(500).send(resBody);
+    }
+
+    res.body = resBody;
+    return next();
+}
+
+
+async function cancelFactoringAppInSF(factoringOpp, sfConn) {
+    const invalidFactoringOppStages = ['Funded/Closed Won',
+                                        'Not Funded/ Closed lost'];
+
+    if (invalidFactoringOppStages.includes(factoringOpp.StageName)){
+        // invalid 403
+        return response(false, null, 403, 'Opp stage is invalid.');
+    } else {
+        // Change the status of the application
+        try{
+            let result = await sfConn.sobject("Opportunity")
+                                .update({
+                                    Id: factoringOpp.Id,
+                                    StageName: 'Not Funded/ Closed lost',
+                                    Lost_Reason__c: 'Canceled by Customer'
+                                });
+            if (result.success){
+                return response(true, {id: result.id}, 200);
+            } else {
+                return response(false, null, 500, 'Something Wents Wrong. Please Try Again.');
+            }
+        } catch (e) {
+            return response(false, null,500, "An error occured when updating factoring opportunity.", [e]);
+        }
+
+        // Change the status of SPOs
+
+        // change the status of offers
+    }
+}
+
 // exports.submitFactoring = submitFactoring;
 
 module.exports = {
     submitFactoring,
     getCustomerFactoringApplications,
-    openFactoringOpp
+    openFactoringOpp,
+    cancelFactoringApp
 }
