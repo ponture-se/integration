@@ -1,7 +1,7 @@
 const myToolkit = require('../controllers/myToolkit');
 const response = require('../controllers/myResponse');
 const queryHelper = require("./sfHelpers/queryHelper");
-const sfAttachments = require("./sfAttachments");
+const fileController = require("./fileController");
 const jsonResHelper = require("./sfHelpers/jsonResHelper");
 const _ = require('lodash');
 
@@ -154,7 +154,7 @@ async function openFactoringOpp(req, res, next){
 
         if (recordIds.length){
             try{
-                files = await sfAttachments.getAttachedFilesinfo(recordIds, sfConn);
+                files = await fileController.getAttachedFilesinfo(recordIds, sfConn);
                 if (files == null) {
                     resBody = response(false, null, 500, 'Something Wents Wrong When Getting Attached Files of Record. Please Try Again.');
                     res.status(500).send(resBody);
