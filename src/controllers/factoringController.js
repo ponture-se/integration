@@ -1,5 +1,5 @@
 const myToolkit = require('../controllers/myToolkit');
-const response = require('../controllers/myResponse');
+const myResponse = require('../controllers/myResponse');
 const queryHelper = require("./sfHelpers/queryHelper");
 const fileController = require("./fileController");
 const jsonResHelper = require("./sfHelpers/jsonResHelper");
@@ -51,13 +51,13 @@ async function insertFactoringInSf(sfConn, req, res, factoringRecordTypeId){
         const factoringOpp = await sfConn.sobject("Opportunity").create(payload);
         
         if (factoringOpp.success){
-            return response(true, {id: factoringOpp.id}, 200, 'Factoring Submitted.');
+            return myResponse(true, {id: factoringOpp.id}, 200, 'Factoring Submitted.');
         } else {
-            return response(false, null, 500, 'Something Wents Wrong. Please Try Again.');
+            return myResponse(false, null, 500, 'Something Wents Wrong. Please Try Again.');
         }
 
     } catch(err) {
-        return response(false, null, 500, 'Error Occured When Creating Lead.', [err]);
+        return myResponse(false, null, 500, 'Error Occured When Creating Lead.', [err]);
     }
 
 
@@ -84,12 +84,12 @@ async function getCustomerFactoringApplications(req, res, next) {
         factoringRecords = await getCustomerFactoringRecordsFromSf(req.query.customerId, factoringRecordTypeId, sfConn);
 
         if (factoringRecords == null) {
-            resBody = response(false, null, 500, 'Something Wents Wrong When Getting Customer Factoring Records. Please Try Again.');
+            resBody = myResponse(false, null, 500, 'Something Wents Wrong When Getting Customer Factoring Records. Please Try Again.');
             res.status(500).send(resBody);
         } else {
             let finalResult = factoringRecords.map(item => _.pick(item, wantedKeys));
 
-            resBody = jsonResHelper.refineJsonResponseKeys(response(true, finalResult, 200));
+            resBody = jsonResHelper.refineJsonResponseKeys(myResponse(true, finalResult, 200));
             res.status(200).send(resBody);
         }
         
@@ -97,7 +97,7 @@ async function getCustomerFactoringApplications(req, res, next) {
         return next();
         
     } catch (e) {
-        resBody = response(false, null, 500, 'Something Wents Wrong.', [{message: e.message}]);
+        resBody = myResponse(false, null, 500, 'Something Wents Wrong.', [{message: e.message}]);
         res.status(500).json(resBody);
         console.log(e);
         res.body = resBody;
@@ -144,7 +144,7 @@ async function openFactoringOpp(req, res, next){
         // Get Factoring Opp of a given Customer
         factoringRecords = await getFacoringExtendedDetailsById(req.query.oppId, factoringRecordTypeId, sfConn);
         if (factoringRecords == null) {
-            resBody = response(false, null, 500, 'Something Wents Wrong When Getting Factoring Extended Details. Please Try Again.');
+            resBody = myResponse(false, null, 500, 'Something Wents Wrong When Getting Factoring Extended Details. Please Try Again.');
             res.status(500).send(resBody);
             res.body = resBody;
             return next();
@@ -156,7 +156,7 @@ async function openFactoringOpp(req, res, next){
             try{
                 files = await fileController.getAttachedFilesinfo(recordIds, sfConn);
                 if (files == null) {
-                    resBody = response(false, null, 500, 'Something Wents Wrong When Getting Attached Files of Record. Please Try Again.');
+                    resBody = myResponse(false, null, 500, 'Something Wents Wrong When Getting Attached Files of Record. Please Try Again.');
                     res.status(500).send(resBody);
                     res.body = resBody;
                     return next();
@@ -167,11 +167,11 @@ async function openFactoringOpp(req, res, next){
                    item.files = files[item.Id];
                 });
                 
-                resBody = jsonResHelper.refineJsonResponseKeys(response(true, factoringRecords[0], 200));
+                resBody = jsonResHelper.refineJsonResponseKeys(myResponse(true, factoringRecords[0], 200));
                 res.status(200).send(resBody);
             } catch (e) {
                 console.log(e);
-                resBody = response(false, null, 500, 'Something Wents Wrong When Getting Attached Files of Record. Please Try Again.', [e]);
+                resBody = myResponse(false, null, 500, 'Something Wents Wrong When Getting Attached Files of Record. Please Try Again.', [e]);
                 res.status(500).send(resBody);
             }
 
@@ -180,7 +180,7 @@ async function openFactoringOpp(req, res, next){
         }
         
     } catch (e) {
-        resBody = response(false, null, 500, 'Something Wents Wrong When Getting Factoring Extended Details. Please Try Again.', [e]);
+        resBody = myResponse(false, null, 500, 'Something Wents Wrong When Getting Factoring Extended Details. Please Try Again.', [e]);
         res.status(500).send(resBody);
         res.body = resBody;
         return next();
@@ -227,10 +227,10 @@ async function cancelFactoringApp(req, res, next){
     try{
         let records = await getFacoringExtendedDetailsById(req.query.oppId, factoringRecordTypeId, sfConn);
         if (records == null){
-            resBody = response(false, null, 500, "Something Went Wrong");
+            resBody = myResponse(false, null, 500, "Something Went Wrong");
             res.status(500).send(resBody);
         } else if (!records.length) {
-            resBody = response(false, null, 404, "Nothing Found. 'oppId' may be incorrect.");
+            resBody = myResponse(false, null, 404, "Nothing Found. 'oppId' may be incorrect.");
             res.status(404).send(resBody);
         } else {
             resBody = await cancelFactoringAppInSF(records[0], sfConn);
@@ -238,7 +238,7 @@ async function cancelFactoringApp(req, res, next){
         }
 
     } catch (e) {
-        resBody = response(false, null, 500, 'Something Wents Wrong When Canceling Factoring Opp. Please Try Again.', [e]);
+        resBody = myResponse(false, null, 500, 'Something Wents Wrong When Canceling Factoring Opp. Please Try Again.', [e]);
         res.status(500).send(resBody);
     }
 
@@ -253,7 +253,7 @@ async function cancelFactoringAppInSF(factoringOpp, sfConn) {
 
     if (invalidFactoringOppStages.includes(factoringOpp.StageName)){
         // invalid 403
-        return response(false, null, 403, 'Opp stage is invalid.');
+        return myResponse(false, null, 403, 'Opp stage is invalid.');
     } else {
         // Change the status of the application
         try{
@@ -264,12 +264,12 @@ async function cancelFactoringAppInSF(factoringOpp, sfConn) {
                                     Lost_Reason__c: 'Canceled by Customer'
                                 });
             if (result.success){
-                return response(true, {id: result.id}, 200);
+                return myResponse(true, {id: result.id}, 200);
             } else {
-                return response(false, null, 500, 'Something Wents Wrong. Please Try Again.');
+                return myResponse(false, null, 500, 'Something Wents Wrong. Please Try Again.');
             }
         } catch (e) {
-            return response(false, null,500, "An error occured when updating factoring opportunity.", [e]);
+            return myResponse(false, null,500, "An error occured when updating factoring opportunity.", [e]);
         }
 
         // Change the status of SPOs
