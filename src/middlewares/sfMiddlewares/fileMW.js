@@ -1,5 +1,6 @@
 const fileController = require('../../controllers/fileController');
 const myResponse = require('../../controllers/myResponse');
+const apiLogger = require('../apiLogger');
 
 async function uploadFile(req, res, next) {
     let resBody;
