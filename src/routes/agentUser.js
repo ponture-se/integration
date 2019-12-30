@@ -7,6 +7,7 @@ var auth = require("../controllers/auth");
 
 
 router.post('/login',
+            auth.noAuthNeeded,
             agentUserValidationRules.loginValidation(),
             validate,
             auth.getSalesForceToken,
