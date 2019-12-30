@@ -3,6 +3,8 @@ const { validationResult, body, check } = require("express-validator");
 const { sanitizeBody } = require("express-validator");
 const async = require("async");
 const reflectAll = require("async/reflectAll");
+const _ = require('lodash');
+const myResponse = require('./myResponse');
 
 exports.getCompanies = [
   // Validate fields
@@ -311,10 +313,15 @@ exports.submit = [
       var roaring;
       async.parallel(async.reflectAll(tasks), function(errors, results) {
         console.log(JSON.stringify(results));
-        if (errors && errors.length > 0) {
-          console.log(JSON.stringify(errors));
-          res.status(400).send(errors);
-          res.body = errors;
+        if (!results ||
+            (results && _.size(results) == 0) || 
+            !results.hasOwnProperty('overview') ||
+            (results.hasOwnProperty('overview') && !results.overview.hasOwnProperty('value'))){
+          
+          resBody = myResponse(false, null, 400, "Some Problems in Roaring API.", errors);
+          console.log(resBody);
+          res.status(400).send(resBody);
+          res.body = resBody;
           return next();
         } else {
           for (var attr in results) req.body[attr] = results[attr].value;
@@ -330,7 +337,7 @@ exports.submit = [
               Authorization: "Bearer " + token
             }
           };
-          //console.log(config);
+          console.log("Sending submit to salesforce : " + config);
           axios(config)
             .then(function(response) {
               console.log(JSON.stringify(response.data));
