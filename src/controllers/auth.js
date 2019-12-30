@@ -3,37 +3,51 @@ const qs = require("qs");
 const jwt = require("jsonwebtoken");
 const cnf = require("../config");
 const roaring = require('./roaring');
+const apiLogger = require('../middlewares/apiLogger');
 
 
 function verifyToken(req, res, next) {
   var token = req.headers["x-access-token"];
+  let resBody = null;
   if (token == null || !token) {
     token = req.headers["authorization"];
     if (token) token = token.replace("Bearer ", "");
   }
-  if (!token || token == null)
-    return res.status(403).send({ auth: false, message: "No token provided." });
+  if (!token || token == null){
+    resBody = { auth: false, message: "No token provided." };
+    res.status(403).send(resBody);
+    res.body = resBody;
+    
+    return apiLogger(req, res, () => {return;});
+  }
   jwt.verify(token, cnf.secret, function(err, decoded) {
-    if (err)
-      return res
-        .status(401)
-        .send({ auth: false, message: "Failed to authenticate token. " });
+    if (err){
+      resBody = { auth: false, message: "Failed to authenticate token. " };
+      res.status(401).send(resBody);
+      res.body = resBody;
+
+      return apiLogger(req, res, () => {return;});
+    }
     // if everything good, save to request for use in other routes
     console.log("decoded : ", decoded);
     req.orderRef = decoded.orderRef;
     next();
   });
 }
+
 function noAuthNeeded(req, res, next) {
   var token = req.headers["x-access-token"];
   if (token == null || !token) {
     token = req.headers["authorization"];
     if (token) token = token.replace("Bearer ", "");
   }
-  if (token)
-    return res
-      .status(400)
-      .send({ auth: false, message: "No authentication needed." });
+  if (token) {
+    let resBody = { auth: false, message: "No authentication needed." };
+    res.status(400).send(resBody);
+    res.body = resBody;
+
+    return apiLogger(req, res, () => {return;});
+  }
   next();
 }
 
@@ -74,6 +88,9 @@ async function getRoaringToken(req, res, next) {
     next();
   } else {
     res.status(400).send(response.data);
+    res.body = response.data;
+    
+    return apiLogger(req, res, () => {return;});
   }
 
 }
@@ -110,10 +127,13 @@ function getSFToken(req, res, next) {
     })
     .catch(function(error) {
       res.status(400).send(error);
+      res.body = error;
+      return apiLogger(req,res, () => {return;});
     });
 }
 
 var login = function(req, res, next) {
+  let resBody = null;
   var accessToken = req.access_token;
   var apiRoot =
     process.env.SALESFORCE_API_ROOT ||
@@ -142,35 +162,52 @@ var login = function(req, res, next) {
             expiresIn: process.env.AUTHENTICATIONTOKEN_EXPIRE_TIME || 120 * 60 // expires in 30 minutes
           }
         );
+
+        resBody = { access_token: token, userInfo: response.data.data };
         res
           .status(200)
-          .send({ access_token: token, userInfo: response.data.data });
+          .send(resBody);
+
+        res.body = resBody;
       } else {
         res.status(response.statusCode).send(response);
+        res.body = response;
       }
+      return next();
     })
     .catch(function(error) {
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
         res.status(error.response.status).send(error.response.data);
+        res.body = error.response.data;
       } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
         // http.ClientRequest in node.js
-        res.status(204).send("No response from BankID server");
+        let msg = "No response from BankID server";
+        res.status(204).send(msg);
+        res.body = msg;
       } else {
         // Something happened in setting up the request that triggered an Error
         console.log("Error", error.message);
+        resBody = { error: "Error in loading needs list from salesforce" };
         res
           .status(500)
-          .send({ error: "Error in loading needs list from salesforce" });
+          .send(resBody);
+        
+        res.body = resBody;
       }
-      res
-        .status(400)
-        .send({ error: "Error in loading needs list from salesforce" });
+      // res
+      //   .status(400)
+      //   .send({ error: "Error in loading needs list from salesforce" });
+
+      return next();
     });
+    
 };
+
+
 exports.noAuthNeeded = noAuthNeeded;
 exports.verifyToken = verifyToken;
 exports.getSalesForceToken = getSFToken;

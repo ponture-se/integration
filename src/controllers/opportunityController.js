@@ -3,6 +3,8 @@ const { validationResult, body, check } = require("express-validator");
 const { sanitizeBody } = require("express-validator");
 const async = require("async");
 const reflectAll = require("async/reflectAll");
+const _ = require('lodash');
+const myResponse = require('./myResponse');
 
 exports.getCompanies = [
   // Validate fields
@@ -17,15 +19,19 @@ exports.getCompanies = [
     .trim()
     .escape(),
   (req, res, next) => {
+    let resBody = null;
+
     var errors = validationResult(req);
     if (!errors.isEmpty()) {
       //There are errors. send error result
-      return res.status(422).json({
+      resBody = {
         success: false,
         code: "INVALID_PERSONALNUMBER",
         errors: errors.array()
-      });
-      return;
+      };
+      res.status(422).json(resBody);
+      res.body = resBody;
+      return next();
     } else {
       var token = req.access_token;
       var apiRoot = process.env.ROARING_API_ROOT || "https://api.roaring.io";
@@ -50,26 +56,38 @@ exports.getCompanies = [
               return x.statusCode == 100;
             });
             res.status(200).send(output);
-          } else res.status(200).send([]);
+            res.body = output;
+          } else {
+            res.status(200).send([]);
+            res.body = [];
+          }
+
+          return next();
         })
         .catch(function(error) {
           if (error.response) {
             // The request was made and the server responded with a status code
             // that falls out of the range of 2xx
             res.status(error.response.status).send(error.response.data);
+            res.body = error.response.data;
           } else if (error.request) {
             // The request was made but no response was received
             // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
             // http.ClientRequest in node.js
-            res.status(204).send("No response from Roaring server");
+            resBody = "No response from Roaring server";
+            res.status(204).send(resBody);
+            res.body = resBody;
           } else {
             // Something happened in setting up the request that triggered an Error
             console.log("Error", error.message);
-            res.status(500).send({ error: "Error in loading companioes" });
+            resBody = { error: "Error in loading companioes" };
+            res.status(500).send(resBody);
+            res.body = resBody;
           }
-          res
-            .status(400)
-            .send({ error: "Error in loading companioes from roaring" });
+          // res
+          //   .status(400)
+          //   .send({ error: "Error in loading companioes from roaring" });
+          return next();
         });
     }
   }
@@ -177,17 +195,22 @@ exports.submit = [
     .trim()
     .escape(),
   (req, res, next) => {
+    let resBody = null;
+
     console.log(req.url);
     console.log(JSON.stringify(req.body));
+    
     var errors = validationResult(req);
     if (!errors.isEmpty()) {
       //There are errors. send error result
-      return res.status(422).json({
+      resBody = {
         success: false,
         code: "INVALID_REQUEST",
         errors: errors.array()
-      });
-      return;
+      };
+      res.status(422).json(resBody);
+      res.body = resBody;
+      return next();
     } else {
       var token = req.roaring_access_token;
       var tasks = {
@@ -290,12 +313,16 @@ exports.submit = [
       var roaring;
       async.parallel(async.reflectAll(tasks), function(errors, results) {
         console.log(JSON.stringify(results));
-        if (!results || (results && results.length == 0)) {
-          console.log(
-            "No response from roaring api. Results array is empty. Errors : " +
-              JSON.stringify(errors)
-          );
-          return Promise.reject(errors);
+        if (!results ||
+            (results && _.size(results) == 0) || 
+            !results.hasOwnProperty('overview') ||
+            (results.hasOwnProperty('overview') && !results.overview.hasOwnProperty('value'))){
+          
+          resBody = myResponse(false, null, 400, "Some Problems in Roaring API.", errors);
+          console.log(resBody);
+          res.status(400).send(resBody);
+          res.body = resBody;
+          return next();
         } else {
           for (var attr in results) req.body[attr] = results[attr].value;
           token = req.sf_access_token;
@@ -314,7 +341,9 @@ exports.submit = [
           axios(config)
             .then(function(response) {
               console.log(JSON.stringify(response.data));
-              res.send(response.data);
+              res.status(200).send(response.data);
+              res.body = response.data;
+              return next();
             })
             .catch(function(error) {
               if (error.response) {
@@ -323,32 +352,27 @@ exports.submit = [
                 console.log(error.response.data);
                 console.log(error.response.status);
                 console.log(error.response.headers);
+                
+                res.status(error.response.status).send(error.response.data);
+                res.body = error.response.data;
               } else if (error.request) {
                 // The request was made but no response was received
                 // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
                 // http.ClientRequest in node.js
                 console.log(error.request);
+                let msg = "No response from BankID server";
+                res.status(500).send(msg);
+                res.body = msg;			// For logging purpose
               } else {
                 // Something happened in setting up the request that triggered an Error
                 console.log("Error", error.message);
+                res.status(500).send(error.message);
+                res.body = error.message;			// For logging purpose
               }
               console.log(error.config);
               console.log(error.toJSON());
-              if (error.response) {
-                // The request was made and the server responded with a status code
-                // that falls out of the range of 2xx
-                return Promise.reject(error.response);
-              } else if (error.request) {
-                // The request was made but no response was received
-                // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-                // http.ClientRequest in node.js
-                return Promise.reject("No response from BankID server");
-              } else {
-                // Something happened in setting up the request that triggered an Error
-                console.log("Error", error.message);
-                return Promise.reject(error.message);
-              }
-              return Promise.reject(error.response);
+              // return Promise.reject(error.response);
+              return next();
             });
         }
       });
@@ -374,27 +398,35 @@ exports.getNeedsList = function(req, res, next) {
   axios(config)
     .then(function(response) {
       res.send(response.data);
+      res.body = response.data;
+      return next();
     })
     .catch(function(error) {
+      let resBody = null;
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
         res.status(error.response.status).send(error.response.data);
+        res.body = error.response.data;
       } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
         // http.ClientRequest in node.js
-        res.status(204).send("No response from BankID server");
+        resBody = "No response from BankID server";
+        res.status(204).send(resBody);
+        res.body = resBody;
       } else {
-        // Something happened in setting up the request that triggered an Error
+        // Something happened in setting up the request that triggered an Error        
         console.log("Error", error.message);
-        res
-          .status(500)
-          .send({ error: "Error in loading needs list from salesforce" });
+        
+        resBody = { error: "Error in loading needs list from salesforce" };
+        res.status(500).send(resBody);
+        res.body = resBody;
       }
-      res
-        .status(400)
-        .send({ error: "Error in loading needs list from salesforce" });
+      // res
+      //   .status(400)
+      //   .send({ error: "Error in loading needs list from salesforce" });
+      return next();
     });
 };
 
@@ -415,28 +447,36 @@ exports.myrequests = function(req, res, next) {
   console.log(config);
   axios(config)
     .then(function(response) {
-      res.send(response.data);
+      res.status(200).send(response.data);
+      res.body = response.data;
+      return next();
     })
     .catch(function(error) {
+      let resBody = null;
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
         res.status(error.response.status).send(error.response.data);
+        res.body = error.response.data;
       } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
         // http.ClientRequest in node.js
-        res.status(204).send("No response from BankID server");
+        resBody = "No response from BankID server";
+        res.status(204).send(resBody);
+        res.body = resBody;
       } else {
         // Something happened in setting up the request that triggered an Error
         console.log("Error", error.message);
-        res
-          .status(500)
-          .send({ error: "Error in loading needs list from salesforce" });
+        resBody = { error: "Error in loading needs list from salesforce" };
+        res.status(500).send(resBody);
+        res.body = resBody;
       }
-      res
-        .status(400)
-        .send({ error: "Error in loading needs list from salesforce" });
+      // res
+      //   .status(400)
+      //   .send({ error: "Error in loading needs list from salesforce" });
+
+      return next();
     });
 };
 
@@ -457,28 +497,35 @@ exports.acceptOffer = function(req, res, next) {
   console.log(config);
   axios(config)
     .then(function(response) {
-      res.send(response.data);
+      res.status(200).send(response.data);
+      res.body = response.data;
+      return next();
     })
     .catch(function(error) {
+      let resBody = null;
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
         res.status(error.response.status).send(error.response.data);
+        res.body = error.response.data;
       } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
         // http.ClientRequest in node.js
-        res.status(204).send("No response from BankID server");
+        resBody = "No response from BankID server";
+        res.status(204).send(resBody);
+        res.body = resBody;
       } else {
         // Something happened in setting up the request that triggered an Error
         console.log("Error", error.message);
-        res
-          .status(500)
-          .send({ error: "Error in loading needs list from salesforce" });
+        resBody = { error: "Error in loading needs list from salesforce" };
+        res.status(500).send(resBody);
+        res.body = resBody;
       }
-      res
-        .status(400)
-        .send({ error: "Error in loading needs list from salesforce" });
+      // res
+      //   .status(400)
+      //   .send({ error: "Error in loading needs list from salesforce" });
+      return next();
     });
 };
 
@@ -499,28 +546,35 @@ exports.getOffers = function(req, res, next) {
   console.log(config);
   axios(config)
     .then(function(response) {
-      res.send(response.data);
+      res.status(200).send(response.data);
+      res.body = response.data;
+      return next();
     })
     .catch(function(error) {
+      let resBody = null;
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
         res.status(error.response.status).send(error.response.data);
+        res.body = error.response.data;
       } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
         // http.ClientRequest in node.js
-        res.status(204).send("No response from BankID server");
+        resBody = "No response from BankID server";
+        res.status(204).send(resBody);
+        res.body = resBody;
       } else {
         // Something happened in setting up the request that triggered an Error
         console.log("Error", error.message);
-        res
-          .status(500)
-          .send({ error: "Error in loading needs list from salesforce" });
+        resBody = { error: "Error in loading needs list from salesforce" };
+        res.status(500).send(resBody);
+        res.body = resBody;
       }
-      res
-        .status(400)
-        .send({ error: "Error in loading needs list from salesforce" });
+      // res
+      //   .status(400)
+      //   .send({ error: "Error in loading needs list from salesforce" });
+      return next();
     });
 };
 exports.rejectOffer = function(req, res, next) {
@@ -540,28 +594,35 @@ exports.rejectOffer = function(req, res, next) {
   console.log(config);
   axios(config)
     .then(function(response) {
-      res.send(response.data);
+      res.status(200).send(response.data);
+      res.body = response.data;
+      return next();
     })
     .catch(function(error) {
+      let resBody = null;
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
         res.status(error.response.status).send(error.response.data);
+        res.body = error.response.data;
       } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
         // http.ClientRequest in node.js
-        res.status(204).send("No response from BankID server");
+        resBody = "No response from BankID server";
+        res.status(204).send(resBody);
+        res.body = resBody;
       } else {
         // Something happened in setting up the request that triggered an Error
         console.log("Error", error.message);
-        res
-          .status(500)
-          .send({ error: "Error in loading needs list from salesforce" });
+        resBody = { error: "Error in loading needs list from salesforce" };
+        res.status(500).send(resBody);
+        res.body = resBody;
       }
-      res
-        .status(400)
-        .send({ error: "Error in loading needs list from salesforce" });
+      // res
+      //   .status(400)
+      //   .send({ error: "Error in loading needs list from salesforce" });
+      return next();
     });
 };
 
@@ -582,27 +643,34 @@ exports.cancel = function(req, res, next) {
   console.log(config);
   axios(config)
     .then(function(response) {
-      res.send(response.data);
+      res.status(200).send(response.data);
+      res.body = response.data;
+      return next();
     })
     .catch(function(error) {
+      let resBody = null;
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
         res.status(error.response.status).send(error.response.data);
+        res.body = error.response.data;
       } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
         // http.ClientRequest in node.js
-        res.status(204).send("No response from BankID server");
+        resBody = "No response from BankID server";
+        res.status(204).send(resBody);
+        res.body = resBody;
       } else {
         // Something happened in setting up the request that triggered an Error
         console.log("Error", error.message);
-        res
-          .status(500)
-          .send({ error: "Error in loading needs list from salesforce" });
+        resBody = { error: "Error in loading needs list from salesforce" };
+        res.status(500).send(resBody);
+        res.body = resBody;
       }
-      res
-        .status(400)
-        .send({ error: "Error in loading needs list from salesforce" });
+      // res
+      //   .status(400)
+      //   .send({ error: "Error in loading needs list from salesforce" });
+      return next();
     });
 };
