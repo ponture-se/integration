@@ -16,7 +16,9 @@ function jsonResponse(success, message, errorCode, data, statusCode){
 
 
 function wrapErrorsInList(errors) {
-    if (Array.isArray(errors)){
+    if (!errors){
+        return [];
+    } else if (Array.isArray(errors)){
         return errors;
     } else {
         return [errors];
