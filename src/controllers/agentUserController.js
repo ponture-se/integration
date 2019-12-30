@@ -1,4 +1,6 @@
 const axios = require('axios');
+const jwt = require('jsonwebtoken');
+const cnf = require("../config");
 
 async function login(sfToken, username, password){
     let body = {
@@ -7,7 +9,7 @@ async function login(sfToken, username, password){
     },
     url = "/services/apexrest/agentLogin";
 
-    var config = {
+    let config = {
         url: url,
         baseURL: process.env.SALESFORCE_API_ROOT || 'https://sms--local.my.salesforce.com',
         method: "post",
@@ -16,13 +18,31 @@ async function login(sfToken, username, password){
             Authorization: "Bearer " + sfToken
         }
     };
-    // console.log(config);
+
+    
     try{
         const response = await axios(config);
+
+        let jwtPayload = {
+            access_token: sfToken,
+            referral_id: response.data.data.referral_id
+        },
+        jwtSecret = cnf.secret,
+        jwtOptions = {
+            expiresIn: process.env.AUTHENTICATIONTOKEN_EXPIRE_TIME || 120 * 60
+        };
+        
+        let token = jwt.sign(jwtPayload, jwtSecret, jwtOptions);
+        
+        // return jwtToken in response
+        response.data.data.access_token = token;
+
         return {
             success: true,
             data: response.data
         };
+
+
     } catch (error) {
         return {
             success: false,
