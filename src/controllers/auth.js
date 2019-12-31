@@ -154,7 +154,7 @@ var login = function(req, res, next) {
         console.log(response.data);
         var token = jwt.sign(
           {
-            access_token: req.access_token,
+            // access_token: req.access_token,
             personalNumber: response.data.data.personalNumber
           },
           cnf.secret,
