@@ -24,7 +24,6 @@ async function login(sfToken, username, password){
         const response = await axios(config);
 
         let jwtPayload = {
-            access_token: sfToken,
             referral_id: response.data.data.referral_id
         },
         jwtSecret = cnf.secret,
