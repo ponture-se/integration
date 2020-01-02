@@ -13,7 +13,7 @@ dotenv.config();
 
 var app = express();
 
-const dbConnString = "mongodb+srv://backupLogDB:9SEnbWEu2qmGRYpo@cluster0-ljo1h.mongodb.net/backupLogDB?retryWrites=true&w=majority";
+const dbConnString = process.env.LOG_DB_CONNECTION_STRING || "mongodb+srv://backupLogDB:9SEnbWEu2qmGRYpo@cluster0-ljo1h.mongodb.net/backupLogDB?retryWrites=true&w=majority";
 winston.add(new winston.transports.MongoDB({
     db: dbConnString,
     options: {
