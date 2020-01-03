@@ -95,7 +95,7 @@ async function getSingleQueryResult(sfConn, sObj, where, select = "*", setRecord
     try {
         let resulsList = await getQueryResult(sfConn, sObj, where, select, setRecordTypeId, rTypeId);
 
-        if (resulsList != null) {
+        if (resulsList != null && resulsList.length > 0) {
             return resulsList[0];
         } else {
             return null
