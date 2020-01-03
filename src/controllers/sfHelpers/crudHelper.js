@@ -26,7 +26,24 @@ async function updateSobjectInSf(sfConn, sObj, payload, existingId = null) {
 }
 
 
+async function upsertSobjectInSf(sfConn, sObj, payload, existingId = null) {
+  let result;
+  
+  if(existingId != null ) {
+    payload['Id'] = existingId;
+
+    result = await updateSobjectInSf(sfConn, sObj, payload, existingId);
+  } else {
+    result = await insertSobjectInSf(sfConn, sObj, payload);
+  }
+  
+  // result will be 'null' or an object with Id
+  return result;
+}
+
+
 module.exports = {
     insertSobjectInSf,
-    updateSobjectInSf
+    updateSobjectInSf,
+    upsertSobjectInSf
 }
