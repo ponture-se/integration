@@ -31,6 +31,7 @@ function verifyToken(req, res, next) {
     // if everything good, save to request for use in other routes
     console.log("decoded : ", decoded);
     req.orderRef = decoded.orderRef;
+    req.jwtData = decoded;
     next();
   });
 }
