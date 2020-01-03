@@ -1,7 +1,7 @@
 
 
 class salesforceException extends Error {
-    constructor(message, errObj) {
+    constructor(message, errObj, statusCode = null) {
         super(message);
         this.name = this.constructor.name;
         // this.metadata = errObj;
@@ -22,6 +22,10 @@ class salesforceException extends Error {
                     break;
             }
 
+        }
+
+        if (statusCode != null) {
+            this.statusCode = statusCode;
         }
     }
 }
