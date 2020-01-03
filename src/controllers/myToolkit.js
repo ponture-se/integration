@@ -78,6 +78,21 @@ function addPairToReqNeeds(req, key, value){
     return;
 }
 
+function checkJwtTokenEssentialData(jwtData, essentialData) {
+    let unseenData = [];
+    if (!Array.isArray(essentialData)) {
+        essentialData = [essentialData];
+    }
+
+    essentialData.forEach(el => {
+        if(!jwtData.hasOwnProperty(el)) {
+            unseenData.push(el);
+        }
+    });
+
+    return unseenData;
+}
+
 
 
 module.exports = {
@@ -85,5 +100,6 @@ module.exports = {
     isJSON,
     fixPhoneNumber,
     makeSFConnection,
-    addPairToReqNeeds
+    addPairToReqNeeds,
+    checkJwtTokenEssentialData
 }
