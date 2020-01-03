@@ -91,9 +91,25 @@ async function getQueryResult(sfConn, sObj, where, select = "*", setRecordTypeId
     }
 }
 
+async function getSingleQueryResult(sfConn, sObj, where, select = "*", setRecordTypeId = false,  rTypeId = null){
+    try {
+        let resulsList = await getQueryResult(sfConn, sObj, where, select, setRecordTypeId, rTypeId);
+
+        if (resulsList != null) {
+            return resulsList[0];
+        } else {
+            return null
+        }
+    } catch (err) {
+        console.error('Error in getSobjectFromSfByOrgNumber', err);
+        return null;
+    }
+}
+
 
 module.exports = {
     hasRecordTypeInWhereClause,
     addRecordType2WhereClause,
-    getQueryResult
+    getQueryResult,
+    getSingleQueryResult
 }
