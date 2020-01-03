@@ -78,6 +78,29 @@ function addPairToReqNeeds(req, key, value){
     return;
 }
 
+function checkJwtTokenEssentialData(jwtData, essentialData) {
+    let unseenData = [];
+    if (!Array.isArray(essentialData)) {
+        essentialData = [essentialData];
+    }
+
+    essentialData.forEach(el => {
+        if(!jwtData.hasOwnProperty(el)) {
+            unseenData.push(el);
+        }
+    });
+
+    return unseenData;
+}
+
+
+function getFormattedDate() {
+    var date = new Date();
+    var str = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " +  date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+
+    return str;
+}
+
 
 
 module.exports = {
@@ -85,5 +108,7 @@ module.exports = {
     isJSON,
     fixPhoneNumber,
     makeSFConnection,
-    addPairToReqNeeds
+    addPairToReqNeeds,
+    getFormattedDate,
+    checkJwtTokenEssentialData
 }
