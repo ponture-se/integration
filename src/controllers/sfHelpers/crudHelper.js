@@ -1,3 +1,21 @@
+const {salesforceException} = require('../customeException');
+
+async function readSobjectInSf(sfConn, sObj, Id) {
+    try {
+      const result = await sfConn.sobject(sObj)
+                                  .retrieve(Id);
+      return result;
+    } catch (err) {
+      console.error('Error in readSobjectInSf (' + sObj + ')', err);
+
+      if (err.errorCode == 'NOT_FOUND'){
+        throw new salesforceException('Wrong ' + sObj + ' Id', err);
+      } else {
+        throw new salesforceException('Something wents wrong, when attemp to get the ' + sObj, err);
+      }
+    }
+}
+
 async function insertSobjectInSf(sfConn, sObj, payload) {
   try {
     const result = await sfConn.sobject(sObj)
@@ -43,6 +61,7 @@ async function upsertSobjectInSf(sfConn, sObj, payload, existingId = null) {
 
 
 module.exports = {
+    readSobjectInSf,
     insertSobjectInSf,
     updateSobjectInSf,
     upsertSobjectInSf
