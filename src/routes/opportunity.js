@@ -2,6 +2,10 @@ var express = require("express");
 var router = express.Router();
 var controller = require("../controllers/opportunityController");
 var auth = require("../controllers/auth");
+let opportunityValidationRules = require('../models/opportunityModel');
+const validate = require("../middlewares/validate");
+const getSFConnection = require("../middlewares/sfMiddleware");
+const opportunityMW = require("../middlewares/sfMiddlewares/opportunityMW");
 
 router.get("/needslist", auth.getSalesForceToken, controller.getNeedsList);
 router.get(
@@ -49,4 +53,16 @@ router.put(
   auth.getSalesForceToken,
   controller.cancel
 );
+
+
+router.post(
+  "/saveApp",
+  auth.verifyToken,
+  opportunityValidationRules.saveAppValidation(),
+  validate,
+  getSFConnection,
+  opportunityMW.saveApplicationApi
+);
+
+
 module.exports = router;

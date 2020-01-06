@@ -3,6 +3,8 @@ const async = require("async");
 const reflectAll = require("async/reflectAll");
 const {callRoaring, getRoaringToken} = require('./roaring');
 const apiLogger = require('../middlewares/apiLogger');
+const fResult = require('./functionResult');
+const queryHelper = require('./sfHelpers/queryHelper');
 
 async function getAccountFromExternalService(orgNumber, orgName = '*** NOTHING ***', finalCallback){
   const roaringTokenRes = await getRoaringToken();
@@ -101,10 +103,6 @@ function getLegalFormApiName(legalText) {
   return (legalTextMap[legalText.toLowerCase()] || null);
 }
 
-
-exports.getLegalFormApiName = getLegalFormApiName;
-exports.getAccountFromExternalService = getAccountFromExternalService;
-
 exports.getcompanyinfo = async (req, res, next) => {
   let resBody = null;
   // Validate fields
@@ -153,3 +151,6 @@ exports.getcompanyinfo = async (req, res, next) => {
         return next();
       });
 };
+
+exports.getLegalFormApiName = getLegalFormApiName;
+exports.getAccountFromExternalService = getAccountFromExternalService;

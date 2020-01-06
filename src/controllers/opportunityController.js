@@ -5,6 +5,9 @@ const async = require("async");
 const reflectAll = require("async/reflectAll");
 const _ = require('lodash');
 const myResponse = require('./myResponse');
+const queryHelper = require('./sfHelpers/queryHelper');
+const crudHelper = require('./sfHelpers/crudHelper');
+const {salesforceException} = require('./customeException');
 
 exports.getCompanies = [
   // Validate fields
@@ -674,3 +677,76 @@ exports.cancel = function(req, res, next) {
       return next();
     });
 };
+
+
+async function saveApplication(sfConn, payload){
+	let witoutCompany_NeedValue = 'purchase_of_business';
+	let accountInfo = payload.account,
+      contactInfo = payload.contact,
+	    oppInfo = payload.opp;
+
+	let oppId = (oppInfo.Id) ? oppInfo.Id : null,
+		opp,
+		account,
+		contact,
+		accId,
+		contactId,
+		accUpsertResult,
+		contactUpsertResult,
+		oppUpsertResult;
+
+	// Get Opp, if oppId exist
+	if (oppId) {
+		opp = await crudHelper.readSobjectInSf(sfConn, 'Opportunity', oppId);
+		// accId = opp.AccountId;
+    contactId = opp.PrimaryContact__c;
+    
+    delete oppInfo.recordTypeId;
+	} else {
+		
+		if (!accountInfo.Organization_Number__c){
+			if (String(oppInfo.Need__c).indexOf(witoutCompany_NeedValue) != -1) {
+				accId = null;
+				accountInfo.Name = 'CMP_' + contactInfo.Personal_Identity_Number__c;
+			} else {
+				throw new salesforceException("'orgNumber' is not provided.", null, 400);
+			}
+		} else {
+			// Get Account with orgNumber
+			let getAccWhereCluase = {
+				Organization_Number__c: accountInfo.Organization_Number__c
+			}
+			account = await queryHelper.getSingleQueryResult(sfConn, 'Account', getAccWhereCluase);
+			accId = (account != null) ? account.Id : null;
+		}
+
+		// Upsert Account
+		accUpsertResult = await crudHelper.upsertSobjectInSf(sfConn, 'Account', accountInfo, accId);
+		oppInfo['AccountId'] = accUpsertResult.id;
+
+		// Get Contact with personalNum
+		let getContactWhereCluase = {
+			Personal_Identity_Number__c: contactInfo.Personal_Identity_Number__c
+		  }
+		contact = await queryHelper.getSingleQueryResult(sfConn, 'Contact', getContactWhereCluase);
+		contactId = (contact != null) ? contact.Id : null;
+		// Upsert Contact
+		contactInfo['AccountId'] = accUpsertResult.id;
+		contactUpsertResult = await crudHelper.upsertSobjectInSf(sfConn, 'Contact', contactInfo, contactId);
+    
+    oppInfo['PrimaryContact__c'] = contactUpsertResult.id;
+	}
+
+
+  	// Opportunity Processing
+    // Upsert Opportunity
+	oppUpsertResult = await crudHelper.upsertSobjectInSf(sfConn, 'Opportunity', oppInfo, oppId);
+  
+
+	if (oppUpsertResult) {
+		return oppUpsertResult.id;
+	} else {
+		return null;
+	}
+}
+exports.saveApplication = saveApplication;
