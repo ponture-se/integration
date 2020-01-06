@@ -25,6 +25,12 @@ function saveAppValidation() {
 		body('personalNumber').isNumeric().withMessage('It Should be Numeric')
 			.exists().withMessage("Required Key/Value Pair")
 			.notEmpty().withMessage("Can not be Empty"),
+		body('amount').isNumeric().withMessage('It Should be Numeric')
+			.exists().withMessage("Required Key/Value Pair")
+			.notEmpty().withMessage("Can not be Empty"),
+		body('amourtizationPeriod').isNumeric().withMessage('It Should be Numeric')
+			.exists().withMessage("Required Key/Value Pair")
+			.notEmpty().withMessage("Can not be Empty"),
 		body('lastName').isString().withMessage('It Should be String')
 			.exists().withMessage("Required Key/Value Pair")
 			.notEmpty().withMessage("Can not be Empty"),
@@ -40,6 +46,9 @@ function saveAppValidation() {
 			.isArray().withMessage("Value Must be Array"),
 		body('needDescription').isString().withMessage('It Should be String').optional(),
 		body('oppId').isString().withMessage('It Should be String').optional(),
+		body('referral_id').isString().withMessage('It Should be String')
+			.notEmpty().withMessage("Can not be Empty")
+			.optional(),
 		// body('acquisition.name')
 		// 	.if(body('acquisition').exists())
 		// 		.exists().withMessage("Required Key/Value Pair"),
@@ -61,6 +70,44 @@ function saveAppValidation() {
 		body('acquisition.object_valuation_letter')
 			.if(body('acquisition').exists())
 			.isString().withMessage("It Should be String"),
+		body('acquisition.account_balance_sheet')
+			.if(body('acquisition').exists())
+			.isString().withMessage("It Should be String"),
+		body('acquisition.account_income_statement')
+			.if(body('acquisition').exists())
+			.isString().withMessage("It Should be String"),
+		body('acquisition.available_guarantees')
+			.if(body('acquisition').exists())
+			.isString().withMessage("It Should be String"),
+		body('acquisition.available_guarantees_description')
+			.if(body('acquisition').exists())
+			.isString().withMessage("It Should be String"),
+		body('acquisition.purchaser_profile')
+			.if(body('acquisition').exists())
+			.isString().withMessage("It Should be String"),
+		body('acquisition.own_investment_details')
+			.if(body('acquisition').exists())
+			.isString().withMessage("It Should be String"),
+		body('acquisition.additional_details')
+			.if(body('acquisition').exists())
+			.isString().withMessage("It Should be String"),
+		body('acquisition.purchase_type')
+			.if(body('acquisition').exists())
+			.isString().withMessage("It Should be String"),
+		body('acquisition.description')
+			.if(body('acquisition').exists())
+			.isString().withMessage("It Should be String")
+			.exists().withMessage("Required Key/Value Pair")
+			.notEmpty().withMessage("Can not be Empty"),
+		body('acquisition.additional_files')
+			.if(body('acquisition').exists())
+			.isArray().withMessage("Value Must be Array"),
+		body('acquisition.business_plan')
+			.if(body('acquisition').exists())
+			.isArray().withMessage("Value Must be Array"),
+		body('acquisition.own_investment_amount')
+			.if(body('acquisition').exists())
+			.isNumeric().withMessage("It Should be Numeric"),
 	];
 }
 
