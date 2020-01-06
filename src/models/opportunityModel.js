@@ -39,7 +39,28 @@ function saveAppValidation() {
 			}).withMessage("At least one value should exist")
 			.isArray().withMessage("Value Must be Array"),
 		body('needDescription').isString().withMessage('It Should be String').optional(),
-		body('oppId').isString().withMessage('It Should be String').optional()
+		body('oppId').isString().withMessage('It Should be String').optional(),
+		// body('acquisition.name')
+		// 	.if(body('acquisition').exists())
+		// 		.exists().withMessage("Required Key/Value Pair"),
+		body('acquisition.object_price')
+			.if(body('acquisition').exists())
+			.isNumeric().withMessage("It Should be Numeric"),
+		body('acquisition.object_industry')
+			.if(body('acquisition').exists())
+			.isString().withMessage("It Should be String"),
+		body('acquisition.object_annual_report')
+			.if(body('acquisition').exists())
+			.isString().withMessage("It Should be String"),
+		body('acquisition.object_balance_sheet')
+			.if(body('acquisition').exists())
+			.isString().withMessage("It Should be String"),
+		body('acquisition.object_income_statement')
+			.if(body('acquisition').exists())
+			.isString().withMessage("It Should be String"),
+		body('acquisition.object_valuation_letter')
+			.if(body('acquisition').exists())
+			.isString().withMessage("It Should be String"),
 	];
 }
 
