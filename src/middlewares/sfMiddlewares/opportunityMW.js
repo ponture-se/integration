@@ -71,7 +71,19 @@ async function saveApplicationApi(req, res, next) {
             Object_Annual_Report__c: acquisitionReq.object_annual_report,
             Object_Balance_Sheet__c: acquisitionReq.object_balance_sheet,
             Object_Income_Statement__c: acquisitionReq.object_income_statement,
-            Object_Valuation_Letter__c: acquisitionReq.object_valuation_letter
+            Object_Valuation_Letter__c: acquisitionReq.object_valuation_letter,
+            Account_Balance_Sheet__c: acquisitionReq.account_balance_sheet,
+            Account_Income_Statement__c: acquisitionReq.account_income_statement,
+            Available_Guarantees__c: acquisitionReq.available_guarantees,
+            Available_Guarantees_Description__c: acquisitionReq.available_guarantees_description,
+            Purchaser_Profile__c: acquisitionReq.purchaser_profile,
+            Own_Investment_Amount__c: acquisitionReq.own_investment_amount,
+            Own_Investment_Details__c: acquisitionReq.own_investment_details,
+            Additional_files__c: (acquisitionReq.additional_files) ? acquisitionReq.additional_files.join(';') : "",
+            Business_Plan__c: (acquisitionReq.business_plan) ? acquisitionReq.business_plan.join(';') : "",
+            Additional_details__c: acquisitionReq.additional_details,
+            Purchase_type__c: acquisitionReq.purchase_type,
+            Description: acquisitionReq.description
         };
         
         Object.assign(payload.opp, acquisitionPayload);
