@@ -683,7 +683,7 @@ async function saveApplication(sfConn, payload){
 	let witoutCompany_NeedValue = 'purchase_of_business';
 	let accountInfo = payload.account,
       contactInfo = payload.contact,
-	  oppInfo = payload.opp;
+	    oppInfo = payload.opp;
 
 	let oppId = (oppInfo.Id) ? oppInfo.Id : null,
 		opp,
@@ -699,7 +699,9 @@ async function saveApplication(sfConn, payload){
 	if (oppId) {
 		opp = await crudHelper.readSobjectInSf(sfConn, 'Opportunity', oppId);
 		// accId = opp.AccountId;
-		contactId = opp.PrimaryContact__c;
+    contactId = opp.PrimaryContact__c;
+    
+    delete oppInfo.recordTypeId;
 	} else {
 		
 		if (!accountInfo.Organization_Number__c){
@@ -731,7 +733,8 @@ async function saveApplication(sfConn, payload){
 		// Upsert Contact
 		contactInfo['AccountId'] = accUpsertResult.id;
 		contactUpsertResult = await crudHelper.upsertSobjectInSf(sfConn, 'Contact', contactInfo, contactId);
-		oppInfo['PrimaryContact__c'] = contactUpsertResult.id;
+    
+    oppInfo['PrimaryContact__c'] = contactUpsertResult.id;
 	}
 
 
