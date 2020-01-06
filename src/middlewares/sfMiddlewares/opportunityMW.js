@@ -8,14 +8,14 @@ const _ = require('lodash');
 async function saveApplicationApi(req, res, next) {
     let resBody;
 
-    const referral_id = req.jwtData.referral_id;
-    const jwtDataLack = myToolkit.checkJwtTokenEssentialData(req.jwtData, 'referral_id');
-    if (jwtDataLack.length) {
-        resBody = myResponse(false, null, 400, "The token is not provided these data: " + jwtDataLack.join(','));
-        res.status(400).send(resBody);
-        res.body = resBody;
-        return next();
-    }
+    // const referral_id = req.jwtData.referral_id;
+    // const jwtDataLack = myToolkit.checkJwtTokenEssentialData(req.jwtData, 'referral_id');
+    // if (jwtDataLack.length) {
+    //     resBody = myResponse(false, null, 400, "The token is not provided these data: " + jwtDataLack.join(','));
+    //     res.status(400).send(resBody);
+    //     res.body = resBody;
+    //     return next();
+    // }
 
     const sfConn = req.needs.sfConn;
     let today = new Date();             // keeps today's date
@@ -33,8 +33,8 @@ async function saveApplicationApi(req, res, next) {
             // Defualt Values
             stageName: 'Created',
             CloseDate: clostDate,
-            Name: `Saved Opp @ ${myToolkit.getFormattedDate()} - ${referral_id}`,
-            Referral_ID__c: referral_id        
+            Name: `Saved Opp @ ${myToolkit.getFormattedDate()} - ${req.body.personalNumber}`,
+            Referral_ID__c: req.jwtData.referral_id        
         },
         contact: {
             Email: req.body.email,
@@ -77,12 +77,12 @@ async function saveApplicationApi(req, res, next) {
         Object.assign(payload.opp, acquisitionPayload);
     }
 
-    if (realEstateReq && _.size(realEstateReq) != 0) {
-        // recordTypeId = await myToolkit.getRecordTypeId(sfConn, 'Opportunity', 'Real Estate Financing');
-        realEstatePayload = {
-            Name: req.body.realEstate.objName
-        };
-    }
+    // if (realEstateReq && _.size(realEstateReq) != 0) {
+    //     // recordTypeId = await myToolkit.getRecordTypeId(sfConn, 'Opportunity', 'Real Estate Financing');
+    //     realEstatePayload = {
+    //         Name: req.body.realEstate.objName
+    //     };
+    // }
 
 
     try {
