@@ -3,6 +3,7 @@ const myResponse = require('../../controllers/myResponse');
 const apiLogger = require('../apiLogger');
 const opportunityController = require('../../controllers/opportunityController');
 const {salesforceException} = require('../../controllers/customeException');
+const _ = require('lodash');
 
 async function saveApplicationApi(req, res, next) {
     let resBody;
@@ -21,6 +22,7 @@ async function saveApplicationApi(req, res, next) {
     let clostDate = today;
     clostDate.setMonth(clostDate.getMonth() + 1);
 
+    // Prepare payloads
     let payload = {
         opp: {
             // User Values
@@ -47,9 +49,41 @@ async function saveApplicationApi(req, res, next) {
         }
     }
 
+    let acquisitionReq = req.body.acquisition,
+        realEstateReq = req.body.realEstate,
+        acquisitionPayload = {},
+        realEstatePayload = {},
+        oppRecordTypeId;
+
     if (req.body.oppId) {
         payload.opp.Id = req.body.oppId
     };
+    
+    if (acquisitionReq && _.size(acquisitionReq) != 0) {
+        oppRecordTypeId = await myToolkit.getRecordTypeId(sfConn, 'Opportunity', 'Business Acquisition Loan');
+        acquisitionPayload = {
+            // _objName: req.body.objName,
+            // _objCompanyName : req.body.acquisition.objCompanyName,
+            // _objOrgNumber : req.body.acquisition.objOrgNumber,
+            recordTypeId: oppRecordTypeId,
+            Object_Price__c: acquisitionReq.object_price,
+            Object_Industry__c: acquisitionReq.object_industry,
+            Object_Annual_Report__c: acquisitionReq.object_annual_report,
+            Object_Balance_Sheet__c: acquisitionReq.object_balance_sheet,
+            Object_Income_Statement__c: acquisitionReq.object_income_statement,
+            Object_Valuation_Letter__c: acquisitionReq.object_valuation_letter
+        };
+        
+        Object.assign(payload.opp, acquisitionPayload);
+    }
+
+    if (realEstateReq && _.size(realEstateReq) != 0) {
+        // recordTypeId = await myToolkit.getRecordTypeId(sfConn, 'Opportunity', 'Real Estate Financing');
+        realEstatePayload = {
+            Name: req.body.realEstate.objName
+        };
+    }
+
 
     try {
         let result = await opportunityController.saveApplication(sfConn, payload);
