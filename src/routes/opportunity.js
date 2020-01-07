@@ -61,6 +61,7 @@ router.post(
   opportunityValidationRules.saveAppValidation(),
   validate,
   getSFConnection,
+  opportunityMW.saveAppExtraValidation,
   opportunityMW.saveApplicationApi
 );
 

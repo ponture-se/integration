@@ -4,6 +4,7 @@ const apiLogger = require('../apiLogger');
 const opportunityController = require('../../controllers/opportunityController');
 const {salesforceException} = require('../../controllers/customeException');
 const _ = require('lodash');
+const agentUserController = require('../../controllers/agentUserController');
 
 async function saveApplicationApi(req, res, next) {
     let resBody;
@@ -21,6 +22,10 @@ async function saveApplicationApi(req, res, next) {
     let today = new Date();             // keeps today's date
     let clostDate = today;
     clostDate.setMonth(clostDate.getMonth() + 1);
+
+    let acquisitionReq = req.body.acquisition,
+        realEstateReq = req.body.realEstate;
+
 
     // Prepare payloads
     let payload = {
@@ -49,9 +54,8 @@ async function saveApplicationApi(req, res, next) {
         }
     }
 
-    let acquisitionReq = req.body.acquisition,
-        realEstateReq = req.body.realEstate,
-        acquisitionPayload = {},
+    
+    let acquisitionPayload = {},
         realEstatePayload = {},
         oppRecordTypeId;
 
@@ -89,12 +93,16 @@ async function saveApplicationApi(req, res, next) {
         Object.assign(payload.opp, acquisitionPayload);
     }
 
-    // if (realEstateReq && _.size(realEstateReq) != 0) {
-    //     // recordTypeId = await myToolkit.getRecordTypeId(sfConn, 'Opportunity', 'Real Estate Financing');
-    //     realEstatePayload = {
-    //         Name: req.body.realEstate.objName
-    //     };
-    // }
+    if (realEstateReq && _.size(realEstateReq) != 0) {
+        oppRecordTypeId = await myToolkit.getRecordTypeId(sfConn, 'Opportunity', 'Real Estate');
+        realEstatePayload = {
+            recordTypeId: oppRecordTypeId,
+            Object_Price__c: realEstateReq.object_price,
+            Object_Area__c: realEstateReq.object_area
+        };
+
+        Object.assign(payload.opp, realEstatePayload);
+    }
 
 
     try {
@@ -132,7 +140,55 @@ async function saveApplicationApi(req, res, next) {
             
 }
 
+async function saveAppExtraValidation(req, res, next) {
+    const sfConn = req.needs.sfConn;
+    let acquisitionReq = req.body.acquisition,
+        realEstateReq = req.body.realEstate
+        validationError = false,
+        resBody = {};
+    
+    if (acquisitionReq && _.size(acquisitionReq) != 0 && realEstateReq && _.size(realEstateReq) != 0) {
+        resBody = myResponse(false, null, 400, "'acquisition' and 'realEstate' keys can not coexist.");
+        res.status(400).send(resBody);
+        res.body = resBody;
+
+        validationError = true;
+    }  else if (req.body.referral_id) {
+        try {
+            let result = await agentUserController.getAgentContactDetailByAgentId(sfConn, req.body.referral_id);
+            if (!result) {
+                resBody = myResponse(false, null, 400, "Invalid Agent Id.");
+                res.status(400).send(resBody);
+                res.body = resBody;
+
+                validationError = true;
+            }
+        } catch (err) {
+            console.log(err);
+            if (err instanceof salesforceException) {
+                resBody = myResponse(false, null, err.statusCode, err.message, err.metadata);
+                res.status(err.statusCode).send(resBody);
+                res.body = resBody;
+            } else {
+                resBody = myResponse(false, null, 500, 'Something Went Wrong');
+                res.status(500).send(resBody);
+                res.body = resBody;
+            }
+            validationError = true;
+        }        
+    }
+
+
+
+    if (validationError) {
+        return apiLogger(req, res, () => {return;});			//instead of calling next()
+    } else {
+        return next();
+    }
+}
+
 
 module.exports = {
-    saveApplicationApi
+    saveApplicationApi,
+    saveAppExtraValidation
 }
