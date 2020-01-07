@@ -22,6 +22,16 @@ async function saveApplicationApi(req, res, next) {
     let clostDate = today;
     clostDate.setMonth(clostDate.getMonth() + 1);
 
+    let acquisitionReq = req.body.acquisition,
+        realEstateReq = req.body.realEstate;
+
+    if (acquisitionReq && _.size(acquisitionReq) != 0 && realEstateReq && _.size(realEstateReq) != 0) {
+        resBody = myResponse(false, null, 400, "'acquisition' and 'realEstate' keys can not coexist.");
+        res.status(400).send(resBody);
+        res.body = resBody;
+        return next();
+    }
+
     // Prepare payloads
     let payload = {
         opp: {
@@ -49,9 +59,8 @@ async function saveApplicationApi(req, res, next) {
         }
     }
 
-    let acquisitionReq = req.body.acquisition,
-        realEstateReq = req.body.realEstate,
-        acquisitionPayload = {},
+    
+    let acquisitionPayload = {},
         realEstatePayload = {},
         oppRecordTypeId;
 
@@ -89,12 +98,16 @@ async function saveApplicationApi(req, res, next) {
         Object.assign(payload.opp, acquisitionPayload);
     }
 
-    // if (realEstateReq && _.size(realEstateReq) != 0) {
-    //     // recordTypeId = await myToolkit.getRecordTypeId(sfConn, 'Opportunity', 'Real Estate Financing');
-    //     realEstatePayload = {
-    //         Name: req.body.realEstate.objName
-    //     };
-    // }
+    if (realEstateReq && _.size(realEstateReq) != 0) {
+        oppRecordTypeId = await myToolkit.getRecordTypeId(sfConn, 'Opportunity', 'Real Estate');
+        realEstatePayload = {
+            recordTypeId: oppRecordTypeId,
+            Object_Price__c: realEstateReq.object_price,
+            Object_Area__c: realEstateReq.object_area
+        };
+
+        Object.assign(payload.opp, realEstatePayload);
+    }
 
 
     try {

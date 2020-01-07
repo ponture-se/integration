@@ -108,6 +108,13 @@ function saveAppValidation() {
 		body('acquisition.own_investment_amount')
 			.if(body('acquisition').exists())
 			.isNumeric().withMessage("It Should be Numeric"),
+
+		body('realEstate.object_price')
+			.if(body('realEstate').exists())
+			.isNumeric().withMessage("It Should be Numeric"),
+		body('realEstate.object_area')
+			.if(body('realEstate').exists())
+			.isNumeric().withMessage("It Should be Numeric")
 	];
 }
 
