@@ -26,7 +26,7 @@ async function login(sfToken, username, password){
         const response = await axios(config);
 
         let jwtPayload = {
-            referral_id: response.data.data.referral_id
+            broker_id: response.data.data.broker_id
         },
         jwtSecret = cnf.secret,
         jwtOptions = {
@@ -55,7 +55,7 @@ async function login(sfToken, username, password){
 
 async function getAgentContactDetailByAgentId(sfConn, agentId) {
     let whereCluase = {
-        referral_id__c: agentId
+        Broker_ID__c: agentId
     }
     try{
         let result = await queryHelper.getQueryResult(sfConn, 'Contact', whereCluase);
@@ -64,7 +64,7 @@ async function getAgentContactDetailByAgentId(sfConn, agentId) {
             if (result.length == 1){
                 return result[0];
             } else {
-                throw new salesforceException('More Than One Contact with the Given Id Exist, Please Call The Technical Team.', null, 409);
+                throw new salesforceException('More Than One Contact with the Given Broker Id Exist, Please Call The Technical Team.', null, 409);
             }
         } else {
             return null;
@@ -74,7 +74,7 @@ async function getAgentContactDetailByAgentId(sfConn, agentId) {
         if (err instanceof salesforceException) {
             throw err;
         } else {
-            throw new salesforceException('Error In Getting Agent with given Id', err, 500);
+            throw new salesforceException('Error In Getting Agent with given Broker Id', err, 500);
         }
     }
 

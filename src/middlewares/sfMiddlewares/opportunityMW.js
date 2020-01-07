@@ -24,7 +24,7 @@ async function saveApplicationApi(req, res, next) {
     clostDate.setMonth(clostDate.getMonth() + 1);
 
     let acquisitionReq = req.body.acquisition,
-        realEstateReq = req.body.realEstate;
+        realEstateReq = req.body.real_estate;
 
 
     // Prepare payloads
@@ -39,7 +39,7 @@ async function saveApplicationApi(req, res, next) {
             stageName: 'Created',
             CloseDate: clostDate,
             Name: `Saved Opp @ ${myToolkit.getFormattedDate()} - ${req.body.personalNumber}`,
-            Referral_ID__c: req.jwtData.referral_id        
+            Broker_ID__c: req.body.broker_id        
         },
         contact: {
             Email: req.body.email,
@@ -153,9 +153,9 @@ async function saveAppExtraValidation(req, res, next) {
         res.body = resBody;
 
         validationError = true;
-    }  else if (req.body.referral_id) {
+    }  else if (req.body.broker_id) {
         try {
-            let result = await agentUserController.getAgentContactDetailByAgentId(sfConn, req.body.referral_id);
+            let result = await agentUserController.getAgentContactDetailByAgentId(sfConn, req.body.broker_id);
             if (!result) {
                 resBody = myResponse(false, null, 400, "Invalid Agent Id.");
                 res.status(400).send(resBody);

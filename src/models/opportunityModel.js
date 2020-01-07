@@ -46,7 +46,7 @@ function saveAppValidation() {
 			.isArray().withMessage("Value Must be Array"),
 		body('needDescription').isString().withMessage('It Should be String').optional(),
 		body('oppId').isString().withMessage('It Should be String').optional(),
-		body('referral_id').isString().withMessage('It Should be String')
+		body('broker_id').isString().withMessage('It Should be String')
 			.notEmpty().withMessage("Can not be Empty")
 			.optional(),
 		// body('acquisition.name')
@@ -109,11 +109,11 @@ function saveAppValidation() {
 			.if(body('acquisition').exists())
 			.isNumeric().withMessage("It Should be Numeric"),
 
-		body('realEstate.object_price')
-			.if(body('realEstate').exists())
+		body('real_estate.object_price')
+			.if(body('real_estate').exists())
 			.isNumeric().withMessage("It Should be Numeric"),
-		body('realEstate.object_area')
-			.if(body('realEstate').exists())
+		body('real_estate.object_area')
+			.if(body('real_estate').exists())
 			.isNumeric().withMessage("It Should be Numeric")
 	];
 }
