@@ -155,12 +155,12 @@ async function saveApplicationApi(req, res, next) {
 async function saveAppExtraValidation(req, res, next) {
     const sfConn = req.needs.sfConn;
     let acquisitionReq = req.body.acquisition,
-        realEstateReq = req.body.realEstate
+        realEstateReq = req.body.real_estate,
         validationError = false,
         resBody = {};
     
     if (acquisitionReq && _.size(acquisitionReq) != 0 && realEstateReq && _.size(realEstateReq) != 0) {
-        resBody = myResponse(false, null, 400, "'acquisition' and 'realEstate' keys can not coexist.");
+        resBody = myResponse(false, null, 400, "'acquisition' and 'real_estate' keys can not coexist.");
         res.status(400).send(resBody);
         res.body = resBody;
 
