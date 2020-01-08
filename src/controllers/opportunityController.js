@@ -7,7 +7,7 @@ const _ = require('lodash');
 const myResponse = require('./myResponse');
 const queryHelper = require('./sfHelpers/queryHelper');
 const crudHelper = require('./sfHelpers/crudHelper');
-const {salesforceException} = require('./customeException');
+const {salesforceException, externalCalloutException} = require('./customeException');
 
 exports.getCompanies = [
   // Validate fields
@@ -878,3 +878,31 @@ async function getCompanies2(req, res, next) {
 	res.status(200).send(response);
 }
 exports.getCompanies2 = getCompanies2;
+
+
+async function getUserInfoFromRoaring(personalNumber, roaringToken) {
+	let url = "/person/1.0/person";
+
+	let config = {
+		url: url,
+		baseURL: process.env.ROARING_API_ROOT || 'https://api.roaring.io',
+		method: "get",
+		params: {
+			personalNumber: personalNumber
+		},
+		headers: {
+			Authorization: "Bearer " + roaringToken
+		}
+	};
+
+
+	try{
+		const response = await axios(config);
+		return response.data.posts[0].details[0];
+
+	} catch (error) {
+		console.log('getUserInfo Error', error);
+		throw new externalCalloutException('Invalid Repsponse When Getting User Info', error.data, error.statusCode);
+	}
+}
+exports.getUserInfo = getUserInfoFromRoaring;
