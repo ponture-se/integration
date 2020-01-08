@@ -2,6 +2,8 @@ const myToolkit = require('./myToolkit');
 const queryHelper = require('./sfHelpers/queryHelper');
 const fResult = require('./functionResult');
 const _ = require("lodash");
+const crudHelper = require('./sfHelpers/crudHelper');
+const { salesforceException } = require('./customeException');
 
 async function insertFileInSf(sfConn, title, fileExtension, content){
     let result;
@@ -111,7 +113,44 @@ async function getAttachedFilesinfo(targetIds, sfConn = undefined){
 }
 
 
+async function assignFileToTargetRecord(fileIds, targetId, sfConn = undefined) {
+    try {
+        if (sfConn == undefined){
+            sfConn = await myToolkit.makeSFConnection();
+            if (sfConn == null){
+                return null;
+            }
+        }
+        
+        let payload = [];
+        let files = await crudHelper.readSobjectInSf(sfConn, 'ContentVersion', fileIds);
+
+        files.forEach(f => {
+            payload.push({
+                ContentDocumentId : f.ContentDocumentId,
+                LinkedEntityId : targetId,
+                ShareType : 'V'
+            });
+        });
+
+        let result = await crudHelper.insertSobjectInSf(sfConn, 'ContentDocumentLink', payload);
+        console.log(result);
+        if (result) {
+            return result;
+        } else {
+            throw new salesforceException("The file can not be assign to the target record.", null, 500);
+        }
+    } catch (error) {
+        if (error instanceof salesforceException) {
+            throw error;
+        } else {
+            throw new salesforceException("Something wents wrong.", error, 500);
+        }
+    }
+}
+
 module.exports = {
     getAttachedFilesinfo,
-    insertFileInSf
+    insertFileInSf,
+    assignFileToTargetRecord
 }

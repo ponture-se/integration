@@ -99,7 +99,7 @@ async function saveApplicationApi(req, res, next) {
         realEstatePayload = {
             recordTypeId: oppRecordTypeId,
             real_estate_type__c : realEstateReq.real_estate_type,
-            real_estate_usage_category__c : realEstateReq.real_estate_usage_category,
+            real_estate_usage_category__c : realEstateReq.real_estate_usage_category.join(','),
             real_estate_price__c : realEstateReq.real_estate_price,
             real_estate_taxation_value__c : realEstateReq.real_estate_taxation_value,
             real_estate_size__c : realEstateReq.real_estate_size,

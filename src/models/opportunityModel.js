@@ -114,7 +114,7 @@ function saveAppValidation() {
 			.isString().withMessage("It Should be String"),
 		body('real_estate.real_estate_usage_category')
 			.if(body('real_estate').exists())
-			.isString().withMessage("It Should be String"),		
+			.isArray().withMessage("Value Must be Array"),	
 		body('real_estate.real_estate_price')
 			.if(body('real_estate').exists())
 			.isNumeric().withMessage("It Should be Numeric"),
