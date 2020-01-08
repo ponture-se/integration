@@ -12,8 +12,10 @@ router.get(
   "/companies",
   auth.verifyToken,
   auth.getRoaringToken,
-  controller.getCompanies
+  opportunityMW.getCompaniesList
 );
+
+
 router.post(
   "/submit",
   auth.verifyToken,
