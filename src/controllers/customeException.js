@@ -1,5 +1,3 @@
-
-
 class salesforceException extends Error {
     constructor(message, errObj, statusCode = null) {
         super(message);
@@ -31,7 +29,30 @@ class salesforceException extends Error {
 }
 
 
+class externalCalloutException extends Error {
+    constructor(message, errObj, statusCode = null) {
+        super(message);
+        this.name = this.constructor.name;
+        // this.metadata = errObj;
+
+        // Set errors detail based on jsForce errorCode
+        if (errObj) {
+            if (!Array.isArray(errObj)){
+                errObj = [errObj];
+            }
+        }
+
+        if (statusCode != null) {
+            this.statusCode = statusCode;
+        } else {
+            this.statusCode = 500;
+        }
+    }
+}
+
+
 
 module.exports = {
-    salesforceException
+    salesforceException,
+    externalCalloutException
 }
