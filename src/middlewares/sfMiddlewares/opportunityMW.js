@@ -107,6 +107,7 @@ async function saveApplicationApi(req, res, next) {
 
     try {
         let result = await opportunityController.saveApplication(sfConn, payload);
+        console.log('payload', payload);
         console.log('final result', result);
 
         if (result) {
