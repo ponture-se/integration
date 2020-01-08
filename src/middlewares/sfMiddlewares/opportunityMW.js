@@ -98,8 +98,19 @@ async function saveApplicationApi(req, res, next) {
         oppRecordTypeId = await myToolkit.getRecordTypeId(sfConn, 'Opportunity', 'Real Estate');
         realEstatePayload = {
             recordTypeId: oppRecordTypeId,
-            Object_Price__c: realEstateReq.object_price,
-            Object_Area__c: realEstateReq.object_area
+            real_estate_type__c : realEstateReq.real_estate_type,
+            real_estate_usage_category__c : realEstateReq.real_estate_usage_category,
+            real_estate_price__c : realEstateReq.real_estate_price,
+            real_estate_taxation_value__c : realEstateReq.real_estate_taxation_value,
+            real_estate_size__c : realEstateReq.real_estate_size,
+            real_estate_address__c : realEstateReq.real_estate_address,
+            real_estate_city__c : realEstateReq.real_estate_city,
+            real_estate_link__c : realEstateReq.real_estate_link,
+            real_estate_description__c : realEstateReq.real_estate_description,
+            real_estate_document__c : realEstateReq.real_estate_document,
+            Description: realEstateReq.description,
+            Additional_details__c: realEstateReq.additional_details,
+            Own_Investment_Amount__c: realEstateReq.own_investment_amount,
         };
 
         Object.assign(payload.opp, realEstatePayload);
@@ -158,7 +169,7 @@ async function saveAppExtraValidation(req, res, next) {
         try {
             let result = await agentUserController.getAgentContactDetailByAgentId(sfConn, req.body.broker_id);
             if (!result) {
-                resBody = myResponse(false, null, 400, "Invalid Agent Id.");
+                resBody = myResponse(false, null, 400, "Invalid Broker ID.");
                 res.status(400).send(resBody);
                 res.body = resBody;
 
