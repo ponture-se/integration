@@ -4,6 +4,7 @@ const apiLogger = require('../apiLogger');
 const opportunityController = require('../../controllers/opportunityController');
 const {salesforceException} = require('../../controllers/customeException');
 const _ = require('lodash');
+const async = require('async');
 const agentUserController = require('../../controllers/agentUserController');
 
 async function saveApplicationApi(req, res, next) {
@@ -107,7 +108,6 @@ async function saveApplicationApi(req, res, next) {
 
     try {
         let result = await opportunityController.saveApplication(sfConn, payload);
-        console.log('payload', payload);
         console.log('final result', result);
 
         if (result) {
@@ -189,7 +189,44 @@ async function saveAppExtraValidation(req, res, next) {
 }
 
 
+async function getCompaniesList(req, res, next) {
+    let resBody;
+    let roaring_token = req.access_token,
+        personalNumber = req.query.personalNumber;
+
+    let tasks = {
+        companies: function (callback) {
+            opportunityController.getCompaniesOfPersonalNumber(personalNumber, roaring_token, callback)
+        },
+        user_info: function (callback) {
+            opportunityController.getUserInfo(personalNumber,roaring_token, callback);
+        }
+    }
+    
+    async.parallel(async.reflectAll(tasks), (errors, results) => {
+        if (!results || 
+            results && _.size(results) == 0){
+                resBody = myResponse(false, null, 500, 'Something wents wrong', errors);
+        } else if (results && _.size(results) != 0 && results.companies && _.size(results.companies) !=0) {
+                let response = {
+                    companies: (results.companies) ? results.companies.value : [],
+                    user_info: (results.user_info) ? results.user_info.value : {}
+                }
+                resBody = myResponse(true, response, 200);
+        } else {
+                resBody = myResponse(false, null, 500, 'Something wents wrong', errors);
+        }
+
+        res.status(resBody.statusCode).send(resBody);
+        res.body = resBody;
+
+        next();
+    });
+}
+
+
 module.exports = {
     saveApplicationApi,
-    saveAppExtraValidation
+    saveAppExtraValidation,
+    getCompaniesList
 }
