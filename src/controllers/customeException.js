@@ -33,14 +33,14 @@ class externalCalloutException extends Error {
     constructor(message, errObj, statusCode = null) {
         super(message);
         this.name = this.constructor.name;
-        // this.metadata = errObj;
+        this.metadata = errObj;
 
-        // Set errors detail based on jsForce errorCode
-        if (errObj) {
-            if (!Array.isArray(errObj)){
-                errObj = [errObj];
-            }
-        }
+        // // Set errors detail based on jsForce errorCode
+        // if (errObj) {
+        //     if (!Array.isArray(errObj)){
+        //         errObj = [errObj];
+        //     }
+        // }
 
         if (statusCode != null) {
             this.statusCode = statusCode;
