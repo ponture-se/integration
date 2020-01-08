@@ -108,13 +108,48 @@ function saveAppValidation() {
 		body('acquisition.own_investment_amount')
 			.if(body('acquisition').exists())
 			.isNumeric().withMessage("It Should be Numeric"),
-
-		body('real_estate.object_price')
+		
+		body('real_estate.real_estate_type')
+			.if(body('real_estate').exists())
+			.isString().withMessage("It Should be String"),
+		body('real_estate.real_estate_usage_category')
+			.if(body('real_estate').exists())
+			.isString().withMessage("It Should be String"),		
+		body('real_estate.real_estate_price')
 			.if(body('real_estate').exists())
 			.isNumeric().withMessage("It Should be Numeric"),
-		body('real_estate.object_area')
+		body('real_estate.real_estate_taxation_value')
 			.if(body('real_estate').exists())
-			.isNumeric().withMessage("It Should be Numeric")
+			.isNumeric().withMessage("It Should be Numeric"),
+		body('real_estate.real_estate_size')
+			.if(body('real_estate').exists())
+			.isNumeric().withMessage("It Should be Numeric"),
+		body('real_estate.real_estate_address')
+			.if(body('real_estate').exists())
+			.isString().withMessage("It Should be String"),
+		body('real_estate.real_estate_city')
+			.if(body('real_estate').exists())
+			.isString().withMessage("It Should be String"),
+		body('real_estate.real_estate_link')
+			.if(body('real_estate').exists())
+			.isString().withMessage("It Should be String"),
+		body('real_estate.real_estate_description')
+			.if(body('real_estate').exists())
+			.isString().withMessage("It Should be String"),
+		body('real_estate.real_estate_document')
+			.if(body('real_estate').exists())
+			.isString().withMessage("It Should be String"),
+		body('real_estate.own_investment_amount')
+			.if(body('real_estate').exists())
+			.isNumeric().withMessage("It Should be Numeric"),
+		body('real_estate.description')
+			.if(body('real_estate').exists())
+			.isString().withMessage("It Should be String"),
+			// .exists().withMessage("Required Key/Value Pair")
+			// .notEmpty().withMessage("Can not be Empty"),
+		body('real_estate.additional_details')
+			.if(body('real_estate').exists())
+			.isString().withMessage("It Should be String"),
 	];
 }
 
