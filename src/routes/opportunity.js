@@ -12,8 +12,16 @@ router.get(
   "/companies",
   auth.verifyToken,
   auth.getRoaringToken,
-  controller.getCompanies
+  controller.getCompanies2
 );
+
+// router.get(
+//   "/userInfo",
+//   auth.verifyToken,
+//   auth.getRoaringToken,
+//   controller.getUserInfo
+// );
+
 router.post(
   "/submit",
   auth.verifyToken,
