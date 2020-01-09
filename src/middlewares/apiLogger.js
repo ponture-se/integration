@@ -24,10 +24,7 @@ function logger(req, res, next){
     }
 
     winston.log(logLevel, 
-                    `{` +
-                    `"req" : ${JSON.stringify(reqLog, null, 2)}` +
-                    `, "res" : ${JSON.stringify(resLog, null, 2)}` +
-                    `}`,
+                    "",
                     {metadata: {
                         req: reqLog,
                         res: resLog
