@@ -19,7 +19,8 @@ winston.add(new winston.transports.MongoDB({
     options: {
         useUnifiedTopology: true
     },
-    collection: 'apiLogs'
+    collection: 'apiLogs',
+    storeHost: true
 }));
 winston.add(new winston.transports.File({
     filename: 'apiLogs.log'

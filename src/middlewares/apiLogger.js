@@ -5,6 +5,7 @@ function logger(req, res, next){
     let reqLog = {
         url: req.url,
         method: req.method,
+        headers: req.headers,
         params: req.params,
         query: req.query,
         body: req.body
@@ -24,10 +25,11 @@ function logger(req, res, next){
     }
 
     winston.log(logLevel, 
-                    `{` +
-                    `"req" : ${JSON.stringify(reqLog, null, 2)}` +
-                    `, "res" : ${JSON.stringify(resLog, null, 2)}` +
-                    `}`
+                    "",
+                    {metadata: {
+                        req: reqLog,
+                        res: resLog
+                    }}
                 );
     
     return next();
