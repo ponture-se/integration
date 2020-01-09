@@ -26,6 +26,8 @@ async function saveApplicationApi(req, res, next) {
 
     let acquisitionReq = req.body.acquisition,
         realEstateReq = req.body.real_estate;
+    
+    let toBeAttachedFiledIds = [];
 
 
     // Prepare payloads
@@ -92,6 +94,16 @@ async function saveApplicationApi(req, res, next) {
         };
         
         Object.assign(payload.opp, acquisitionPayload);
+
+        toBeAttachedFiledIds.push(acquisitionReq.object_valuation_letter);
+        toBeAttachedFiledIds.push(acquisitionReq.object_annual_report);
+        toBeAttachedFiledIds.push(acquisitionReq.object_balance_sheet);
+        toBeAttachedFiledIds.push(acquisitionReq.object_income_statement);
+        toBeAttachedFiledIds.push(acquisitionReq.account_balance_sheet);
+        toBeAttachedFiledIds.push(acquisitionReq.account_income_statement);
+        toBeAttachedFiledIds = toBeAttachedFiledIds.concat(acquisitionReq.additional_files);
+        toBeAttachedFiledIds = toBeAttachedFiledIds.concat(acquisitionReq.business_plan);
+
     }
 
     if (realEstateReq && _.size(realEstateReq) != 0) {
@@ -114,11 +126,13 @@ async function saveApplicationApi(req, res, next) {
         };
 
         Object.assign(payload.opp, realEstatePayload);
+        
+        toBeAttachedFiledIds.push(realEstateReq.real_estate_document);
     }
 
 
     try {
-        let result = await opportunityController.saveApplication(sfConn, payload);
+        let result = await opportunityController.saveApplication(sfConn, payload, toBeAttachedFiledIds);
         console.log('final result', result);
 
         if (result) {
