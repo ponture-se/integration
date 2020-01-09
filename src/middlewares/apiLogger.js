@@ -25,7 +25,7 @@ function logger(req, res, next){
     }
 
     winston.log(logLevel, 
-                    "",
+                    reqLog.url,
                     {metadata: {
                         req: reqLog,
                         res: resLog
