@@ -5,6 +5,7 @@ function logger(req, res, next){
     let reqLog = {
         url: req.url,
         method: req.method,
+        headers: req.headers,
         params: req.params,
         query: req.query,
         body: req.body
