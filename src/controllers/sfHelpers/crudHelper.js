@@ -60,9 +60,22 @@ async function upsertSobjectInSf(sfConn, sObj, payload, existingId = null) {
 }
 
 
+async function deleteSobjecInSf(sfConn, sObj, payload) {
+	try {
+		const result = await sfConn.sobject(sObj)
+									.delete(payload);
+		return result;
+	} catch (err) {
+		console.error('Error in deleteSobjecInSf (' + sObj + ')', err);
+		throw new salesforceException('Something wents wrong, when attemp to delete records from ' + sObj, err);
+	}
+}
+
+
 module.exports = {
     readSobjectInSf,
     insertSobjectInSf,
     updateSobjectInSf,
-    upsertSobjectInSf
+	upsertSobjectInSf,
+	deleteSobjecInSf
 }
