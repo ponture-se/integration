@@ -27,7 +27,11 @@ function logger(req, res, next){
                     `{` +
                     `"req" : ${JSON.stringify(reqLog, null, 2)}` +
                     `, "res" : ${JSON.stringify(resLog, null, 2)}` +
-                    `}`
+                    `}`,
+                    {metadata: {
+                        req: reqLog,
+                        res: resLog
+                    }}
                 );
     
     return next();
