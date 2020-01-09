@@ -134,7 +134,6 @@ async function assignFileToTargetRecord(fileIds, targetId, sfConn = undefined) {
         });
 
         let result = await crudHelper.insertSobjectInSf(sfConn, 'ContentDocumentLink', payload);
-        console.log(result);
         if (result) {
             return result;
         } else {
@@ -149,8 +148,39 @@ async function assignFileToTargetRecord(fileIds, targetId, sfConn = undefined) {
     }
 }
 
+async function detachedAllFilesFromTargetId(targetId, sfConn = undefined) {
+    try {
+        if (sfConn == undefined){
+            sfConn = await myToolkit.makeSFConnection();
+            if (sfConn == null){
+                return null;
+            }
+        }
+        
+        let result;
+        
+        let files = await queryHelper.getQueryResult(sfConn, 'ContentDocumentLink', {LinkedEntityId: targetId});
+        let payload = files.map(item => item.Id);
+        
+        if (payload) {
+            result = await crudHelper.deleteSobjecInSf(sfConn, 'ContentDocumentLink', payload);
+        } else {
+            result = [];
+        }
+
+        return result;
+    } catch (error) {
+        if (error instanceof salesforceException) {
+            throw error;
+        } else {
+            throw new salesforceException("Something wents wrong.", error, 500);
+        }
+    }
+}
+
 module.exports = {
     getAttachedFilesinfo,
     insertFileInSf,
-    assignFileToTargetRecord
+    assignFileToTargetRecord,
+    detachedAllFilesFromTargetId
 }

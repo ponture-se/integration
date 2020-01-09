@@ -13,6 +13,7 @@ const _ = require('lodash');
 const myResponse = require('./myResponse');
 const queryHelper = require('./sfHelpers/queryHelper');
 const crudHelper = require('./sfHelpers/crudHelper');
+const fileController = require('./fileController');
 const {
 	salesforceException,
 	externalCalloutException
@@ -718,11 +719,12 @@ exports.cancel = function (req, res, next) {
 };
 
 
-async function saveApplication(sfConn, payload) {
+async function saveApplication(sfConn, payload, toBeAttachedFiledIds) {
 	let witoutCompany_NeedValue = 'purchase_of_business';
 	let accountInfo = payload.account,
 		contactInfo = payload.contact,
 		oppInfo = payload.opp;
+	let dettachedFiles;
 
 	let oppId = (oppInfo.Id) ? oppInfo.Id : null,
 		opp,
@@ -780,6 +782,17 @@ async function saveApplication(sfConn, payload) {
 	// Opportunity Processing
 	// Upsert Opportunity
 	oppUpsertResult = await crudHelper.upsertSobjectInSf(sfConn, 'Opportunity', oppInfo, oppId);
+
+	try {
+		// files detached
+		dettachedFiles = await fileController.detachedAllFilesFromTargetId(oppUpsertResult.id, sfConn);
+		// files attached
+		if (toBeAttachedFiledIds){
+			await fileController.assignFileToTargetRecord(toBeAttachedFiledIds, oppUpsertResult.id, sfConn);
+		}
+	} catch (err) {
+		console.log('Error when detaching and reattaching the files', err);
+	}
 
 
 	if (oppUpsertResult) {
