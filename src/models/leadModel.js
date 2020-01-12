@@ -62,7 +62,9 @@ function leadValidationRules() {
                             .isLength({ min: 1 }).withMessage("At least one value should exist")
                             .exists().withMessage("Required Key/Value Pair"),
     body('need_payoff').isArray().withMessage("Value Must be Array").optional(),
-    body('need_description').isString().withMessage("Value Must be String.").optional(),
+    body('problem_description').isString().withMessage("Value Must be String.")
+                            .exists().withMessage("Required Key/Value Pair")
+                            .notEmpty().withMessage("Can not be Empty"),
     body('spin_stage').isString().withMessage("Value Must be String.").optional(),
     body('marketing_email_opt_out').isBoolean().withMessage("Value Must be Boolean").optional(),
     body('sales_email_opt_out').isBoolean().withMessage("Value Must be Boolean").optional(),
