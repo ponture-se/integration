@@ -62,7 +62,7 @@ function insertLeadInSF(req, res, next, customerLeadRecordTypeId, accountInfo) {
         MobilePhone: myToolkit.fixPhoneNumber(req.body.mobile),
         Problem__c: req.body.problem.join(';'),
         Need_Payoff__c: req.body.need_payoff.join(';'),
-        Need_Description__c : req.body.need_description,
+        Problem_Description__c : req.body.problem_description,
         SPIN_Stage__c: req.body.spin_stage,
         Marketing_Email_Opt_Out__c: req.body.marketing_email_opt_out,
         Sales_Email_Opt_Out__c: req.body.sales_email_opt_out,
