@@ -6,6 +6,7 @@ const {salesforceException} = require('../../controllers/customeException');
 const _ = require('lodash');
 const async = require('async');
 const agentUserController = require('../../controllers/agentUserController');
+const auth = require('../../controllers/auth');
 
 async function saveApplicationApi(req, res, next) {
     let resBody;
@@ -250,8 +251,17 @@ async function getCompaniesList(req, res, next) {
 }
 
 
+function authMwDecision(req,res, next) {
+    if (req.body.broker_id != null && req.body.broker_id.trim() != '') {
+        auth.noAuthNeeded(req, res, next);
+    } else {
+        auth.verifyToken(req, res, next);
+    }
+}
+
 module.exports = {
     saveApplicationApi,
     saveAppExtraValidation,
-    getCompaniesList
+    getCompaniesList,
+    authMwDecision
 }
