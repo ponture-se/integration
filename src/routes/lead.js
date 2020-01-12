@@ -5,18 +5,17 @@ const leadController = require('../controllers/leadController');
 const getSFConnection = require("../middlewares/sfMiddleware");
 const validate = require("../middlewares/validate");
 const leadValidationRules = require("../models/leadModel");
-// var auth = require("../controllers/auth");
+var auth = require("../controllers/auth");
 
 router.get('/:id',
             getSFConnection,
             leadController.getLead);
             
-router.post('/create', 
+router.post('/create',
+            auth.noAuthNeeded,
             getSFConnection,
             leadValidationRules(), 
             validate,
-            // auth.noAuthNeeded,
-            // auth.getRoaringToken,
             leadController.createLead);
 
 
