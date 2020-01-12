@@ -60,7 +60,7 @@ router.put(
 
 router.post(
   "/saveApp",
-  auth.verifyToken,
+  opportunityMW.authMwDecision,
   opportunityValidationRules.saveAppValidation(),
   validate,
   getSFConnection,
