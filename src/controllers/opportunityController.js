@@ -783,15 +783,18 @@ async function saveApplication(sfConn, payload, toBeAttachedFiledIds) {
 	// Upsert Opportunity
 	oppUpsertResult = await crudHelper.upsertSobjectInSf(sfConn, 'Opportunity', oppInfo, oppId);
 
-	try {
-		// files detached
-		dettachedFiles = await fileController.detachedAllFilesFromTargetId(oppUpsertResult.id, sfConn);
-		// files attached
-		if (toBeAttachedFiledIds){
-			await fileController.assignFileToTargetRecord(toBeAttachedFiledIds, oppUpsertResult.id, sfConn);
+
+	if (oppUpsertResult != null){
+		try {
+			// files detached
+			dettachedFiles = await fileController.detachedAllFilesFromTargetId(oppUpsertResult.id, sfConn);
+			// files attached
+			if (toBeAttachedFiledIds){
+				await fileController.assignFileToTargetRecord(toBeAttachedFiledIds, oppUpsertResult.id, sfConn);
+			}
+		} catch (err) {
+			console.log('Error when detaching and reattaching the files', err);
 		}
-	} catch (err) {
-		console.log('Error when detaching and reattaching the files', err);
 	}
 
 

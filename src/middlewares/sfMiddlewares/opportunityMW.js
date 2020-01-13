@@ -134,7 +134,6 @@ async function saveApplicationApi(req, res, next) {
 
     try {
         let result = await opportunityController.saveApplication(sfConn, payload, toBeAttachedFiledIds);
-        console.log('final result', result);
 
         if (result) {
             resBody = myResponse(true, {id: result}, 200, 'Application has been saved.');
