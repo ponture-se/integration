@@ -24,13 +24,17 @@ function logger(req, res, next){
         logLevel = 'info';
     }
 
-    winston.log(logLevel, 
-                    reqLog.url,
-                    {metadata: {
-                        req: reqLog,
-                        res: resLog
-                    }}
-                );
+    try{
+        winston.log(logLevel, 
+            reqLog.url,
+            {metadata: {
+                req: reqLog,
+                res: resLog
+            }}
+        );
+    } catch (e) {
+        console.log("Error Occured when logging using winston. Error:", e );
+    }
     
     return next();
 }
