@@ -5,20 +5,53 @@ const _ = require("lodash");
 const crudHelper = require('./sfHelpers/crudHelper');
 const mime = require('mime-types');
 const { salesforceException } = require('./customeException');
+const fs = require('fs');
+const mlog = require('./customeLogger');
 
-async function insertFileInSf(sfConn, title, fileExtension, content){
+
+// async function insertFileInSf(sfConn, title, fileExtension, content){
+//     let result;
+
+//     fileExtension = mime.extension(fileExtension);
+//     content = content.split('base64,')[1] || content;
+
+//     let payload = {
+//         Title : title,
+//         PathOnClient : 'file_' + Date.now() + '.' + fileExtension,
+//         VersionData : content
+//     };
+    
+//     try{
+//         let ret = await sfConn.sobject('ContentVersion').create(payload);
+//         if (ret.success){
+//             result = fResult(true, {id : ret.id});
+//         } else {
+//             console.log('File could not created.', ret.errors);
+//             result = fResult(false, null , ret.errors, 'File could not created.');
+//         }
+//     } catch (err) {
+//         console.log('File could not created.', err);
+//         result = fResult(false, null , err, 'File could not created.');
+//     }
+
+//     return result;
+// }
+
+
+async function insertFileInSf(sfConn, file){
     let result;
 
-    fileExtension = mime.extension(fileExtension);
-    content = content.split('base64,')[1] || content;
-
-    let payload = {
-        Title : title,
-        PathOnClient : 'file_' + Date.now() + '.' + fileExtension,
-        VersionData : content
-    };
-    
     try{
+        title = file.originalname.split('.')[0];
+        fileExtension = file.originalname.split('.')[1] || '';
+        content = fs.readFileSync(file.path);
+
+        let payload = {
+            Title : title,
+            PathOnClient : 'file_' + Date.now() + '.' + fileExtension,
+            VersionData : content.toString('base64')
+        };
+
         let ret = await sfConn.sobject('ContentVersion').create(payload);
         if (ret.success){
             result = fResult(true, {id : ret.id});
@@ -30,6 +63,15 @@ async function insertFileInSf(sfConn, title, fileExtension, content){
         console.log('File could not created.', err);
         result = fResult(false, null , err, 'File could not created.');
     }
+
+    // remove file after uploading. whether it upload successfully or not.
+    fs.unlink(file.path, (err) => {
+        if (err) {
+            mlog.error('Error occured when removing file from storage', {
+                metadata: {error: err}
+            });
+        }
+    });
 
     return result;
 }
