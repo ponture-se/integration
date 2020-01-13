@@ -3,10 +3,14 @@ const queryHelper = require('./sfHelpers/queryHelper');
 const fResult = require('./functionResult');
 const _ = require("lodash");
 const crudHelper = require('./sfHelpers/crudHelper');
+const mime = require('mime-types');
 const { salesforceException } = require('./customeException');
 
 async function insertFileInSf(sfConn, title, fileExtension, content){
     let result;
+
+    fileExtension = mime.extension(fileExtension);
+    content = content.split('base64,')[1] || content;
 
     let payload = {
         Title : title,
