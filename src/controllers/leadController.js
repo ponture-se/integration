@@ -10,35 +10,45 @@ async function createLead(req, res, next){
     // if (error) res.status(400).send(error.details[0].message);
     let resBody = {};
 
-    let customerLeadRecordTypeId = await myToolkit.getRecordTypeId(req.sfConn, 'Lead', 'Customer Lead');
+    let sfConn = req.needs.sfConn;
+
+    let customerLeadRecordTypeId = await myToolkit.getRecordTypeId(sfConn, 'Lead', 'Customer Lead');
 
     if (customerLeadRecordTypeId == null || customerLeadRecordTypeId == ''){
         resBody = response(false, null, 500, 'sObjName or RecordType was set incorrectly. Please Inform the developer team.');
-        return res.status(500).send(resBody);
+        // return res.status(500).send(resBody);
+        res.status(500).send(resBody);
+        res.body = resBody;
+        return next();
     }
 
     let orgNum = req.body.organization_number;
 
     if (orgNum == null || orgNum == undefined | orgNum == ''){
-        insertLeadInSF(req, res, customerLeadRecordTypeId, null);
+        insertLeadInSF(req, res, next, customerLeadRecordTypeId, null);
     } else {
         accountCrtl.getAccountFromExternalService(orgNum, req.body.Lead_Company__c, (errors, results) => {
             if (errors && errors.length > 0) {
                 resBody = response(false, null, 500, 'Error When Getting Company Info From External Service.', errors);
-                return res.status(500).send(resBody);
+                // return res.status(500).send(resBody);
+                res.status(500).send(resBody);
+                res.body = resBody;
+                return next();
             }
             else {
                 var accountInfo = {};
                 for (var attr in results) accountInfo[attr] = results[attr].value;
-                insertLeadInSF(req, res, customerLeadRecordTypeId, accountInfo);
+                insertLeadInSF(req, res, next, customerLeadRecordTypeId, accountInfo);
             }
             
         });
     }
 }
 
-function insertLeadInSF(req, res, customerLeadRecordTypeId, accountInfo) {
+function insertLeadInSF(req, res, next, customerLeadRecordTypeId, accountInfo) {
     let roaringPayload = {};
+    let sfConn = req.needs.sfConn;
+
     let payload = {
         recordTypeId: customerLeadRecordTypeId,
         Organization_Number__c: req.body.organization_number,
@@ -52,7 +62,7 @@ function insertLeadInSF(req, res, customerLeadRecordTypeId, accountInfo) {
         MobilePhone: myToolkit.fixPhoneNumber(req.body.mobile),
         Problem__c: req.body.problem.join(';'),
         Need_Payoff__c: req.body.need_payoff.join(';'),
-        Need_Description__c : req.body.need_description,
+        Problem_Description__c : req.body.problem_description,
         SPIN_Stage__c: req.body.spin_stage,
         Marketing_Email_Opt_Out__c: req.body.marketing_email_opt_out,
         Sales_Email_Opt_Out__c: req.body.sales_email_opt_out,
@@ -92,7 +102,7 @@ function insertLeadInSF(req, res, customerLeadRecordTypeId, accountInfo) {
 
     payload = Object.assign(payload, roaringPayload);
 
-    req.sfConn.sobject("Lead").create(payload, 
+    sfConn.sobject("Lead").create(payload, 
         function(err, ret) {
         if (err || !ret.success) {
             // use this with winston, to save in a file
@@ -103,14 +113,23 @@ function insertLeadInSF(req, res, customerLeadRecordTypeId, accountInfo) {
             // };
             if (err.errorCode === 'INVALID_OR_NULL_FOR_RESTRICTED_PICKLIST'){
                 resBody = response(false, null, 400, 'One or more Picklist Values are incorrect.', [err]);
-                return res.status(400).send(resBody);
+                // return res.status(400).send(resBody);
+                res.status(400).send(resBody);
+                res.body = resBody;
+                return next();
             } else {
                 resBody = response(false, null, 500, 'Error Occured When Creating Lead.', [err]);
-                return res.status(500).send(resBody);
+                // return res.status(500).send(resBody);
+                res.status(500).send(resBody);
+                res.body = resBody;
+                return next();
             }
         } else {
             let resBody = response(true, {id: ret.id}, 200, 'Lead Created.');
-            return res.status(200).send(resBody);
+            // return res.status(200).send(resBody);
+            res.status(200).send(resBody);
+            res.body = resBody;
+            return next();
         }
     
     });
@@ -120,22 +139,29 @@ function insertLeadInSF(req, res, customerLeadRecordTypeId, accountInfo) {
 function getLead(req, res, next){
     if (!req.params.id){
         resBody = response(false, null, 400, 'ID Parameter Is Not Set.');
-        return res.status(400).send(resBody);
+        res.status(400).send(resBody);
+        res.body = resBody;     // for logging purpose
+        return next();
     }
     else {
-        req.sfConn.sobject("Lead").retrieve(req.params.id, 
+        let sfConn = req.needs.sfConn;
+        
+        sfConn.sobject("Lead").retrieve(req.params.id, 
             function(err, lead) {
                 if (err) {
                     resBody = response(false, null, 500, null, [err]);
-                    return res.status(500).send(resBody);
+                    res.status(500).send(resBody);
+                    res.body = resBody;
+                    return next();
                 }else {
                     resBody = response(true, lead, 200);
-                    return res.status(200).send(resBody);
+                    res.status(200).send(resBody);
+                    res.body = resBody;
+                    return next();
                 }
             }
         );
     }
-    //next();
 }
 
 

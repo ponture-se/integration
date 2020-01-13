@@ -68,11 +68,47 @@ async function makeSFConnection(){
     }
 }
 
+function addPairToReqNeeds(req, key, value){
+    if (req.hasOwnProperty('needs')){
+        req.needs[key] = value;
+    } else {
+        req.needs = {};
+        req.needs[key] = value;
+    }
+    return;
+}
+
+function checkJwtTokenEssentialData(jwtData, essentialData) {
+    let unseenData = [];
+    if (!Array.isArray(essentialData)) {
+        essentialData = [essentialData];
+    }
+
+    essentialData.forEach(el => {
+        if(!jwtData.hasOwnProperty(el)) {
+            unseenData.push(el);
+        }
+    });
+
+    return unseenData;
+}
+
+
+function getFormattedDate() {
+    var date = new Date();
+    var str = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " +  date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+
+    return str;
+}
+
 
 
 module.exports = {
     getRecordTypeId,
     isJSON,
     fixPhoneNumber,
-    makeSFConnection
+    makeSFConnection,
+    addPairToReqNeeds,
+    getFormattedDate,
+    checkJwtTokenEssentialData
 }

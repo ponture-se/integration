@@ -46,7 +46,7 @@ function callRoaring(
     var password = process.env.ROARING_PASSWORD;
     var apiRoot = process.env.ROARING_LOGIN_API_ROOT || "https://api.roaring.io";
     var data = username + ":" + password;
-    var buff = new Buffer(data);
+    var buff = new Buffer.from(data);
     var base64data = buff.toString("base64");
     var config = {
       url: "/token",
@@ -60,7 +60,7 @@ function callRoaring(
         Authorization: "Basic " + base64data
       }
     };
-    console.log(config);
+    // console.log(config);
     try{
         const response = await axios(config);
         return {

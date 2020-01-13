@@ -1,4 +1,3 @@
-const expect = require('chai').expect;
 const nock = require('nock');
 const roaringMockResponse = require('../mockResponses/roaringMockResponse');
 const roaring = require('../src/controllers/roaring');
@@ -18,7 +17,7 @@ describe("Roaring Tests", () => {
         .reply(200, roaringMockResponse.token);
 
         response = await roaring.getRoaringToken();
-        expect(response.success).to.equal(true);
+        expect(response.success).toEqual(true);
     });
 
     it("getRoaringToken Test - unSuccess Status Code", async () => {
@@ -27,6 +26,6 @@ describe("Roaring Tests", () => {
         .reply(500, roaringMockResponse.token);
 
         response = await roaring.getRoaringToken();
-        expect(response.success).to.equal(false);
+        expect(response.success).toEqual(false);
     });
 });
