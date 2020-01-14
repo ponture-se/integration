@@ -16,8 +16,11 @@ const crudHelper = require('./sfHelpers/crudHelper');
 const fileController = require('./fileController');
 const {
 	salesforceException,
-	externalCalloutException
+	externalCalloutException,
+	inputValidationException
 } = require('./customeException');
+const contactEv = require('./contactEvidenceController');
+const logger = require('./customeLogger');
 
 exports.getCompanies = [
 	// Validate fields
@@ -793,7 +796,7 @@ async function saveApplication(sfConn, payload, toBeAttachedFiledIds) {
 	// Opportunity Processing
 	// Upsert Opportunity
 	oppUpsertResult = await crudHelper.upsertSobjectInSf(sfConn, 'Opportunity', oppInfo, oppId);
-
+	
 	// Files Handler
 	if (oppUpsertResult != null){
 		try {
@@ -809,7 +812,13 @@ async function saveApplication(sfConn, payload, toBeAttachedFiledIds) {
 	}
 
 	// save contact-evidence if bankid data exist
-
+	if (bankid){
+		try{
+			await contactEv.insertContactEvidences(sfConn, contactId, bankid);
+		} catch(err) {
+			logger.error('An error raised on `insertContactEvidences`.', {metadata: err});
+		}
+	}
 
 	if (oppUpsertResult) {
 		return oppUpsertResult.id;
