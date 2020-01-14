@@ -803,7 +803,7 @@ async function saveApplication(sfConn, payload, toBeAttachedFiledIds) {
 			// files detached
 			dettachedFiles = await fileController.detachedAllFilesFromTargetId(oppUpsertResult.id, sfConn);
 			// files attached
-			if (toBeAttachedFiledIds){
+			if (toBeAttachedFiledIds.length){
 				await fileController.assignFileToTargetRecord(toBeAttachedFiledIds, oppUpsertResult.id, sfConn);
 			}
 		} catch (err) {
