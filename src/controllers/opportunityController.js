@@ -16,8 +16,11 @@ const crudHelper = require('./sfHelpers/crudHelper');
 const fileController = require('./fileController');
 const {
 	salesforceException,
-	externalCalloutException
+	externalCalloutException,
+	inputValidationException
 } = require('./customeException');
+const contactEv = require('./contactEvidenceController');
+const logger = require('./customeLogger');
 
 exports.getCompanies = [
 	// Validate fields
@@ -723,7 +726,18 @@ async function saveApplication(sfConn, payload, toBeAttachedFiledIds) {
 	let witoutCompany_NeedValue = 'purchase_of_business';
 	let accountInfo = payload.account,
 		contactInfo = payload.contact,
-		oppInfo = payload.opp;
+		oppInfo = payload.opp,
+		bankid = payload.bankid;
+
+	// sync contactInfo with bankid data, if bankid data exist
+	if (bankid) {
+		contactInfo.lastName = bankid.userInfo.surname;
+		contactInfo.firstName = bankid.userInfo.givenName;
+		contactInfo.Veri_cationMethod__c = 'BankID'
+		contactInfo.VerificationEvidence__c = bankid.signature;
+		contactInfo.Last_Contact_Veri_ed_Date__c = Date.now();
+	}
+
 	let dettachedFiles;
 
 	let oppId = (oppInfo.Id) ? oppInfo.Id : null,
@@ -782,8 +796,8 @@ async function saveApplication(sfConn, payload, toBeAttachedFiledIds) {
 	// Opportunity Processing
 	// Upsert Opportunity
 	oppUpsertResult = await crudHelper.upsertSobjectInSf(sfConn, 'Opportunity', oppInfo, oppId);
-
-
+	
+	// Files Handler
 	if (oppUpsertResult != null){
 		try {
 			// files detached
@@ -797,6 +811,14 @@ async function saveApplication(sfConn, payload, toBeAttachedFiledIds) {
 		}
 	}
 
+	// save contact-evidence if bankid data exist
+	if (bankid){
+		try{
+			await contactEv.insertContactEvidences(sfConn, contactId, bankid);
+		} catch(err) {
+			logger.error('An error raised on `insertContactEvidences`.', {metadata: err});
+		}
+	}
 
 	if (oppUpsertResult) {
 		return oppUpsertResult.id;
