@@ -132,13 +132,15 @@ function saveAppValidation() {
 			.isString().withMessage("It Should be String"),
 		body('real_estate.real_estate_link')
 			.if(body('real_estate').exists())
-			.isString().withMessage("It Should be String"),
+			.isString().withMessage("It Should be String")
+			.optional(),
 		body('real_estate.real_estate_description')
 			.if(body('real_estate').exists())
 			.isString().withMessage("It Should be String"),
 		body('real_estate.real_estate_document')
 			.if(body('real_estate').exists())
-			.isString().withMessage("It Should be String"),
+			.isString().withMessage("It Should be String")
+			.optional(),
 		body('real_estate.own_investment_amount')
 			.if(body('real_estate').exists())
 			.isNumeric().withMessage("It Should be Numeric"),
@@ -149,7 +151,8 @@ function saveAppValidation() {
 			// .notEmpty().withMessage("Can not be Empty"),
 		body('real_estate.additional_details')
 			.if(body('real_estate').exists())
-			.isString().withMessage("It Should be String"),
+			.isString().withMessage("It Should be String")
+			.optional(),
 
 // bankId input validation
 		body('bankid.progressStatus')
