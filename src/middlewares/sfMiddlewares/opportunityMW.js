@@ -55,7 +55,9 @@ async function saveApplicationApi(req, res, next) {
         account: {
             Organization_Number__c: req.body.orgNumber,
             Name: req.body.orgName
-        }
+        },
+        
+        bankid: req.body.bankid
     }
 
     
