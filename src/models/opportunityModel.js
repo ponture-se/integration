@@ -150,6 +150,43 @@ function saveAppValidation() {
 		body('real_estate.additional_details')
 			.if(body('real_estate').exists())
 			.isString().withMessage("It Should be String"),
+
+// bankId input validation
+		body('bankid.progressStatus')
+			.if(body('bankid').exists())
+			.equals('COMPLETE'),
+		body('bankid.signature')
+			.if(body('bankid.progressStatus').equals('COMPLETE'))
+			.if(body('bankid').exists())
+			.exists().withMessage("Required Key/Value Pair")
+			.notEmpty().withMessage("Can not be Empty")
+			.isString().withMessage("It Should be String"),
+		body('bankid.ocspResponse')
+			.if(body('bankid.progressStatus').equals('COMPLETE'))
+			.if(body('bankid').exists())
+			.exists().withMessage("Required Key/Value Pair")
+			.notEmpty().withMessage("Can not be Empty")
+			.isString().withMessage("It Should be String"),
+		body('bankid.userInfo')
+			.if(body('bankid.progressStatus').equals('COMPLETE'))
+			.if(body('bankid').exists())
+			.exists().withMessage("Required Key/Value Pair")
+			.notEmpty().withMessage("Can not be Empty"),
+
+		body('bankid.userInfo.givenName')
+			.if(body('bankid.progressStatus').equals('COMPLETE'))
+			.if(body('bankid.userInfo').exists())
+			.if(body('bankid').exists())
+			.exists().withMessage("Required Key/Value Pair")
+			.notEmpty().withMessage("Can not be Empty")
+			.isString().withMessage("It Should be String"),
+		body('bankid.userInfo.surname')
+			.if(body('bankid.progressStatus').equals('COMPLETE'))
+			.if(body('bankid.userInfo').exists())
+			.if(body('bankid').exists())
+			.exists().withMessage("Required Key/Value Pair")
+			.notEmpty().withMessage("Can not be Empty")
+			.isString().withMessage("It Should be String"),
 	];
 }
 
