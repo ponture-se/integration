@@ -7,13 +7,14 @@ const getSFConnection = require("../middlewares/sfMiddleware");
 const validate = require("../middlewares/validate");
 const fileValidationRules = require("../models/fileModel");
 // var auth = require("../controllers/auth");
+const multer = require('multer');
+var upload = multer({ dest: 'tempStorage/' })
             
 router.post('/upload',
             getSFConnection,
-            fileValidationRules.fileUploadValidation(),
-            validate,
-            // auth.noAuthNeeded,
-            // auth.getRoaringToken,
+            // fileValidationRules.fileUploadValidation(),
+            // validate,
+            upload.single('file'),
             fileMW.uploadFile);
 
 

@@ -2,17 +2,23 @@ const fileController = require('../../controllers/fileController');
 const myResponse = require('../../controllers/myResponse');
 const apiLogger = require('../apiLogger');
 
+
 async function uploadFile(req, res, next) {
     let resBody;
-
     const sfConn = req.needs.sfConn;
 
-    const title = req.body.title,
-            fileExtension = req.body.fileExtension,
-            content = req.body.content;
+    const file = req.file;
+
+    if (!file) {
+        resBody = myResponse(false, null, 400, 'No file attached');
+        res.status(400).send(resBody);
+        res.body = resBody;			// For logging purpose
+        
+        return apiLogger(req, res, () => {return;});			//instead of calling next()
+    }
 
     try {
-        const result = await fileController.insertFileInSf(sfConn, title, fileExtension, content);
+        const result = await fileController.insertFileInSf(sfConn, file);
 
         if (result.success) {
             resBody = myResponse(true, result.data, 200);

@@ -52,7 +52,25 @@ class externalCalloutException extends Error {
 
 
 
+class inputValidationException extends Error {
+    constructor(message, errObj = null, statusCode = null) {
+        super(message);
+        this.name = this.constructor.name;
+        this.metadata = errObj;
+
+
+        if (statusCode != null) {
+            this.statusCode = statusCode;
+        } else {
+            this.statusCode = 500;
+        }
+    }
+}
+
+
+
 module.exports = {
     salesforceException,
-    externalCalloutException
+    externalCalloutException,
+    inputValidationException
 }
