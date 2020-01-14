@@ -723,7 +723,18 @@ async function saveApplication(sfConn, payload, toBeAttachedFiledIds) {
 	let witoutCompany_NeedValue = 'purchase_of_business';
 	let accountInfo = payload.account,
 		contactInfo = payload.contact,
-		oppInfo = payload.opp;
+		oppInfo = payload.opp,
+		bankid = payload.bankid;
+
+	// sync contactInfo with bankid data, if bankid data exist
+	if (bankid) {
+		contactInfo.lastName = bankid.userInfo.surname;
+		contactInfo.firstName = bankid.userInfo.givenName;
+		contactInfo.Veri_cationMethod__c = 'BankID'
+		contactInfo.VerificationEvidence__c = bankid.signature;
+		contactInfo.Last_Contact_Veri_ed_Date__c = Date.now();
+	}
+
 	let dettachedFiles;
 
 	let oppId = (oppInfo.Id) ? oppInfo.Id : null,
@@ -783,7 +794,7 @@ async function saveApplication(sfConn, payload, toBeAttachedFiledIds) {
 	// Upsert Opportunity
 	oppUpsertResult = await crudHelper.upsertSobjectInSf(sfConn, 'Opportunity', oppInfo, oppId);
 
-
+	// Files Handler
 	if (oppUpsertResult != null){
 		try {
 			// files detached
@@ -796,6 +807,8 @@ async function saveApplication(sfConn, payload, toBeAttachedFiledIds) {
 			console.log('Error when detaching and reattaching the files', err);
 		}
 	}
+
+	// save contact-evidence if bankid data exist
 
 
 	if (oppUpsertResult) {
