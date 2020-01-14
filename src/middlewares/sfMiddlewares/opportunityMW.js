@@ -98,14 +98,14 @@ async function saveApplicationApi(req, res, next) {
         
         Object.assign(payload.opp, acquisitionPayload);
 
-        toBeAttachedFiledIds.push(acquisitionReq.object_valuation_letter);
-        toBeAttachedFiledIds.push(acquisitionReq.object_annual_report);
-        toBeAttachedFiledIds.push(acquisitionReq.object_balance_sheet);
-        toBeAttachedFiledIds.push(acquisitionReq.object_income_statement);
-        toBeAttachedFiledIds.push(acquisitionReq.account_balance_sheet);
-        toBeAttachedFiledIds.push(acquisitionReq.account_income_statement);
-        toBeAttachedFiledIds = toBeAttachedFiledIds.concat(acquisitionReq.additional_files);
-        toBeAttachedFiledIds = toBeAttachedFiledIds.concat(acquisitionReq.business_plan);
+        if(acquisitionReq.object_valuation_letter) toBeAttachedFiledIds.push(acquisitionReq.object_valuation_letter);
+        if(acquisitionReq.object_annual_report) toBeAttachedFiledIds.push(acquisitionReq.object_annual_report);
+        if(acquisitionReq.object_balance_sheet) toBeAttachedFiledIds.push(acquisitionReq.object_balance_sheet);
+        if(acquisitionReq.object_income_statement) toBeAttachedFiledIds.push(acquisitionReq.object_income_statement);
+        if(acquisitionReq.account_balance_sheet) toBeAttachedFiledIds.push(acquisitionReq.account_balance_sheet);
+        if(acquisitionReq.account_income_statement) toBeAttachedFiledIds.push(acquisitionReq.account_income_statement);
+        if(acquisitionReq.additional_files.length) toBeAttachedFiledIds = toBeAttachedFiledIds.concat(acquisitionReq.additional_files);
+        if(acquisitionReq.business_plan.length) toBeAttachedFiledIds = toBeAttachedFiledIds.concat(acquisitionReq.business_plan);
 
     }
 
@@ -130,7 +130,7 @@ async function saveApplicationApi(req, res, next) {
 
         Object.assign(payload.opp, realEstatePayload);
         
-        toBeAttachedFiledIds.push(realEstateReq.real_estate_document);
+        if (realEstateReq.real_estate_document) toBeAttachedFiledIds.push(realEstateReq.real_estate_document);
     }
 
 
