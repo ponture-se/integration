@@ -181,7 +181,15 @@ async function saveAppExtraValidation(req, res, next) {
         res.body = resBody;
 
         validationError = true;
-    }  else if (req.body.broker_id) {
+    } else if (req.body.bankid && req.body.bankid.userInfo && req.body.bankid.userInfo.personalNumber 
+        && req.body.personalNumber != req.body.bankid.userInfo.personalNumber) {
+        resBody = myResponse(false, null, 400, "The given personalNumber is not match with the bankId personalNumber");
+        res.status(400).send(resBody);
+        res.body = resBody;
+
+        validationError = true;
+
+    } else if (req.body.broker_id) {
         try {
             let result = await agentUserController.getAgentContactDetailByAgentId(sfConn, req.body.broker_id);
             if (!result) {
