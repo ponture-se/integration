@@ -42,8 +42,8 @@ async function insertFileInSf(sfConn, file){
     let result;
 
     try{
-        title = file.originalname.split('.')[0];
-        fileExtension = file.originalname.split('.')[1] || '';
+        title = file.originalname;
+        fileExtension = mime.extension(file.mimetype) || '';
         content = fs.readFileSync(file.path);
 
         let payload = {
