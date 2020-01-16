@@ -2,11 +2,12 @@ const myToolkit = require('../../controllers/myToolkit');
 const myResponse = require('../../controllers/myResponse');
 const apiLogger = require('../apiLogger');
 const opportunityController = require('../../controllers/opportunityController');
-const {salesforceException} = require('../../controllers/customeException');
+const {salesforceException, inputValidationException} = require('../../controllers/customeException');
 const _ = require('lodash');
 const async = require('async');
 const agentUserController = require('../../controllers/agentUserController');
 const auth = require('../../controllers/auth');
+const logger = require('../../controllers/customeLogger');
 
 async function saveApplicationApi(req, res, next) {
     let resBody;
@@ -149,23 +150,22 @@ async function saveApplicationApi(req, res, next) {
     
     } catch (err) {
         console.log(err);
-        switch (true) {
-            case err instanceof salesforceException:
-                resBody = myResponse(false, null, err.statusCode, err.message, err.metadata);
-                res.status(err.statusCode).send(resBody);
-                break;
         
-            default:
-                resBody = myResponse(false, null, 500, err.message);
-                res.status(500).send(resBody);
-                break;
+        if (err instanceof salesforceException){
+            resBody = myResponse(false, null, err.statusCode, err.message, err.metadata);
+            res.status(err.statusCode).send(resBody);
+        } else if (err instanceof inputValidationException) {
+            resBody = myResponse(false, null, err.statusCode, err.message, err.metadata);
+            res.status(err.statusCode).send(resBody);
+        } else {
+            resBody = myResponse(false, null, 500, err.message);
+            res.status(500).send(resBody);
         }
 
         res.body = resBody;
     }
 
     return next();
-            
 }
 
 async function saveAppExtraValidation(req, res, next) {
@@ -268,9 +268,74 @@ function authMwDecision(req,res, next) {
     }
 }
 
+
+async function fillRequestOfSavedOpp(req, res, next) {
+    const sfConn = req.needs.sfConn;
+    const oppId = req.body.oppId;
+    let resBody;
+    let hasResponse = false;
+
+    if (oppId != null && oppId.trim() != '') {
+        try{
+            let savedOppData = await opportunityController.getSavedOppRequiredDataById(sfConn, oppId);
+
+            if (savedOppData == null) {
+                resBody = myResponse(false, null, 400, 'oppId is invalid');
+                res.status(400).send(resBody);
+                
+                hasResponse = true;
+            } else if (savedOppData != null && savedOppData.StageName != 'Created') {
+                resBody = myResponse(false, null, 403, 'Stage of the Saved Opportunity is invalid, it equals to \'' + savedOppData.StageName + '\'');
+                res.status(403).send(resBody);
+                
+                hasResponse = true;
+            } else if (savedOppData != null && savedOppData.PrimaryContactVerified__c != true) {
+                resBody = myResponse(false, null, 403, 'The contact of this saved opportunity is not verified yet.');
+                res.status(403).send(resBody);
+
+                hasResponse = true;
+            } else {
+                req.body.orgNumber = req.body.orgNumber || savedOppData.Account.Organization_Number__c;
+                req.body.orgName = req.body.orgName || savedOppData.Account.Name;
+                req.body.personalNumber = req.body.personalNumber || savedOppData.PrimaryContact__r.Personal_Identity_Number__c;
+                req.body.amount = req.body.amount || savedOppData.Amount;
+                req.body.amourtizationPeriod = req.body.amourtizationPeriod || savedOppData.AmortizationPeriod__c;
+                req.body.need = req.body.need || savedOppData.Need__c.split(';');
+                req.body.needDescription = req.body.needDescription || savedOppData.NeedDescription__c;
+                req.body.referral_id = req.body.referral_id || savedOppData.Referral_ID__c;
+                req.body.utm_source = req.body.utm_source || savedOppData.UTM_Source__c;
+                req.body.utm_medium = req.body.utm_medium || savedOppData.UTM_Medium__c;
+                req.body.utm_campaign = req.body.utm_campaign || savedOppData.UTM_Campaign__c;
+                req.body.ad_gd = req.body.ad_gd || savedOppData.Last_referral_date__c;
+                req.body.bankid = {
+                    userInfo : {
+                        name : savedOppData.PrimaryContact__r.Name
+                    }
+                }
+            }
+
+        } catch (e) {
+            logger.error('fillRequestOfSavedOpp Error', {metadata: e});
+
+            resBody = myResponse(false, null, 500, 'Something Went Wrong', e);
+            res.status(500).send(resBody);
+            
+            hasResponse = true;
+        }        
+    }
+
+    if (hasResponse) {
+        res.body = resBody;
+        return apiLogger(req, res, () => {return;});			//instead of calling next()
+    } else {
+        return next();
+    }
+}
+
 module.exports = {
     saveApplicationApi,
     saveAppExtraValidation,
     getCompaniesList,
-    authMwDecision
+    authMwDecision,
+    fillRequestOfSavedOpp
 }
