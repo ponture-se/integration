@@ -2,7 +2,8 @@ const axios = require("axios");
 const {
 	validationResult,
 	body,
-	check
+	check,
+	oneOf
 } = require("express-validator");
 const {
 	sanitizeBody
@@ -205,18 +206,24 @@ exports.submit = [
 		min: 9
 	})
 	.withMessage("Invalid phone number"),
-	body("bankid", "BankID detail is required")
-	.not()
-	.isEmpty()
-	.withMessage("BankID detail is required"),
-	body("bankid.userInfo", "BankID userInfo is required")
-	.not()
-	.isEmpty()
-	.withMessage("BankID userInfo is required"),
-	body("bankid.ocspResponse", "BankID ocspResponse is required")
-	.not()
-	.isEmpty()
-	.withMessage("BankID ocspResponse is required"),
+	oneOf([
+		[body("bankid", "BankID detail is required")
+		.not()
+		.isEmpty()
+		.withMessage("BankID detail is required"),
+		body("bankid.userInfo", "BankID userInfo is required")
+		.not()
+		.isEmpty()
+		.withMessage("BankID userInfo is required"),
+		body("bankid.ocspResponse", "BankID ocspResponse is required")
+		.not()
+		.isEmpty()
+		.withMessage("BankID ocspResponse is required")],
+		
+		body('oppId', 'OppId is required')
+		.notEmpty()
+		.isString()
+	], 'One of bankId details or oppId should exist.'),
 	//Sanitize fields
 	sanitizeBody("personalNumber")
 	.trim()
@@ -232,6 +239,7 @@ exports.submit = [
 	.escape(),
 	(req, res, next) => {
 		let resBody = null;
+		logger.info('req-body', {metadata: req.body});
 
 		console.log(req.url);
 		console.log(JSON.stringify(req.body));
@@ -756,7 +764,12 @@ async function saveApplication(sfConn, payload, toBeAttachedFiledIds) {
 	// Get Opp, if oppId exist
 	if (oppId) {
 		opp = await crudHelper.readSobjectInSf(sfConn, 'Opportunity', oppId);
-		// accId = opp.AccountId;
+
+		// Check if Stage Name is Valid
+		if (opp.StageName != 'Created') {
+			throw new inputValidationException('Invalid Stage for Save.', {StageName: opp.StageName}, 403);
+		}
+		
 		contactId = opp.PrimaryContact__c;
 
 		delete oppInfo.recordTypeId;
@@ -1046,3 +1059,21 @@ async function getCompaniesOfPersonalNumber(personalNumber, roaring_token, callb
 	}
 }
 exports.getCompaniesOfPersonalNumber = getCompaniesOfPersonalNumber;
+
+
+async function getSavedOppRequiredDataById(sfConn, oppId){
+	let whereCluase = {
+		id: oppId
+	};
+	let selectCluase = `*, 
+						account.Name, 
+						account.Organization_Number__c,
+						PrimaryContact__r.Name,
+						PrimaryContact__r.Personal_Identity_Number__c
+						`;
+
+	let result = await queryHelper.getSingleQueryResult(sfConn, 'Opportunity', whereCluase, selectCluase);
+
+	return result;
+}
+exports.getSavedOppRequiredDataById = getSavedOppRequiredDataById;
