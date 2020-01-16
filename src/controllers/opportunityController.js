@@ -736,6 +736,9 @@ async function saveApplication(sfConn, payload, toBeAttachedFiledIds) {
 		contactInfo.Veri_cationMethod__c = 'BankID'
 		contactInfo.VerificationEvidence__c = bankid.signature;
 		contactInfo.Last_Contact_Veri_ed_Date__c = Date.now();
+		contactInfo.Country__c = 'Sweeden';
+
+		oppInfo.PrimaryContactVerified__c = true;
 	}
 
 	let dettachedFiles;
