@@ -22,6 +22,8 @@ router.post(
   auth.verifyToken,
   auth.getRoaringToken,
   auth.getSalesForceToken,
+  getSFConnection,
+  opportunityMW.fillRequestOfSavedOpp,
   controller.submit
 );
 
