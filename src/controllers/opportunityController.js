@@ -741,7 +741,7 @@ async function saveApplication(sfConn, payload, toBeAttachedFiledIds) {
 	if (bankid) {
 		contactInfo.lastName = bankid.userInfo.surname;
 		contactInfo.firstName = bankid.userInfo.givenName;
-		contactInfo.Veri_cationMethod__c = 'BankID'
+		contactInfo.Veri_cationMethod__c = 'BankID';
 		contactInfo.VerificationEvidence__c = bankid.signature;
 		contactInfo.Last_Contact_Veri_ed_Date__c = Date.now();
 		contactInfo.Country__c = 'Sweeden';
@@ -764,13 +764,28 @@ async function saveApplication(sfConn, payload, toBeAttachedFiledIds) {
 	// Get Opp, if oppId exist
 	if (oppId) {
 		opp = await crudHelper.readSobjectInSf(sfConn, 'Opportunity', oppId);
+		contactId = opp.PrimaryContact__c;
 
 		// Check if Stage Name is Valid
 		if (opp.StageName != 'Created') {
 			throw new inputValidationException('Invalid Stage for Save.', {StageName: opp.StageName}, 403);
 		}
-		
-		contactId = opp.PrimaryContact__c;
+
+		// Update Contact Info If BankId Data received, and opp PrimaryContactVerified__c is not true
+		if (bankid && opp.PrimaryContactVerified__c) {
+			throw new inputValidationException('BankId Verification was done Before.', null, 403);
+		} else if (bankid && !opp.PrimaryContactVerified__c) {
+			let contactUpdateInfo = {
+				lastName : bankid.userInfo.surname,
+				firstName : bankid.userInfo.givenName,
+				Veri_cationMethod__c : 'BankID',
+				VerificationEvidence__c : bankid.signature,
+				Last_Contact_Veri_ed_Date__c : Date.now(),
+				Country__c : 'Sweeden'
+			}
+			
+			contactUpsertResult = await crudHelper.upsertSobjectInSf(sfConn, 'Contact', contactUpdateInfo, contactId);
+		}
 
 		delete oppInfo.recordTypeId;
 	} else {
