@@ -38,24 +38,30 @@ const { body } = require('express-validator');
 
 function leadValidationRules() {
   return [
-    body('organization_number').isNumeric().withMessage("Value Must be Numeric.").optional({ checkFalsy: true }),
+    body('organization_number').isNumeric().withMessage("Value Must be Numeric.").optional({ checkFalsy: true })
+                                .matches(/^([0-9]){6}-?([0-9]){4}$/).withMessage('Invalid Pattern'),
     body('phone').isNumeric().withMessage("Value Must be Numeric.")
                   .exists().withMessage("Required Key/Value Pair")
+                  .trim()
                   .notEmpty().withMessage("Can not be Empty")
                   .matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[0-9]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.'),
-    body('email').isEmail().withMessage("Value Must be Email.").optional(),
+    body('email').isEmail().withMessage("Value Must be Email.")
+                  .exists().withMessage("Required Key/Value Pair"),
     body('situation').isString().withMessage("Value Must be String.")
                     .exists().withMessage("Required Key/Value Pair"),
     body('lead_revenue').isNumeric().withMessage("Value Must be Numeric.").optional(),
     body('lead_company').isString().withMessage("Value Must be String.")
                         .exists().withMessage("Required Key/Value Pair")
-                        .notEmpty().withMessage("Can not be Empty"),
+                        .trim()
+                        .notEmpty().withMessage("Can not be Empty"),                        
     body('last_name').isString().withMessage("Value Must be String.")
                     .exists().withMessage("Required Key/Value Pair")
+                    .trim()
                     .notEmpty().withMessage("Can not be Empty"),
     body('first_name').isString().withMessage("Value Must be String.").optional(),
     body('mobile').isNumeric().withMessage("Value Must be Numeric.")
                   .exists().withMessage("Required Key/Value Pair")
+                  .trim()
                   .notEmpty().withMessage("Can not be Empty")
                   .matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[0-9]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.'),
     body('problem').isArray().withMessage("Value Must be Array")
@@ -64,6 +70,7 @@ function leadValidationRules() {
     body('need_payoff').isArray().withMessage("Value Must be Array").optional(),
     body('problem_description').isString().withMessage("Value Must be String.")
                             .exists().withMessage("Required Key/Value Pair")
+                            .trim()
                             .notEmpty().withMessage("Can not be Empty"),
     body('spin_stage').isString().withMessage("Value Must be String.").optional(),
     body('marketing_email_opt_out').isBoolean().withMessage("Value Must be Boolean").optional(),
