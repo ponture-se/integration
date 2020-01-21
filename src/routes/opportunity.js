@@ -10,10 +10,10 @@ const opportunityMW = require("../middlewares/sfMiddlewares/opportunityMW");
 router.get("/needslist", auth.getSalesForceToken, controller.getNeedsList);
 router.get(
   "/companies",
-  // auth.verifyToken,
-  auth.noAuthNeeded,
+  auth.verifyToken,
+  // auth.noAuthNeeded,
   auth.getRoaringToken,
-  opportunityMW.getCompaniesList
+  controller.getCompanies
 );
 
 
