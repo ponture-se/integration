@@ -10,7 +10,8 @@ function saveAppValidation() {
 			[
 				body('orgNumber').isNumeric().withMessage('It Should be Numeric')
 					.exists().withMessage("Required Key/Value Pair")
-					.notEmpty().withMessage("Can not be Empty"),
+					.notEmpty().withMessage("Can not be Empty")
+					.matches(/^([0-9]){6}-?([0-9]){4}$/).withMessage('Invalid Pattern'),
 				body('orgName').isString().withMessage('It Should be String')
 					.exists().withMessage("Required Key/Value Pair")
 					.notEmpty().withMessage("Can not be Empty")
@@ -24,7 +25,8 @@ function saveAppValidation() {
 		], "'orgName' & 'orgNumber' must exist if 'need' is something different from 'purchase_of_business'"),
 		body('personalNumber').isNumeric().withMessage('It Should be Numeric')
 			.exists().withMessage("Required Key/Value Pair")
-			.notEmpty().withMessage("Can not be Empty"),
+			.notEmpty().withMessage("Can not be Empty")
+			.matches(/^([0-9]*[-]?)[0-9]*$/).withMessage('Invalid Pattern'),
 		body('amount').isNumeric().withMessage('It Should be Numeric')
 			.exists().withMessage("Required Key/Value Pair")
 			.notEmpty().withMessage("Can not be Empty"),
