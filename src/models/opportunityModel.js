@@ -26,7 +26,7 @@ function saveAppValidation() {
 		body('personalNumber').isNumeric().withMessage('It Should be Numeric')
 			.exists().withMessage("Required Key/Value Pair")
 			.notEmpty().withMessage("Can not be Empty")
-			..matches(/^([0-9]*[-]?)[0-9]*$/).withMessage('Invalid Pattern'),
+			.matches(/^([0-9]*[-]?)[0-9]*$/).withMessage('Invalid Pattern'),
 		body('amount').isNumeric().withMessage('It Should be Numeric')
 			.exists().withMessage("Required Key/Value Pair")
 			.notEmpty().withMessage("Can not be Empty"),
