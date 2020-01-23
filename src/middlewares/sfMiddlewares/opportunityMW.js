@@ -43,8 +43,13 @@ async function saveApplicationApi(req, res, next) {
             // Defualt Values
             stageName: 'Created',
             CloseDate: clostDate,
+            UTM_Source__c: req.body.utm_source,
+            UTM_Medium__c: req.body.utm_medium,
+            UTM_Campaign__c: req.body.utm_campaign,
+            Referral_ID__c: req.body.referral_id,
+            Last_referral_date__c: req.body.last_referral_date,
             Name: `Saved Opp @ ${myToolkit.getFormattedDate()} - ${req.body.personalNumber}`,
-            Broker_ID__c: req.body.broker_id        
+            Broker_ID__c: req.body.broker_id
         },
         contact: {
             Email: req.body.email,
