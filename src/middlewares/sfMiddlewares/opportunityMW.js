@@ -6,7 +6,10 @@ const {salesforceException, inputValidationException} = require('../../controlle
 const _ = require('lodash');
 const async = require('async');
 const agentUserController = require('../../controllers/agentUserController');
+const queryHelper = require('../../controllers/sfHelpers/queryHelper');
+const crudHelper = require('../../controllers/sfHelpers/crudHelper');
 const auth = require('../../controllers/auth');
+
 const logger = require('../../controllers/customeLogger');
 
 async function saveApplicationApi(req, res, next) {
@@ -77,11 +80,45 @@ async function saveApplicationApi(req, res, next) {
     
     if (acquisitionReq && _.size(acquisitionReq) != 0) {
         oppRecordTypeId = await myToolkit.getRecordTypeId(sfConn, 'Opportunity', 'Business Acquisition Loan');
+        // upsert Acquisition Object Account (If not exist: Generic, else: recordType not changed)
+        if (acquisitionReq.object_organization_number) {
+            // Try to get Acc
+            // Get Account with orgNumber
+			let getAccWhereCluase = {
+				Organization_Number__c: acquisitionReq.object_organization_number
+			}
+			account = await queryHelper.getSingleQueryResult(sfConn, 'Account', getAccWhereCluase);
+            accId = (account != null) ? account.Id : null;
+
+            if (!accId) {
+                let genericAccRecordTypeId = await myToolkit.getRecordTypeId(sfConn, 'Account', 'Generic');
+
+                let acqObjectInfo = {
+                    Organization_Number__c: acquisitionReq.object_organization_number,
+                    Name: acquisitionReq.object_company_name || acquisitionReq.object_organization_number,
+                    recordTypeId: genericAccRecordTypeId
+                }
+                let acquisitionObjectData = await crudHelper.upsertSobjectInSf(sfConn, 'Account', acqObjectInfo, accId);
+                accId = (acquisitionObjectData != null) ? acquisitionObjectData.id : null;
+            }
+
+            if (accId) {
+                payload.opp.Acquisition_Object__c = accId;
+            } else {
+                resBody = myResponse(false, null, 500 , 'Something wents wrong. \'object_company_name\' or \'object_organization_number\' have some problems. Please recheck.');
+                res.status(500).send(resBody);
+                res.body = resBody;
+                
+                return next();
+            }
+
+        }
+
         acquisitionPayload = {
-            // _objName: req.body.objName,
             // _objCompanyName : req.body.acquisition.objCompanyName,
             // _objOrgNumber : req.body.acquisition.objOrgNumber,
             recordTypeId: oppRecordTypeId,
+            Object_Name__c: acquisitionReq.object_name,
             Object_Price__c: acquisitionReq.object_price,
             Object_Industry__c: acquisitionReq.object_industry,
             Object_Annual_Report__c: acquisitionReq.object_annual_report,
