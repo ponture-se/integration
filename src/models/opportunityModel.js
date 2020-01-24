@@ -51,9 +51,25 @@ function saveAppValidation() {
 		body('broker_id').isString().withMessage('It Should be String')
 			.notEmpty().withMessage("Can not be Empty")
 			.optional(),
-		// body('acquisition.name')
-		// 	.if(body('acquisition').exists())
-		// 		.exists().withMessage("Required Key/Value Pair"),
+		body('utm_source').isString().withMessage('It Should be String').optional(),
+		body('utm_medium').isString().withMessage('It Should be String').optional(),
+		body('utm_campaign').isString().withMessage('It Should be String').optional(),
+		body('referral_id').isString().withMessage('It Should be String').optional(),
+		body('last_referral_date').isString().withMessage('It Should be String').optional(),
+
+		body('acquisition.object_name')
+			.if(body('acquisition').exists())
+			.isString().withMessage('It Should be String')
+			.optional(),
+		body('acquisition.object_company_name')
+			.if(body('acquisition').exists())
+			.isString().withMessage('It Should be String')
+			.optional(),
+		body('acquisition.object_organization_number')
+			.if(body('acquisition').exists())
+			.isNumeric().withMessage('It Should be Numeric')
+			.matches(/^([0-9]){6}-?([0-9]){4}$/).withMessage('Invalid Pattern')
+			.optional(),
 		body('acquisition.object_price')
 			.if(body('acquisition').exists())
 			.isNumeric().withMessage("It Should be Numeric"),
