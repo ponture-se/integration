@@ -57,6 +57,19 @@ function saveAppValidation() {
 		body('referral_id').isString().withMessage('It Should be String').optional(),
 		body('last_referral_date').isString().withMessage('It Should be String').optional(),
 
+		body('acquisition.object_name')
+			.if(body('acquisition').exists())
+			.isString().withMessage('It Should be String')
+			.optional(),
+		body('acquisition.object_company_name')
+			.if(body('acquisition').exists())
+			.isString().withMessage('It Should be String')
+			.optional(),
+		body('acquisition.object_organization_number')
+			.if(body('acquisition').exists())
+			.isNumeric().withMessage('It Should be Numeric')
+			.matches(/^([0-9]){6}-?([0-9]){4}$/).withMessage('Invalid Pattern')
+			.optional(),
 		body('acquisition.object_price')
 			.if(body('acquisition').exists())
 			.isNumeric().withMessage("It Should be Numeric"),
