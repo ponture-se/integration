@@ -69,7 +69,7 @@ function saveAppValidation() {
 			.if(body('acquisition').exists())
 			.isNumeric().withMessage('It Should be Numeric')
 			.matches(/^([0-9]){6}-?([0-9]){4}$/).withMessage('Invalid Pattern')
-			.optional(),
+			.optional({ checkFalsy: true }),
 		body('acquisition.object_price')
 			.if(body('acquisition').exists())
 			.isNumeric().withMessage("It Should be Numeric"),
