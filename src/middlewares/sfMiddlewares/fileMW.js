@@ -4,6 +4,7 @@ const apiLogger = require('../apiLogger');
 const logger = require('../../controllers/customeLogger');
 const multer = require('multer');
 const dotenv = require('dotenv');
+const fs = require('fs');
 dotenv.config();
 
 
@@ -95,12 +96,46 @@ function fileFilter (req, file, callback) {
     }
 
     callback(null, true);
-  };
+}
+
+async function downloadFile(req, res, next) {
+    let resBody;
+    // let sfToken = req.query.access_token;
+    let sfConn = req.needs.sfConn;
+    // let sfToken = req.sf_access_token;
+    let fileId = req.query.fileId;
+
+    let fileData = await fileController.getContentVersionWithFileId(fileId, sfConn);
+
+    if (fileData == null) {
+        resBody = myResponse(false, null, 500, 'Can not get file. Please recheck file Id and try again.');
+        res.status(500).send(resBody);
+        return next();
+    } else {
+        let fileName = Date.now().toString() + ' ' + fileData.title;
+
+        await fileController.downloadFileAsStream(fileId, fileName, sfConn, function (err) {
+            if (err) {
+                resBody = myResponse(false, null, 500, 'downloadFile Func Throw Error', err);
+                logger.error('downloadFile Func Throw Error', {metadata: resBody});
+    
+                res.status(500).send(resBody);
+                return next();
+            } else {
+                let fileAddr = './tempStorage/' + fileName;
+                res.status(200).download(fileAddr);
+            }
+            
+        });
+    }
+
+}
 
 
 module.exports = {
     uploadFile,
     uploadFileExtraValidation,
     uploadErrorHandler,
-    fileFilter
+    fileFilter,
+    downloadFile
 }
