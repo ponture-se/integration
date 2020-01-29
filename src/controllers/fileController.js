@@ -154,7 +154,6 @@ async function getContentVersionWithFileId(fileId, sfConn = undefined){
                             content: cvItem.VersionData
                         };
         
-        console.log(cvsInfo);
         return cvsInfo;
     } catch(e) {
         console.log("getContentVersionWithFileId:", e);
