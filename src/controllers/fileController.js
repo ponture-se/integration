@@ -4,9 +4,11 @@ const fResult = require('./functionResult');
 const _ = require("lodash");
 const crudHelper = require('./sfHelpers/crudHelper');
 const mime = require('mime-types');
-const { salesforceException } = require('./customeException');
+const { salesforceException, externalCalloutException } = require('./customeException');
 const fs = require('fs');
 const mlog = require('./customeLogger');
+const axios = require('axios');
+const logger = require('./customeLogger');
 
 
 // async function insertFileInSf(sfConn, title, fileExtension, content){
@@ -120,13 +122,41 @@ async function getContentVersion(cdIds, sfConn = undefined){
                                             cdId: item.ContentDocumentId,
                                             id : item.Id,
                                             title : item.Title,
-                                            fileExtension : item.FileExtension
+                                            fileExtension : item.FileExtension,
+                                            content: item.VersionData
                                             };
                                         });
-        
+        console.log(cvsInfo);
         return cvsInfo;
     } catch(e) {
         console.log("getContentVersion:", e);
+        return null;
+    }
+}
+
+async function getContentVersionWithFileId(fileId, sfConn = undefined){
+    try{
+        if (sfConn == undefined){
+            sfConn = await myToolkit.makeSFConnection();
+            if (sfConn == null){
+                return null;
+            }
+        }
+
+        let where = {Id : fileId};
+
+        let cvItem = await queryHelper.getSingleQueryResult(sfConn, "ContentVersion", where);
+        let cvsInfo = {
+                            cdId: cvItem.ContentDocumentId,
+                            id : cvItem.Id,
+                            title : cvItem.Title,
+                            fileExtension : cvItem.FileExtension,
+                            content: cvItem.VersionData
+                        };
+        
+        return cvsInfo;
+    } catch(e) {
+        console.log("getContentVersionWithFileId:", e);
         return null;
     }
 }
@@ -224,9 +254,26 @@ async function detachedAllFilesFromTargetId(targetId, sfConn = undefined) {
     }
 }
 
+
+async function downloadFileAsStream(fileId, fileName, sfConn, callback) {
+    // body payload structure is depending to the Apex REST method interface.
+    var param = "?id=" + fileId;
+    let result;
+    try {
+        result = await sfConn.apex.get("/getFile" + param);
+        fs.writeFile('./tempStorage/' + fileName, result.data.content, {encoding: 'base64'}, callback);
+
+    } catch (err) {
+        logger.error('downloadFileAsStream Error', { metadata: err });
+    }
+
+}
+
 module.exports = {
+    downloadFileAsStream,
     getAttachedFilesinfo,
     insertFileInSf,
     assignFileToTargetRecord,
-    detachedAllFilesFromTargetId
+    detachedAllFilesFromTargetId,
+    getContentVersionWithFileId
 }

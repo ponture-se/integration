@@ -10,6 +10,7 @@ const validate = require("../middlewares/validate");
 const fileValidationRules = require("../models/fileModel");
 // var auth = require("../controllers/auth");
 const multer = require('multer');
+const auth = require("../controllers/auth");
 
 const fileSizeLimit = parseInt(process.env.FILE_SIZE_LIMIT) || 10500000;
 
@@ -27,6 +28,11 @@ router.post('/upload',
             },
             fileMW.uploadFileExtraValidation,
             fileMW.uploadFile);
+
+router.get('/download',
+            auth.verifyToken,
+            getSFConnection,
+            fileMW.downloadFile);
 
 
 module.exports = router;
