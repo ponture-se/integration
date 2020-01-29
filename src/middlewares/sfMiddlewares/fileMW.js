@@ -100,9 +100,7 @@ function fileFilter (req, file, callback) {
 
 async function downloadFile(req, res, next) {
     let resBody;
-    // let sfToken = req.query.access_token;
     let sfConn = req.needs.sfConn;
-    // let sfToken = req.sf_access_token;
     let fileId = req.query.fileId;
 
     let fileData = await fileController.getContentVersionWithFileId(fileId, sfConn);
