@@ -316,10 +316,19 @@ async function fillRequestOfSavedOpp(req, res, next) {
     const oppId = req.body.oppId;
     let resBody;
     let hasResponse = false;
+    let recordTypeName;
 
     if (oppId != null && oppId.trim() != '') {
         try{
             let savedOppData = await opportunityController.getSavedOppRequiredDataById(sfConn, oppId);
+            // console.log(savedOppData);
+            logger.info('savedOppData', {metadata: savedOppData});
+            try {
+                recordTypeName = await myToolkit.getRecordTypeName(sfConn, 'opportunity', savedOppData.RecordTypeId);
+            } catch (e) {
+                logger.error('getRecordTypeName func => fillRequestOfSavedOpp', e);
+                recordTypeName = null;
+            }
 
             if (savedOppData == null) {
                 resBody = myResponse(false, null, 400, 'oppId is invalid');
@@ -337,9 +346,9 @@ async function fillRequestOfSavedOpp(req, res, next) {
 
                 hasResponse = true;
             } else {
-                req.body.orgNumber = req.body.orgNumber || savedOppData.Account.Organization_Number__c;
-                req.body.orgName = req.body.orgName || savedOppData.Account.Name;
-                req.body.personalNumber = req.body.personalNumber || savedOppData.PrimaryContact__r.Personal_Identity_Number__c;
+                req.body.orgNumber = req.body.orgNumber || (savedOppData.Account) ? savedOppData.Account.Organization_Number__c : null;
+                req.body.orgName = req.body.orgName || (savedOppData.Account) ? savedOppData.Account.Name : null;
+                req.body.personalNumber = req.body.personalNumber || (savedOppData.PrimaryContact__r) ? savedOppData.PrimaryContact__r.Personal_Identity_Number__c : null;
                 req.body.amount = req.body.amount || savedOppData.Amount;
                 req.body.amourtizationPeriod = req.body.amourtizationPeriod || savedOppData.AmortizationPeriod__c;
                 req.body.need = req.body.need || savedOppData.Need__c.split(';');
@@ -351,7 +360,51 @@ async function fillRequestOfSavedOpp(req, res, next) {
                 req.body.ad_gd = req.body.ad_gd || savedOppData.Last_referral_date__c;
                 req.body.bankid = {
                     userInfo : {
-                        name : savedOppData.PrimaryContact__r.Name
+                        name : (savedOppData.PrimaryContact__r) ? savedOppData.PrimaryContact__r.Name : null
+                    }
+                }
+
+                if (recordTypeName && recordTypeName == 'Business Acquisition Loan'){
+                    // acqusition data
+                    req.body.acquisition = {
+                        object_name : savedOppData.Object_Name__c,
+                        object_organization_number: (savedOppData.Acquisition_Object__r) ? savedOppData.Acquisition_Object__r.Organization_Number__c : null,
+                        object_company_name : (savedOppData.Acquisition_Object__r) ? savedOppData.Acquisition_Object__r.Name : null,
+                        object_price: savedOppData.Object_Price__c,
+                        object_industry: savedOppData.Object_Industry__c,
+                        object_annual_report: savedOppData.Object_Annual_Report__c,
+                        object_balance_sheet: savedOppData.Object_Balance_Sheet__c,
+                        object_income_statement: savedOppData.Object_Income_Statement__c,
+                        object_valuation_letter: savedOppData.Object_Valuation_Letter__c,
+                        account_balance_sheet: savedOppData.Account_Balance_Sheet__c,
+                        account_income_statement: savedOppData.Account_Income_Statement__c,
+                        available_guarantees: savedOppData.Available_Guarantees__c,
+                        available_guarantees_description: savedOppData.Available_Guarantees_Description__c,
+                        purchaser_profile: savedOppData.Purchaser_Profile__c,
+                        own_investment_amount: savedOppData.Own_Investment_Amount__c,
+                        own_investment_details: savedOppData.Own_Investment_Details__c,
+                        additional_files: (savedOppData.Additional_files__c != null) ? savedOppData.Additional_files__c.split(';') : null,
+                        business_plan: (savedOppData.Business_Plan__c != null) ? savedOppData.Business_Plan__c.split(';') : null,
+                        additional_details: savedOppData.Additional_details__c,
+                        purchase_type: savedOppData.Purchase_type__c,
+                        description: savedOppData.Description
+                    }
+                } else if (recordTypeName && recordTypeName == 'Real Estate') {
+                    // real_estate data
+                    req.body.real_estate = {
+                        real_estate_type : savedOppData.Real_Estate_Type__c,
+                        real_estate_usage_category : (savedOppData.Real_Estate_Usage_Category__c) ? savedOppData.Real_Estate_Usage_Category__c.split(',') : null,
+                        real_estate_price : savedOppData.Real_Estate_Price__c,
+                        real_estate_taxation_value : savedOppData.Real_Estate_Taxation_Value__c,
+                        real_estate_size : savedOppData.Real_Estate_Size__c,
+                        real_estate_address : savedOppData.Real_Estate_Address__c,
+                        real_estate_city : savedOppData.Real_Estate_City__c,
+                        real_estate_link : savedOppData.Real_Estate_Link__c,
+                        real_estate_description : savedOppData.Real_Estate_Description__c,
+                        real_estate_document : savedOppData.Real_Estate_Document__c,
+                        own_investment_amount : savedOppData.Own_Investment_Amount__c,
+                        description : savedOppData.Description,
+                        additional_details : savedOppData.Additional_details__c
                     }
                 }
             }
