@@ -970,7 +970,9 @@ async function getSavedOppRequiredDataById(sfConn, oppId){
 						account.Name, 
 						account.Organization_Number__c,
 						PrimaryContact__r.Name,
-						PrimaryContact__r.Personal_Identity_Number__c
+						PrimaryContact__r.Personal_Identity_Number__c,
+						Acquisition_Object__r.Name,
+						Acquisition_Object__r.Organization_Number__c
 						`;
 
 	let result = await queryHelper.getSingleQueryResult(sfConn, 'Opportunity', whereCluase, selectCluase);

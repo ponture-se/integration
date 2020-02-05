@@ -27,6 +27,16 @@ async function getRecordTypeId(sfConn, sObjName, recordTypeName){
 
 }
 
+async function getRecordTypeName(sfConn, sObjName, recordTypeId){
+    let result;
+    
+    let sObjDescribe = await sfConn.sobject(sObjName).describe();
+    let recordTypesList = sObjDescribe.recordTypeInfos;
+    result = recordTypesList.find(o => o.recordTypeId == recordTypeId).name;
+
+    return result;
+}
+
 function isJSON(req, res, next){
     bodyParser.json()(req, res, err => {
         if (err) {
@@ -105,6 +115,7 @@ function getFormattedDate() {
 
 module.exports = {
     getRecordTypeId,
+    getRecordTypeName,
     isJSON,
     fixPhoneNumber,
     makeSFConnection,
