@@ -30,7 +30,7 @@ router.post('/upload',
             fileMW.uploadFile);
 
 router.get('/download',
-            auth.verifyToken,
+            // auth.verifyToken,
             getSFConnection,
             fileMW.downloadFile);
 
