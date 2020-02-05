@@ -321,8 +321,7 @@ async function fillRequestOfSavedOpp(req, res, next) {
     if (oppId != null && oppId.trim() != '') {
         try{
             let savedOppData = await opportunityController.getSavedOppRequiredDataById(sfConn, oppId);
-            // console.log(savedOppData);
-            logger.info('savedOppData', {metadata: savedOppData});
+            
             try {
                 recordTypeName = await myToolkit.getRecordTypeName(sfConn, 'opportunity', savedOppData.RecordTypeId);
             } catch (e) {
@@ -351,6 +350,8 @@ async function fillRequestOfSavedOpp(req, res, next) {
                 req.body.personalNumber = req.body.personalNumber || (savedOppData.PrimaryContact__r) ? savedOppData.PrimaryContact__r.Personal_Identity_Number__c : null;
                 req.body.amount = req.body.amount || savedOppData.Amount;
                 req.body.amourtizationPeriod = req.body.amourtizationPeriod || savedOppData.AmortizationPeriod__c;
+                req.body.email = req.body.email || (savedOppData.PrimaryContact__r) ? savedOppData.PrimaryContact__r.Email : null;
+                req.body.phoneNumber = req.body.phoneNumber || (savedOppData.PrimaryContact__r) ? savedOppData.PrimaryContact__r.Phone || savedOppData.PrimaryContact__r.MobilePhone : null;
                 req.body.need = req.body.need || savedOppData.Need__c.split(';');
                 req.body.needDescription = req.body.needDescription || savedOppData.NeedDescription__c;
                 req.body.referral_id = req.body.referral_id || savedOppData.Referral_ID__c;
