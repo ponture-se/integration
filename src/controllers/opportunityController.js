@@ -171,15 +171,15 @@ exports.submit = [
 	.withMessage("Personal number is invalid")
 	.matches(/^(19|20)?[0-9]{2}(0|1)[0-9][0-3][0-9][-]?[0-9]{4}$/)
 	.withMessage("Personal number is in invalid format"),
-	// body("orgNumber", "Organization number is required")
-	// .isNumeric()
-	// .not()
-	// .isEmpty()
-	// .isLength({
-	// 	min: 9,
-	// 	max: 10
-	// })
-	// .withMessage("Organization number is invalid"),
+	body("orgNumber", "Organization number is required")
+	.isNumeric()
+	.not()
+	.isEmpty()
+	.isLength({
+		min: 9,
+		max: 10
+	})
+	.withMessage("Organization number is invalid"),
 	body("orgName", "Organization name is required")
 	.isString()
 	.isLength({
