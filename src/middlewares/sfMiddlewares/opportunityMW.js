@@ -352,7 +352,7 @@ async function fillRequestOfSavedOpp(req, res, next) {
                 req.body.amourtizationPeriod = req.body.amourtizationPeriod || savedOppData.AmortizationPeriod__c;
                 req.body.email = req.body.email || (savedOppData.PrimaryContact__r) ? savedOppData.PrimaryContact__r.Email : null;
                 req.body.phoneNumber = req.body.phoneNumber || (savedOppData.PrimaryContact__r) ? savedOppData.PrimaryContact__r.Phone || savedOppData.PrimaryContact__r.MobilePhone : null;
-                req.body.need = req.body.need || savedOppData.Need__c.split(';');
+                req.body.need = req.body.need || (savedOppData.Need__c) ? savedOppData.Need__c.split(';') : null;
                 req.body.needDescription = req.body.needDescription || savedOppData.NeedDescription__c;
                 req.body.referral_id = req.body.referral_id || savedOppData.Referral_ID__c;
                 req.body.utm_source = req.body.utm_source || savedOppData.UTM_Source__c;
@@ -390,6 +390,8 @@ async function fillRequestOfSavedOpp(req, res, next) {
                         purchase_type: savedOppData.Purchase_type__c,
                         description: savedOppData.Description
                     }
+
+                    req.body.acquisition = _.omitBy(req.body.acquisition, _.isNull);
                 } else if (recordTypeName && recordTypeName == 'Real Estate') {
                     // real_estate data
                     req.body.real_estate = {
@@ -407,7 +409,11 @@ async function fillRequestOfSavedOpp(req, res, next) {
                         description : savedOppData.Description,
                         additional_details : savedOppData.Additional_details__c
                     }
+
+                    req.body.real_estate = _.omitBy(req.body.real_estate, _.isNull);
                 }
+
+                req.body = _.omitBy(req.body, _.isNull);
             }
 
         } catch (e) {
