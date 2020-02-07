@@ -25,8 +25,8 @@ router.post(
   auth.getSalesForceToken,
   getSFConnection,
   opportunityMW.fillRequestOfSavedOpp,
-  // opportunityValidationRules.submitValidation(),
-  // validate,
+  opportunityValidationRules.submitValidation(),
+  validate,
   controller.submit
 );
 
