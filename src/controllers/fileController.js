@@ -261,6 +261,11 @@ async function downloadFileAsStream(fileId, fileName, sfConn, callback) {
     let result;
     try {
         result = await sfConn.apex.get("/getFile" + param);
+
+        fs.mkdir('./tempStorage/', { recursive: true }, (err) => {
+            if (err) throw err;
+        });
+
         fs.writeFile('./tempStorage/' + fileName, result.data.content, {encoding: 'base64'}, callback);
 
     } catch (err) {
