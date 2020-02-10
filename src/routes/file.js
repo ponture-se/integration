@@ -29,7 +29,7 @@ router.post('/upload',
             fileMW.uploadFileExtraValidation,
             fileMW.uploadFile);
 
-router.get('/download',
+router.get('/download/:fileId',
             // auth.verifyToken,
             getSFConnection,
             fileMW.downloadFile);
