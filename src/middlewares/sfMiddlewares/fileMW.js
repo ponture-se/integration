@@ -101,9 +101,11 @@ function fileFilter (req, file, callback) {
 async function downloadFile(req, res, next) {
     let resBody;
     let sfConn = req.needs.sfConn;
-    let fileId = req.query.fileId;
+    let fileId = req.params.fileId;
 
-    let fileData = await fileController.getContentVersionWithFileId(fileId, sfConn);
+    // let fileData = await fileController.getContentVersionWithFileId(fileId, sfConn);
+    fileId = fileId.split('.')[0];
+    let fileData = await fileController.getContentVersionWithCustomFileId(fileId, sfConn);
 
     if (fileData == null) {
         resBody = myResponse(false, null, 500, 'Can not get file. Please recheck file Id and try again.');
@@ -112,19 +114,25 @@ async function downloadFile(req, res, next) {
     } else {
         let fileName = Date.now().toString() + ' ' + fileData.title;
 
-        await fileController.downloadFileAsStream(fileId, fileName, sfConn, function (err) {
-            if (err) {
-                resBody = myResponse(false, null, 500, 'downloadFile Func Throw Error', err);
-                logger.error('downloadFile Func Throw Error', {metadata: resBody});
-    
-                res.status(500).send(resBody);
-                return next();
-            } else {
-                let fileAddr = './tempStorage/' + fileName;
-                res.status(200).download(fileAddr);
-            }
-            
-        });
+        try {
+            await fileController.downloadFileAsStream(fileData.id, fileName, sfConn, function (err) {
+                if (err) {
+                    resBody = myResponse(false, null, 500, 'downloadFile Func Throw Error', err);
+                    logger.error('downloadFile Func Throw Error', {metadata: resBody});
+        
+                    res.status(500).send(resBody);
+                    return next();
+                } else {
+                    let fileAddr = './tempStorage/' + fileName;
+                    res.status(200).download(fileAddr);
+                }
+                
+            });
+        } catch (err) {
+            resBody = myResponse(false, null, err.statusCode || 500, err.message, err);
+            res.status(resBody.statusCode).send(resBody);
+            return next();
+        }
     }
 
 }
