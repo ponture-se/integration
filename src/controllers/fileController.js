@@ -55,8 +55,10 @@ async function insertFileInSf(sfConn, file){
         };
 
         let ret = await sfConn.sobject('ContentVersion').create(payload);
-        if (ret.success){
-            result = fResult(true, {id : ret.id});
+        let fileInfo = await queryHelper.getSingleQueryResult(sfConn, 'ContentVersion', {Id : ret.id});
+
+        if (ret.success && fileInfo){
+            result = fResult(true, {id : fileInfo.File_ID__c + '.' + fileExtension});
         } else {
             console.log('File could not created.', ret.errors);
             result = fResult(false, null , ret.errors, 'File could not created.');
@@ -144,6 +146,35 @@ async function getContentVersionWithFileId(fileId, sfConn = undefined){
         }
 
         let where = {Id : fileId};
+
+        let cvItem = await queryHelper.getSingleQueryResult(sfConn, "ContentVersion", where);
+        let cvsInfo = {
+                            cdId: cvItem.ContentDocumentId,
+                            id : cvItem.Id,
+                            title : cvItem.Title,
+                            fileExtension : cvItem.FileExtension,
+                            content: cvItem.VersionData
+                        };
+        
+        return cvsInfo;
+    } catch(e) {
+        console.log("getContentVersionWithFileId:", e);
+        return null;
+    }
+}
+
+
+
+async function getContentVersionWithCustomFileId(fileId, sfConn = undefined){
+    try{
+        if (sfConn == undefined){
+            sfConn = await myToolkit.makeSFConnection();
+            if (sfConn == null){
+                return null;
+            }
+        }
+
+        let where = {File_ID__c : fileId};
 
         let cvItem = await queryHelper.getSingleQueryResult(sfConn, "ContentVersion", where);
         let cvsInfo = {
@@ -270,6 +301,7 @@ async function downloadFileAsStream(fileId, fileName, sfConn, callback) {
 
     } catch (err) {
         logger.error('downloadFileAsStream Error', { metadata: err });
+        throw err;
     }
 
 }
@@ -280,5 +312,6 @@ module.exports = {
     insertFileInSf,
     assignFileToTargetRecord,
     detachedAllFilesFromTargetId,
-    getContentVersionWithFileId
+    getContentVersionWithFileId,
+    getContentVersionWithCustomFileId
 }
