@@ -9,17 +9,7 @@
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "program": "${workspaceFolder}/src/bin/www",
-            "env":
-            {
-                "ACCESS_TOKEN" : "1059b83f-72da-47ae-a4f2-5db923545fbd",
-                "ROARING_USERNAME":"7WdiQzeZHTNUbReQMt4dwUpAYNoa",
-                "ROARING_PASSWORD":"_Mk3choT6cARfmaXdwymWKROpE0a",
-                "SALESFORCE_CLIENTID" :"3MVG9X0_oZyBSzHrbClmOrbkZ1gywFDNc9RqwUrlM5muJFnPZ77Ay2Qj3U7mdCWLIkdCt39wBlHeRREjkwnmd",
-                "SALESFORCE_CLIENT_SECRET" : "1476FF2BBF5848B8C39F4B572F1B3D24593676626860BB19B2D3028DAF446C60",
-                "SALESFORCE_PASSWORD": "HamedHero2020#",
-                "SALESFORCE_USERNAME" : "hamed-3eph@force.com.migratest3"
-                        }
+            "program": "${workspaceFolder}/src/bin/www"
         },
         {
             "type": "node",
