@@ -230,16 +230,9 @@ async function assignFileToTargetRecord(fileIds, targetId, sfConn = undefined) {
         }
         
         let payload = [];
-        logger.info('assignFileToTargetRecord - fileIds', {metadata: fileIds});
         // let files = await crudHelper.readSobjectInSf(sfConn, 'ContentVersion', fileIds);
-        let trueFileIds = fileIds.filter(item => {if (item instanceof String) return item.split('.')[0]});
-
-        logger.info('assignFileToTargetRecord - trueFileIds', {metadata: trueFileIds});
-        
+        let trueFileIds = fileIds.filter(item => {if (typeof item == 'string') return item.split('.')[0]});
         let files = await queryHelper.getQueryResult(sfConn, 'ContentVersion', {File_ID__c: trueFileIds});
-
-        logger.info('assignFileToTargetRecord - files', {metadata: files});
-
 
         files.forEach(f => {
             if (f != null) {
@@ -251,13 +244,8 @@ async function assignFileToTargetRecord(fileIds, targetId, sfConn = undefined) {
             }
         });
 
-        logger.info('assignFileToTargetRecord - payload', {metadata: payload});
-
-
         let result = await crudHelper.insertSobjectInSf(sfConn, 'ContentDocumentLink', payload);
-
-        logger.info('assignFileToTargetRecord - result', {metadata: result});
-
+        
         if (result) {
             return result;
         } else {
