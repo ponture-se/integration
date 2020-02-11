@@ -229,9 +229,11 @@ async function assignFileToTargetRecord(fileIds, targetId, sfConn = undefined) {
             }
         }
         
-        let payload = [];
+        let payload = []
+            ,trueFileIds = [];
+        
         // let files = await crudHelper.readSobjectInSf(sfConn, 'ContentVersion', fileIds);
-        let trueFileIds = fileIds.filter(item => {if (typeof item == 'string') return item.split('.')[0]});
+        fileIds.filter(item => {if (typeof item == 'string')  trueFileIds.push(item.split('.')[0])});
         let files = await queryHelper.getQueryResult(sfConn, 'ContentVersion', {File_ID__c: trueFileIds});
 
         files.forEach(f => {
