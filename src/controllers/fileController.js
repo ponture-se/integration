@@ -230,17 +230,25 @@ async function assignFileToTargetRecord(fileIds, targetId, sfConn = undefined) {
         }
         
         let payload = [];
-        let files = await crudHelper.readSobjectInSf(sfConn, 'ContentVersion', fileIds);
+        
+        // let files = await crudHelper.readSobjectInSf(sfConn, 'ContentVersion', fileIds);
+        let trueFileIds = fileIds.map(item => item.split('.')[0]);
+        let files = await queryHelper.getQueryResult(sfConn, 'ContentVersion', {File_ID__c: trueFileIds});
+
 
         files.forEach(f => {
-            payload.push({
-                ContentDocumentId : f.ContentDocumentId,
-                LinkedEntityId : targetId,
-                ShareType : 'V'
-            });
+            if (f != null) {
+                payload.push({
+                    ContentDocumentId : f.ContentDocumentId,
+                    LinkedEntityId : targetId,
+                    ShareType : 'V'
+                });
+            }
         });
 
+
         let result = await crudHelper.insertSobjectInSf(sfConn, 'ContentDocumentLink', payload);
+
         if (result) {
             return result;
         } else {
