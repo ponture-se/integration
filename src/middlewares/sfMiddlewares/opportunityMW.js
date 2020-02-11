@@ -147,8 +147,8 @@ async function saveApplicationApi(req, res, next) {
         if(acquisitionReq.object_income_statement) toBeAttachedFiledIds.push(acquisitionReq.object_income_statement);
         if(acquisitionReq.account_balance_sheet) toBeAttachedFiledIds.push(acquisitionReq.account_balance_sheet);
         if(acquisitionReq.account_income_statement) toBeAttachedFiledIds.push(acquisitionReq.account_income_statement);
-        if(acquisitionReq.additional_files.length) toBeAttachedFiledIds = toBeAttachedFiledIds.concat(acquisitionReq.additional_files);
-        if(acquisitionReq.business_plan.length) toBeAttachedFiledIds = toBeAttachedFiledIds.concat(acquisitionReq.business_plan);
+        if(acquisitionReq.additional_files && acquisitionReq.additional_files.length) toBeAttachedFiledIds = toBeAttachedFiledIds.concat(acquisitionReq.additional_files);
+        if(acquisitionReq.business_plan && acquisitionReq.business_plan.length) toBeAttachedFiledIds = toBeAttachedFiledIds.concat(acquisitionReq.business_plan);
 
     }
 
