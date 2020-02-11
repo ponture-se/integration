@@ -232,7 +232,7 @@ async function assignFileToTargetRecord(fileIds, targetId, sfConn = undefined) {
         let payload = [];
         logger.info('assignFileToTargetRecord - fileIds', {metadata: fileIds});
         // let files = await crudHelper.readSobjectInSf(sfConn, 'ContentVersion', fileIds);
-        let trueFileIds = fileIds.map(item => item.split('.')[0]);
+        let trueFileIds = fileIds.map(item => {if (item instanceof String) item.split('.')[0]});
         let files = await queryHelper.getQueryResult(sfConn, 'ContentVersion', {File_ID__c: trueFileIds});
 
         logger.info('assignFileToTargetRecord - files', {metadata: files});
