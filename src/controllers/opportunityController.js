@@ -171,15 +171,15 @@ exports.submit = [
 	.withMessage("Personal number is invalid")
 	.matches(/^(19|20)?[0-9]{2}(0|1)[0-9][0-3][0-9][-]?[0-9]{4}$/)
 	.withMessage("Personal number is in invalid format"),
-	body("orgNumber", "Organization number is required")
-	.isNumeric()
-	.not()
-	.isEmpty()
-	.isLength({
-		min: 9,
-		max: 10
-	})
-	.withMessage("Organization number is invalid"),
+	// body("orgNumber", "Organization number is required")
+	// .isNumeric()
+	// .not()
+	// .isEmpty()
+	// .isLength({
+	// 	min: 9,
+	// 	max: 10
+	// })
+	// .withMessage("Organization number is invalid"),
 	body("orgName", "Organization name is required")
 	.isString()
 	.isLength({
@@ -256,167 +256,187 @@ exports.submit = [
 			res.body = resBody;
 			return next();
 		} else {
-			var token = req.roaring_access_token;
-			var tasks = {
-				overview: function (callback) {
-					callRoaring(
-						callback,
-						"/se/company/overview/1.1/" + req.body.orgNumber,
-						"get",
-						undefined,
-						"COMPANY_OVERVIEW_INVALID_RESPONSE",
-						"COMPANY_OVERVIEW_API_ERROR",
-						token
-					);
-				},
-				ecoOverview: function (callback) {
-					callRoaring(
-						callback,
-						"/se/company/economy-overview/1.1/" + req.body.orgNumber,
-						"get",
-						undefined,
-						"COMPANY_ECOOVERVIEW_INVALID_RESPONSE",
-						"COMPANY_ECOOVERVIEW_API_ERROR",
-						token
-					);
-				},
-				boardMembers: function (callback) {
-					callRoaring(
-						callback,
-						"/se/company/board-members/1.1/" + req.body.orgNumber,
-						"get",
-						undefined,
-						"COMPANY_BOARDMEMBERS_INVALID_RESPONSE",
-						"COMPANY_BOARDMEMBERS_API_ERROR",
-						token
-					);
-				},
-				beneficialOwners: function (callback) {
-					callRoaring(
-						callback,
-						"/se/beneficialowner/1.0/company/" + req.body.orgNumber,
-						"get",
-						undefined,
-						"COMPANY_BENEFICIAL_INVALID_RESPONSE",
-						"COMPANY_BENEFICIAL_API_ERROR",
-						token
-					);
-				},
-				signatory: function (callback) {
-					callRoaring(
-						callback,
-						"/se/company/signatory/1.1/" + req.body.orgNumber,
-						"get",
-						undefined,
-						"COMPANY_SIGNATORY_INVALID_RESPONSE",
-						"COMPANY_SIGNATORY_API_ERROR",
-						token
-					);
-				},
-				cmpSanctionInfo: function (callback) {
-					callRoaring(
-						callback,
-						"/global/sanctions-lists/1.0/search",
-						"get", {
-							name: req.body.orgName
-						},
-						"COMPANY_SANCTION_INVALID_RESPONSE",
-						"COMPANY_SANCTION_API_ERROR",
-						token
-					);
-				},
-				perSanctionInfo: function (callback) {
-					callRoaring(
-						callback,
-						"/global/sanctions-lists/1.0/search",
-						"get", {
-							name: req.body.bankid.userInfo.name
-						},
-						"PERSON_SACNTION_INVALID_RESPONSE",
-						"PERSON_SACNTION_API_ERROR",
-						token
-					);
-				},
-				pepInfo: function (callback) {
-					callRoaring(
-						callback,
-						"/nordic/pep/1.0/search",
-						"get", {
-							personalNumber: req.body.personalNumber,
-							countryCode: "se"
-						},
-						"PEP_INVALID_RESPONSE",
-						"PEP_API_ERROR",
-						token
-					);
+			// check if the company is real or not, so we can decide to call roaring or not
+			const isFakeCompany = ((req.body.orgNumber == null || (req.body.orgNumber != null && req.body.orgNumber.trim() == ''))
+									&& req.body.need != null
+									&& req.body.need.length != 0
+									&& req.body.need.includes('purchase_of_business'));
+
+			logger.info('Check Fake Company', {metadata: {
+				orgNumber: req.body.orgNumber,
+				need: req.body.need,
+				isFakeCompany: isFakeCompany
+			}})
+
+			// Here we should add a if condition to decide based on company truthiness
+			if (!isFakeCompany) {
+				var token = req.roaring_access_token;
+				var tasks = {
+					overview: function (callback) {
+						callRoaring(
+							callback,
+							"/se/company/overview/1.1/" + req.body.orgNumber,
+							"get",
+							undefined,
+							"COMPANY_OVERVIEW_INVALID_RESPONSE",
+							"COMPANY_OVERVIEW_API_ERROR",
+							token
+						);
+					},
+					ecoOverview: function (callback) {
+						callRoaring(
+							callback,
+							"/se/company/economy-overview/1.1/" + req.body.orgNumber,
+							"get",
+							undefined,
+							"COMPANY_ECOOVERVIEW_INVALID_RESPONSE",
+							"COMPANY_ECOOVERVIEW_API_ERROR",
+							token
+						);
+					},
+					boardMembers: function (callback) {
+						callRoaring(
+							callback,
+							"/se/company/board-members/1.1/" + req.body.orgNumber,
+							"get",
+							undefined,
+							"COMPANY_BOARDMEMBERS_INVALID_RESPONSE",
+							"COMPANY_BOARDMEMBERS_API_ERROR",
+							token
+						);
+					},
+					beneficialOwners: function (callback) {
+						callRoaring(
+							callback,
+							"/se/beneficialowner/1.0/company/" + req.body.orgNumber,
+							"get",
+							undefined,
+							"COMPANY_BENEFICIAL_INVALID_RESPONSE",
+							"COMPANY_BENEFICIAL_API_ERROR",
+							token
+						);
+					},
+					signatory: function (callback) {
+						callRoaring(
+							callback,
+							"/se/company/signatory/1.1/" + req.body.orgNumber,
+							"get",
+							undefined,
+							"COMPANY_SIGNATORY_INVALID_RESPONSE",
+							"COMPANY_SIGNATORY_API_ERROR",
+							token
+						);
+					},
+					cmpSanctionInfo: function (callback) {
+						callRoaring(
+							callback,
+							"/global/sanctions-lists/1.0/search",
+							"get", {
+								name: req.body.orgName
+							},
+							"COMPANY_SANCTION_INVALID_RESPONSE",
+							"COMPANY_SANCTION_API_ERROR",
+							token
+						);
+					},
+					perSanctionInfo: function (callback) {
+						callRoaring(
+							callback,
+							"/global/sanctions-lists/1.0/search",
+							"get", {
+								name: req.body.bankid.userInfo.name
+							},
+							"PERSON_SACNTION_INVALID_RESPONSE",
+							"PERSON_SACNTION_API_ERROR",
+							token
+						);
+					},
+					pepInfo: function (callback) {
+						callRoaring(
+							callback,
+							"/nordic/pep/1.0/search",
+							"get", {
+								personalNumber: req.body.personalNumber,
+								countryCode: "se"
+							},
+							"PEP_INVALID_RESPONSE",
+							"PEP_API_ERROR",
+							token
+						);
+					}
+				};
+				var roaring;
+				async.parallel(async.reflectAll(tasks),
+					function (errors, results) {
+						console.log(JSON.stringify(results));
+						if (!results ||
+							(results && _.size(results) == 0) ||
+							!results.hasOwnProperty('overview') ||
+							(results.hasOwnProperty('overview') && !results.overview.hasOwnProperty('value'))) {
+
+							resBody = myResponse(false, null, 400, "Some Problems in Roaring API.", errors);
+							console.log(resBody);
+							res.status(400).send(resBody);
+							res.body = resBody;
+							return next();
+						} else {
+							for (var attr in results) req.body[attr] = results[attr].value;
+						}
+					});
+			} else {
+				req.body.overview = {
+					companyId: "",
+					___realCompany___: false
+				}
+			}
+			token = req.sf_access_token;
+			var apiRoot =
+				process.env.SALESFORCE_API_ROOT || "https://cs85.salesforce.com"; // for prod set to https://api.zignsec.com/v2
+			var config = {
+				url: "/services/apexrest/submitWithoutCallout",
+				baseURL: apiRoot,
+				method: "post",
+				data: req.body,
+				headers: {
+					Authorization: "Bearer " + token
 				}
 			};
-			var roaring;
-			async.parallel(async.reflectAll(tasks),
-				function (errors, results) {
-					console.log(JSON.stringify(results));
-					if (!results ||
-						(results && _.size(results) == 0) ||
-						!results.hasOwnProperty('overview') ||
-						(results.hasOwnProperty('overview') && !results.overview.hasOwnProperty('value'))) {
+			console.log("Sending submit to salesforce : " + config);
+			axios(config)
+				.then(function (response) {
+					console.log(JSON.stringify(response.data));
+					res.status(200).send(response.data);
+					res.body = response.data;
+					return next();
+				})
+				.catch(function (error) {
+					if (error.response) {
+						// The request was made and the server responded with a status code
+						// that falls out of the range of 2xx
+						console.log(error.response.data);
+						console.log(error.response.status);
+						console.log(error.response.headers);
 
-						resBody = myResponse(false, null, 400, "Some Problems in Roaring API.", errors);
-						console.log(resBody);
-						res.status(400).send(resBody);
-						res.body = resBody;
-						return next();
+						res.status(error.response.status).send(error.response.data);
+						res.body = error.response.data;
+					} else if (error.request) {
+						// The request was made but no response was received
+						// `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+						// http.ClientRequest in node.js
+						console.log(error.request);
+						let msg = "No response from BankID server";
+						res.status(500).send(msg);
+						res.body = msg; // For logging purpose
 					} else {
-						for (var attr in results) req.body[attr] = results[attr].value;
-						token = req.sf_access_token;
-						var apiRoot =
-							process.env.SALESFORCE_API_ROOT || "https://cs85.salesforce.com"; // for prod set to https://api.zignsec.com/v2
-						var config = {
-							url: "/services/apexrest/submitWithoutCallout",
-							baseURL: apiRoot,
-							method: "post",
-							data: req.body,
-							headers: {
-								Authorization: "Bearer " + token
-							}
-						};
-						console.log("Sending submit to salesforce : " + config);
-						axios(config)
-							.then(function (response) {
-								console.log(JSON.stringify(response.data));
-								res.status(200).send(response.data);
-								res.body = response.data;
-								return next();
-							})
-							.catch(function (error) {
-								if (error.response) {
-									// The request was made and the server responded with a status code
-									// that falls out of the range of 2xx
-									console.log(error.response.data);
-									console.log(error.response.status);
-									console.log(error.response.headers);
-
-									res.status(error.response.status).send(error.response.data);
-									res.body = error.response.data;
-								} else if (error.request) {
-									// The request was made but no response was received
-									// `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-									// http.ClientRequest in node.js
-									console.log(error.request);
-									let msg = "No response from BankID server";
-									res.status(500).send(msg);
-									res.body = msg; // For logging purpose
-								} else {
-									// Something happened in setting up the request that triggered an Error
-									console.log("Error", error.message);
-									res.status(500).send(error.message);
-									res.body = error.message; // For logging purpose
-								}
-								console.log(error.config);
-								console.log(error.toJSON());
-								// return Promise.reject(error.response);
-								return next();
-							});
+						// Something happened in setting up the request that triggered an Error
+						console.log("Error", error.message);
+						res.status(500).send(error.message);
+						res.body = error.message; // For logging purpose
 					}
+					console.log(error.config);
+					console.log(error.toJSON());
+					// return Promise.reject(error.response);
+					return next();
 				});
 		}
 	}

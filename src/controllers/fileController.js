@@ -236,7 +236,6 @@ async function assignFileToTargetRecord(fileIds, targetId, sfConn = undefined) {
         fileIds.filter(item => {if (typeof item == 'string')  trueFileIds.push(item.split('.')[0])});
         let files = await queryHelper.getQueryResult(sfConn, 'ContentVersion', {File_ID__c: trueFileIds});
 
-
         files.forEach(f => {
             if (f != null) {
                 payload.push({
@@ -247,9 +246,8 @@ async function assignFileToTargetRecord(fileIds, targetId, sfConn = undefined) {
             }
         });
 
-
         let result = await crudHelper.insertSobjectInSf(sfConn, 'ContentDocumentLink', payload);
-
+        
         if (result) {
             return result;
         } else {
