@@ -24,6 +24,7 @@ router.post(
   auth.getRoaringToken,
   auth.getSalesForceToken,
   getSFConnection,
+  opportunityMW.saveAppBeforeSubmit,
   opportunityMW.fillRequestOfSavedOpp,
   opportunityValidationRules.submitValidation(),
   validate,
@@ -70,6 +71,7 @@ router.post(
   validate,
   getSFConnection,
   opportunityMW.saveAppExtraValidation,
+  opportunityMW.prepareSavePayload,
   opportunityMW.saveApplicationApi
 );
 
