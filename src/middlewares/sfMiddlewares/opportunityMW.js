@@ -10,30 +10,63 @@ const queryHelper = require('../../controllers/sfHelpers/queryHelper');
 const crudHelper = require('../../controllers/sfHelpers/crudHelper');
 const auth = require('../../controllers/auth');
 
+const app = require('../../app');
+
 const logger = require('../../controllers/customeLogger');
 
 async function saveApplicationApi(req, res, next) {
     let resBody;
-
-    // const referral_id = req.jwtData.referral_id;
-    // const jwtDataLack = myToolkit.checkJwtTokenEssentialData(req.jwtData, 'referral_id');
-    // if (jwtDataLack.length) {
-    //     resBody = myResponse(false, null, 400, "The token is not provided these data: " + jwtDataLack.join(','));
-    //     res.status(400).send(resBody);
-    //     res.body = resBody;
-    //     return next();
-    // }
-
     const sfConn = req.needs.sfConn;
+
+    let payload = req.needs.payload;
+    let toBeAttachedFiledIds = req.needs.toBeAttachedFiledIds;
+
+    try {
+        let result = await opportunityController.saveApplication(sfConn, payload, toBeAttachedFiledIds);
+
+        if (result) {
+            resBody = myResponse(true, {id: result}, 200, 'Application has been saved.');
+            res.status(200).send(resBody);
+            res.body = resBody;
+        } else {
+            resBody = myResponse(false, null, 500 , 'Unable to save application.');
+            res.status(500).send(resBody);
+            res.body = resBody;
+        }
+    
+    } catch (err) {
+        console.log(err);
+        
+        if (err instanceof salesforceException){
+            resBody = myResponse(false, null, err.statusCode, err.message, err.metadata);
+            res.status(err.statusCode).send(resBody);
+        } else if (err instanceof inputValidationException) {
+            resBody = myResponse(false, null, err.statusCode, err.message, err.metadata);
+            res.status(err.statusCode).send(resBody);
+        } else {
+            resBody = myResponse(false, null, 500, err.message);
+            res.status(500).send(resBody);
+        }
+
+        res.body = resBody;
+    }
+
+    return next();
+}
+
+async function prepareSavePayload(req, res, next) {
+    const sfConn = req.needs.sfConn;
+
     let today = new Date();             // keeps today's date
     let clostDate = today;
-    clostDate.setMonth(clostDate.getMonth() + 1);
-
     let acquisitionReq = req.body.acquisition,
         realEstateReq = req.body.real_estate;
-    
     let toBeAttachedFiledIds = [];
+    let acquisitionPayload = {},
+        realEstatePayload = {},
+        oppRecordTypeId;
 
+    clostDate.setMonth(clostDate.getMonth() + 1);
 
     // Prepare payloads
     let payload = {
@@ -69,11 +102,7 @@ async function saveApplicationApi(req, res, next) {
         bankid: req.body.bankid
     }
 
-    
-    let acquisitionPayload = {},
-        realEstatePayload = {},
-        oppRecordTypeId;
-
+    // set opp.Id if oppId exists in req.body
     if (req.body.oppId) {
         payload.opp.Id = req.body.oppId
     };
@@ -109,7 +138,8 @@ async function saveApplicationApi(req, res, next) {
                 res.status(500).send(resBody);
                 res.body = resBody;
                 
-                return next();
+                // return next();
+                return apiLogger(req, res, () => {return;});			//instead of calling next()
             }
 
         }
@@ -176,36 +206,8 @@ async function saveApplicationApi(req, res, next) {
         if (realEstateReq.real_estate_document) toBeAttachedFiledIds.push(realEstateReq.real_estate_document);
     }
 
-
-    try {
-        let result = await opportunityController.saveApplication(sfConn, payload, toBeAttachedFiledIds);
-
-        if (result) {
-            resBody = myResponse(true, {id: result}, 200, 'Application has been saved.');
-            res.status(200).send(resBody);
-            res.body = resBody;
-        } else {
-            resBody = myResponse(false, null, 500 , 'Unable to save application.');
-            res.status(500).send(resBody);
-            res.body = resBody;
-        }
-    
-    } catch (err) {
-        console.log(err);
-        
-        if (err instanceof salesforceException){
-            resBody = myResponse(false, null, err.statusCode, err.message, err.metadata);
-            res.status(err.statusCode).send(resBody);
-        } else if (err instanceof inputValidationException) {
-            resBody = myResponse(false, null, err.statusCode, err.message, err.metadata);
-            res.status(err.statusCode).send(resBody);
-        } else {
-            resBody = myResponse(false, null, 500, err.message);
-            res.status(500).send(resBody);
-        }
-
-        res.body = resBody;
-    }
+    req.needs.payload = payload;
+    req.needs.toBeAttachedFiledIds = toBeAttachedFiledIds;
 
     return next();
 }
@@ -434,10 +436,88 @@ async function fillRequestOfSavedOpp(req, res, next) {
     }
 }
 
+async function saveAppBeforeSubmit(req, res, next) {
+    let sfConn = req.needs.sfConn;
+    let realEstateReq = req.body.real_estate,
+        acquisitionReq = req.body.acquisition;
+
+    let payload,
+        toBeAttachedFiledIds;
+    let result;
+    
+    let isRealEstate = (realEstateReq && _.size(realEstateReq) != 0);
+    let isAcquisition = (acquisitionReq && _.size(acquisitionReq) != 0);
+    let isCustomer = (!req.body.broker_id || (req.body.broker_id && req.body.broker_id.trim() == ''));
+    let hasOppId = (req.body.oppId && req.body.oppId.trim != '');
+    
+    // Check if app is a real-estate & the user is customer (Not Agent)
+    if (isAcquisition
+        || (isAcquisition && isRealEstate)
+        || ((isRealEstate || isAcquisition) && hasOppId)
+        || ((isRealEstate || isAcquisition) && !isCustomer)) {
+            resBody = myResponse(false, null, 400, 'Bad requset. Please check your req body.');
+            res.status(400).send(resBody);
+            res.body = resBody;
+            
+            return apiLogger(req, res, () => {return;});			//instead of calling next()
+
+    } else if (isRealEstate && isCustomer) {
+        try {
+            await prepareSavePayload(req,res, () => {return;});
+            payload = req.needs.payload;
+            toBeAttachedFiledIds = req.needs.toBeAttachedFiledIds;
+        } catch (error) {
+            logger.error('saveAppBeforeSubmit - on prepareSavePayload Block', {metadata: error});
+
+            resBody = myResponse(false, null, 500 , 'Preparing Save Payload encountered a problem.');
+            res.status(500).send(resBody);
+            res.body = resBody;
+            
+            return apiLogger(req, res, () => {return;});			//instead of calling next()
+        }
+
+        try {
+            result = await opportunityController.saveApplication(sfConn, payload, toBeAttachedFiledIds);
+
+            if (result) {
+                req.body.oppId = result;
+                return next();
+            } else {
+                resBody = myResponse(false, null, 500 , 'Something Wents wrong. Application could not be saved before submitting.');
+                res.status(500).send(resBody);
+                res.body = resBody;
+                
+                return apiLogger(req, res, () => {return;});			//instead of calling next()
+            }
+        } catch (error) {
+            logger.error('saveAppBeforeSubmit - on saveApplication Block', {metadata: error});
+        
+            if (err instanceof salesforceException){
+                resBody = myResponse(false, null, err.statusCode, err.message, err.metadata);
+                res.status(err.statusCode).send(resBody);
+            } else if (err instanceof inputValidationException) {
+                resBody = myResponse(false, null, err.statusCode, err.message, err.metadata);
+                res.status(err.statusCode).send(resBody);
+            } else {
+                resBody = myResponse(false, null, 500, err.message);
+                res.status(500).send(resBody);
+            }
+    
+            res.body = resBody;
+
+            return apiLogger(req, res, () => {return;});			//instead of calling next()
+        }
+    } else {
+        return next();
+    }
+}
+
 module.exports = {
     saveApplicationApi,
     saveAppExtraValidation,
     getCompaniesList,
     authMwDecision,
-    fillRequestOfSavedOpp
+    fillRequestOfSavedOpp,
+    saveAppBeforeSubmit,
+    prepareSavePayload
 }
