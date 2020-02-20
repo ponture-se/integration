@@ -257,7 +257,7 @@ exports.submit = [
 			return next();
 		} else {
 			// check if the company is real or not, so we can decide to call roaring or not
-			const isFakeCompany = ((req.body.orgNumber == null || (req.body.orgNumber != null && req.body.orgNumber.trim() == '') || (req.body.orgNumber != null && req.body.orgNumber.startsWith('CMP_')))
+			const isFakeCompany = ((req.body.orgNumber == null || (req.body.orgNumber != null && req.body.orgNumber.trim() == ''))
 									&& req.body.need != null
 									&& req.body.need.length != 0
 									&& req.body.need.includes('purchase_of_business'));
@@ -385,7 +385,7 @@ exports.submit = [
 					});
 			} else {
 				req.body.overview = {
-					companyId: req.body.orgNumber,
+					companyId: "",
 					___realCompany___: false
 				}
 			}
@@ -814,7 +814,6 @@ async function saveApplication(sfConn, payload, toBeAttachedFiledIds) {
 			if (String(oppInfo.Need__c).indexOf(witoutCompany_NeedValue) != -1) {
 				accId = null;
 				accountInfo.Name = 'CMP_' + contactInfo.Personal_Identity_Number__c;
-				accountInfo.Organization_Number__c = 'CMP_' + Date.now();
 			} else {
 				throw new salesforceException("'orgNumber' is not provided.", null, 400);
 			}
@@ -842,6 +841,7 @@ async function saveApplication(sfConn, payload, toBeAttachedFiledIds) {
 		contactUpsertResult = await crudHelper.upsertSobjectInSf(sfConn, 'Contact', contactInfo, contactId);
 
 		oppInfo['PrimaryContact__c'] = contactUpsertResult.id;
+		oppInfo['Notification__c'] = true;
 	}
 
 
