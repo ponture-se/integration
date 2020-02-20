@@ -841,6 +841,7 @@ async function saveApplication(sfConn, payload, toBeAttachedFiledIds) {
 		contactUpsertResult = await crudHelper.upsertSobjectInSf(sfConn, 'Contact', contactInfo, contactId);
 
 		oppInfo['PrimaryContact__c'] = contactUpsertResult.id;
+		oppInfo['Notification__c'] = true;
 	}
 
 
