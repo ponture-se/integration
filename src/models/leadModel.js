@@ -40,7 +40,7 @@ function leadValidationRules() {
   return [
     body('organization_number').isNumeric().withMessage("Value Must be Numeric.").optional({ checkFalsy: true })
                                 .matches(/^([0-9]){6}-?([0-9]){4}$/).withMessage('Invalid Pattern'),
-    body('phone').isNumeric().withMessage("Value Must be Numeric.")
+    body('phone').isString().withMessage("Value Must be Numeric.")
                   .exists().withMessage("Required Key/Value Pair")
                   .trim()
                   .notEmpty().withMessage("Can not be Empty")
@@ -59,7 +59,7 @@ function leadValidationRules() {
                     .trim()
                     .notEmpty().withMessage("Can not be Empty"),
     body('first_name').isString().withMessage("Value Must be String.").optional(),
-    body('mobile').isNumeric().withMessage("Value Must be Numeric.")
+    body('mobile').isString().withMessage("Value Must be Numeric.")
                   .exists().withMessage("Required Key/Value Pair")
                   .trim()
                   .notEmpty().withMessage("Can not be Empty")
