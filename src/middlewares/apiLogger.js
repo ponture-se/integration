@@ -3,7 +3,7 @@ const winston = require("winston");
 
 function logger(req, res, next){
     let reqLog = {
-        url: req.url,
+        url: req.originalUrl,
         method: req.method,
         headers: req.headers,
         params: req.params,
