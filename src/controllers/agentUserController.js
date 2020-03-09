@@ -9,7 +9,7 @@ async function login(sfToken, username, password){
         username : username,
         password : password
     },
-    url = "/services/apexrest/agentLogin";
+    url = "/services/apexrest/userLogin";
 
     let config = {
         url: url,
@@ -26,7 +26,9 @@ async function login(sfToken, username, password){
         const response = await axios(config);
 
         let jwtPayload = {
-            broker_id: response.data.data.broker_id
+            broker_id: response.data.data.broker_id,
+            admin_id: response.data.data.admin_id,
+            role: response.data.data.role
         },
         jwtSecret = cnf.secret,
         jwtOptions = {
