@@ -496,6 +496,7 @@ exports.getNeedsList = function (req, res, next) {
 
 exports.myrequests = function (req, res, next) {
 	var accessToken = req.access_token;
+	req.query.role = req.jwtData.role;
 	var apiRoot =
 		process.env.SALESFORCE_API_ROOT ||
 		"https://crmdev-ponture-crmdev.cs84.force.com"; // for prod set to https://api.zignsec.com/v2
