@@ -82,7 +82,18 @@ async function getAgentContactDetailByAgentId(sfConn, agentId) {
 
 }
 
+
+async function getPartnerForMatchMakeController(sfConn, oppId, role) {
+    let param = "?" + "role=" + role + "&" + "oppId=" + oppId;
+    
+    // Error handeled in parent middleware.
+    let result = await sfConn.apex.get("/getPartnersForMatchMake" + param);
+
+    return result;
+}
+
 module.exports = {
     login,
-    getAgentContactDetailByAgentId
+    getAgentContactDetailByAgentId,
+    getPartnerForMatchMakeController
 }
