@@ -1,17 +1,27 @@
 const express = require('express');
 const router = express.Router();
-const agentUserMW = require('../middlewares/sfMiddlewares/agentUserMW');
+const userMW = require('../middlewares/sfMiddlewares/userMW');
 const validate = require("../middlewares/validate");
-const agentUserValidationRules = require("../models/agentUserModel");
+const userValidationRules = require("../models/userModel");
+const getSFConnection = require("../middlewares/sfMiddleware");
 var auth = require("../controllers/auth");
+
 
 
 router.post('/login',
             auth.noAuthNeeded,
-            agentUserValidationRules.loginValidation(),
+            userValidationRules.loginValidation(),
             validate,
             auth.getSalesForceToken,
-            agentUserMW.loginApi);
+            userMW.loginApi);
+            
+            
+router.get('/getPartnersForMatchMake',
+            auth.verifyToken,
+            userValidationRules.getPartnerForMatchMakeValidation(),
+            validate,
+            getSFConnection,
+            userMW.getPartnerForMatchMakeAPI);
 
 
 module.exports = router;

@@ -1,5 +1,5 @@
 const myToolkit = require('../../controllers/myToolkit');
-const agentUserController = require('../../controllers/agentUserController');
+const userController = require('../../controllers/userController');
 const myResponse = require('../../controllers/myResponse');
 
 async function loginApi(req, res, next) {
@@ -9,7 +9,7 @@ async function loginApi(req, res, next) {
     let resBody;
 
     try {
-        const result = await agentUserController.login(sfToken, username, password);
+        const result = await userController.login(sfToken, username, password);
         if (result.success) {
             resBody = result.data;      // Salesforce response
             res.status(200).send(resBody);
@@ -56,6 +56,37 @@ async function loginApi(req, res, next) {
 
 }
 
+
+async function getPartnerForMatchMakeAPI(req, res, next) {
+    let sfConn = req.needs.sfConn,
+        oppId = req.query.oppId,
+        role = req.jwtData.role;
+
+    let resBody;
+
+    if (!role || role != 'admin') {
+        resBody = myResponse(false, null, 403, 'Not allowed.');
+        res.status(403).send(resBody);
+        res.body = resBody;
+    } else {
+        // let result;
+        try {
+            resBody = await userController.getPartnerForMatchMakeController(sfConn, oppId, role);
+            res.status(200).send(resBody);
+            res.body = resBody;
+        } catch (e) {
+            resBody = myResponse(false, null, 500, 'Internal Server Error.', e);
+            res.status(500).send(resBody);
+            res.body = resBody;
+        }
+    }
+
+    // This is the Last Middleware, So anyway it should call next (API Logger)
+    return next();
+
+}
+
 module.exports = {
-    loginApi
+    loginApi,
+    getPartnerForMatchMakeAPI
 }

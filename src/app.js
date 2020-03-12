@@ -36,7 +36,7 @@ var opportunity = require("./routes/opportunity");
 const lead =  require('./routes/lead');
 const factoring =  require('./routes/factoring');
 const file = require('./routes/file');
-const agentUser = require('./routes/user');
+const user = require('./routes/user');
 // a middleware function with no mount path. This code is executed for every request to the router
 
 app.use(logger("dev"));
@@ -52,7 +52,7 @@ app.use("/apply", opportunity);
 app.use('/leads', lead);
 app.use('/factoring', factoring);
 app.use('/files', file);
-app.use('/user', agentUser);
+app.use('/user', user);
 
 app.use(apiLogger);
 
