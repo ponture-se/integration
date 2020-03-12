@@ -1,5 +1,5 @@
 const myToolkit = require('../../controllers/myToolkit');
-const agentUserController = require('../../controllers/agentUserController');
+const userController = require('../../controllers/userController');
 const myResponse = require('../../controllers/myResponse');
 
 async function loginApi(req, res, next) {
@@ -9,7 +9,7 @@ async function loginApi(req, res, next) {
     let resBody;
 
     try {
-        const result = await agentUserController.login(sfToken, username, password);
+        const result = await userController.login(sfToken, username, password);
         if (result.success) {
             resBody = result.data;      // Salesforce response
             res.status(200).send(resBody);

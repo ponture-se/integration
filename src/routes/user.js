@@ -1,17 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const agentUserMW = require('../middlewares/sfMiddlewares/agentUserMW');
+const userMW = require('../middlewares/sfMiddlewares/userMW');
 const validate = require("../middlewares/validate");
-const agentUserValidationRules = require("../models/agentUserModel");
+const userModel = require("../models/userModel");
 var auth = require("../controllers/auth");
 
 
 router.post('/login',
             auth.noAuthNeeded,
-            agentUserValidationRules.loginValidation(),
+            userModel.loginValidation(),
             validate,
             auth.getSalesForceToken,
-            agentUserMW.loginApi);
+            userMW.loginApi);
+
 
 
 module.exports = router;
