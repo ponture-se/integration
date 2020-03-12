@@ -5,7 +5,7 @@ const opportunityController = require('../../controllers/opportunityController')
 const {salesforceException, inputValidationException} = require('../../controllers/customeException');
 const _ = require('lodash');
 const async = require('async');
-const agentUserController = require('../../controllers/agentUserController');
+const userController = require('../../controllers/userController');
 const queryHelper = require('../../controllers/sfHelpers/queryHelper');
 const crudHelper = require('../../controllers/sfHelpers/crudHelper');
 const auth = require('../../controllers/auth');
@@ -235,7 +235,7 @@ async function saveAppExtraValidation(req, res, next) {
 
     } else if (req.body.broker_id) {
         try {
-            let result = await agentUserController.getAgentContactDetailByAgentId(sfConn, req.body.broker_id);
+            let result = await userController.getAgentContactDetailByAgentId(sfConn, req.body.broker_id);
             if (!result) {
                 resBody = myResponse(false, null, 400, "Invalid Broker ID.");
                 res.status(400).send(resBody);
