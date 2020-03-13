@@ -92,8 +92,21 @@ async function getPartnerForMatchMakeController(sfConn, oppId, role) {
     return result;
 }
 
+async function manualMatchMakingController(sfConn, oppId, partnersId, role) {
+    let body = {
+        "opp_id": oppId,
+        "partners_id": partnersId,
+        "role": role
+    }
+    // Error handeled in parent middleware.
+    let result = await sfConn.apex.post("/manualMatchMake", body);
+
+    return result;
+}
+
 module.exports = {
     login,
     getAgentContactDetailByAgentId,
-    getPartnerForMatchMakeController
+    getPartnerForMatchMakeController,
+    manualMatchMakingController
 }
