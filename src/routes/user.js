@@ -23,5 +23,12 @@ router.get('/getPartnersForMatchMake',
             getSFConnection,
             userMW.getPartnerForMatchMakeAPI);
 
+router.post('/manualMatchMaking',
+            auth.verifyToken,
+            userValidationRules.manualMatchMakingValidation(),
+            validate,
+            getSFConnection,
+            userMW.doManualMatchMakingAPI);
+
 
 module.exports = router;
