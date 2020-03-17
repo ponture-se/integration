@@ -13,6 +13,10 @@ router.post('/adminLogin',
             userValidationRules.loginValidation(),
             validate,
             auth.getSalesForceTokenForAdmin,
+            (req, res, next) => {
+                req.loginRole = 'admin';
+                next();
+            },
             userMW.loginApi);
 
 router.post('/agentLogin',
@@ -20,6 +24,10 @@ router.post('/agentLogin',
             userValidationRules.loginValidation(),
             validate,
             auth.getSalesForceToken,
+            (req, res, next) => {
+                req.loginRole = 'agent';
+                next();
+            },
             userMW.loginApi);
             
             
