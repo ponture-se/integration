@@ -3,8 +3,9 @@ const qs = require("qs");
 const jwt = require("jsonwebtoken");
 const cnf = require("../config");
 const roaring = require('./roaring');
+const response = require('./myResponse');
 const apiLogger = require('../middlewares/apiLogger');
-
+const logger = require('./customeLogger');
 
 function verifyToken(req, res, next) {
   var token = req.headers["x-access-token"];
@@ -96,11 +97,18 @@ async function getRoaringToken(req, res, next) {
 
 }
 
+function getSalesForceTokenForAdmin (req, res, next) {
+  req.admin_sfUserName = req.body.username;
+  req.admin_sfPassword = req.body.password;
+
+  getSFToken(req,res, next);
+}
+
 function getSFToken(req, res, next) {
   var client_id = process.env.SALESFORCE_CLIENTID;
   var client_secret = process.env.SALESFORCE_CLIENT_SECRET;
-  var username = process.env.SALESFORCE_USERNAME;
-  var password = process.env.SALESFORCE_PASSWORD;
+  var username = req.admin_sfUserName || process.env.SALESFORCE_USERNAME;
+  var password = req.admin_sfPassword || process.env.SALESFORCE_PASSWORD;
   var apiRoot = process.env.LOGIN_API_ROOT || "https://test.salesforce.com";
   var d = {
     grant_type: "password",
@@ -123,11 +131,23 @@ function getSFToken(req, res, next) {
   axios(config)
     .then(function(response) {
       req.access_token = response.data.access_token;
+      // req.sf_instance_url = response.data.instance_url;
       req.sf_access_token = response.data.access_token;
       next();
     })
     .catch(function(error) {
-      res.status(400).send(error);
+      logger.error("Error occuerd when 'getSFToken' called.", {
+        metadata: error
+      });
+
+      let resBody;
+      if (req.admin_sfUserName){
+        resBody = response(false, null, 400, 'Wrong username and password was entered.');
+        res.status(400).send(resBody);
+      } else {
+        resBody = response(false, null, 500, 'Something Went Wrong.');
+        res.status(500).send(resBody);
+      }
       res.body = error;
       return apiLogger(req,res, () => {return;});
     });
@@ -214,3 +234,4 @@ exports.verifyToken = verifyToken;
 exports.getSalesForceToken = getSFToken;
 exports.getRoaringToken = getRoaringToken;
 exports.login = login;
+exports.getSalesForceTokenForAdmin = getSalesForceTokenForAdmin;

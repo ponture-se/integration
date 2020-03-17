@@ -1,6 +1,7 @@
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const cnf = require("../config");
+const myToolkit = require('./myToolkit');
 const queryHelper = require('./sfHelpers/queryHelper');
 const { salesforceException } = require('./customeException');
 
@@ -28,7 +29,8 @@ async function login(sfToken, username, password){
         let jwtPayload = {
             broker_id: response.data.data.broker_id,
             admin_id: response.data.data.admin_id,
-            role: response.data.data.role
+            role: response.data.data.role,
+            stoken: myToolkit.encryptData(sfToken)
         },
         jwtSecret = cnf.secret,
         jwtOptions = {
