@@ -11,9 +11,15 @@ async function loginApi(req, res, next) {
     try {
         const result = await userController.login(sfToken, username, password);
         if (result.success) {
-            resBody = result.data;      // Salesforce response
-            res.status(200).send(resBody);
+            if (result.data && result.data.data && result.data.data.role == req.loginRole) {
+                resBody = result.data;      // Salesforce response
+                res.status(200).send(resBody);
+            } else {
+                resBody = myResponse(false, null, 404, 'User not found.');
+                res.status(404).send(resBody);
+            }
             res.body = resBody;			// For logging purpose
+            
         } else {
             let error = result.data;
             
