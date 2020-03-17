@@ -105,8 +105,8 @@ async function doManualMatchMakingAPI(req, res, next) {
             res.status(200).send(resBody);
             res.body = resBody;
         } catch (e) {
-            resBody = myResponse(false, null, 500, 'Internal Server Error.', e);
-            res.status(500).send(resBody);
+            resBody = myResponse(false, null, e.statusCode, e.message, e);
+            res.status(resBody.statusCode).send(resBody);
             res.body = resBody;
         }
     }
