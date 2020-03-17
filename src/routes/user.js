@@ -8,7 +8,14 @@ var auth = require("../controllers/auth");
 
 
 
-router.post('/login',
+router.post('/adminLogin',
+            auth.noAuthNeeded,
+            userValidationRules.loginValidation(),
+            validate,
+            auth.getSalesForceTokenForAdmin,
+            userMW.loginApi);
+
+router.post('/agentLogin',
             auth.noAuthNeeded,
             userValidationRules.loginValidation(),
             validate,
