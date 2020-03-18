@@ -492,14 +492,14 @@ async function saveAppBeforeSubmit(req, res, next) {
         } catch (error) {
             logger.error('saveAppBeforeSubmit - on saveApplication Block', {metadata: error});
         
-            if (err instanceof salesforceException){
-                resBody = myResponse(false, null, err.statusCode, err.message, err.metadata);
-                res.status(err.statusCode).send(resBody);
-            } else if (err instanceof inputValidationException) {
-                resBody = myResponse(false, null, err.statusCode, err.message, err.metadata);
-                res.status(err.statusCode).send(resBody);
+            if (error instanceof salesforceException){
+                resBody = myResponse(false, null, error.statusCode, error.message, error.metadata);
+                res.status(error.statusCode).send(resBody);
+            } else if (error instanceof inputValidationException) {
+                resBody = myResponse(false, null, error.statusCode, error.message, error.metadata);
+                res.status(error.statusCode).send(resBody);
             } else {
-                resBody = myResponse(false, null, 500, err.message);
+                resBody = myResponse(false, null, 500, error.message);
                 res.status(500).send(resBody);
             }
     
