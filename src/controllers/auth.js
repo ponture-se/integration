@@ -142,8 +142,8 @@ function getSFToken(req, res, next) {
 
       let resBody;
       if (req.admin_sfUserName){
-        resBody = response(false, null, 400, 'Wrong username and password was entered.');
-        res.status(400).send(resBody);
+        resBody = response(false, null, 404, 'Wrong username and password was entered; Or there is no SF User Connected to this user/pass');
+        res.status(404).send(resBody);
       } else {
         resBody = response(false, null, 500, 'Something Went Wrong.');
         res.status(500).send(resBody);
