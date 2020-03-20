@@ -3,33 +3,14 @@ const jwt = require('jsonwebtoken');
 const cnf = require("../config");
 const myToolkit = require('./myToolkit');
 const queryHelper = require('./sfHelpers/queryHelper');
+const myResponse = require('./myResponse');
 const { salesforceException } = require('./customeException');
 
-async function login(sfToken, username, password){
-    let body = {
-        username : username,
-        password : password
-    },
-    url = "/services/apexrest/userLogin";
-
-    let config = {
-        url: url,
-        baseURL: process.env.SALESFORCE_API_ROOT || 'https://sms--local.my.salesforce.com',
-        method: "post",
-        data: body,
-        headers: {
-            Authorization: "Bearer " + sfToken
-        }
-    };
-
-    
-    try{
-        const response = await axios(config);
-
+async function login(sfToken, username, password, loginRole){
+    if (loginRole == 'admin') {
         let jwtPayload = {
-            broker_id: response.data.data.broker_id,
-            admin_id: response.data.data.admin_id,
-            role: response.data.data.role,
+            admin_id: username,
+            role: 'admin',
             stoken: myToolkit.encryptData(sfToken)
         },
         jwtSecret = cnf.secret,
@@ -38,21 +19,69 @@ async function login(sfToken, username, password){
         };
         
         let token = jwt.sign(jwtPayload, jwtSecret, jwtOptions);
-        
-        // return jwtToken in response
-        response.data.data.access_token = token;
+
+        let resBody = myResponse(true, {
+            admin_id: username,
+            role: 'admin',
+            access_token: token
+        },
+        200, 'User exist.');
 
         return {
             success: true,
-            data: response.data
+            data: resBody
+        }
+    
+    } else {
+        let body = {
+            username : username,
+            password : password
+        },
+        url = "/services/apexrest/userLogin";
+    
+        let config = {
+            url: url,
+            baseURL: process.env.SALESFORCE_API_ROOT || 'https://sms--local.my.salesforce.com',
+            method: "post",
+            data: body,
+            headers: {
+                Authorization: "Bearer " + sfToken
+            }
         };
+    
+        
+        try{
+            const response = await axios(config);
+    
+            let jwtPayload = {
+                broker_id: response.data.data.broker_id,
+                admin_id: response.data.data.admin_id,
+                role: response.data.data.role,
+                // stoken: myToolkit.encryptData(sfToken)
+            },
+            jwtSecret = cnf.secret,
+            jwtOptions = {
+                expiresIn: process.env.AUTHENTICATIONTOKEN_EXPIRE_TIME || 120 * 60
+            };
+            
+            let token = jwt.sign(jwtPayload, jwtSecret, jwtOptions);
+            
+            // return jwtToken in response
+            response.data.data.access_token = token;
+    
+            return {
+                success: true,
+                data: response.data
+            };
+    
+    
+        } catch (error) {
+            return {
+                success: false,
+                data: error
+            }; 
+        }
 
-
-    } catch (error) {
-        return {
-            success: false,
-            data: error
-        }; 
     }
 }
 
