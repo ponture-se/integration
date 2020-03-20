@@ -140,12 +140,14 @@ function getSFToken(req, res, next) {
         metadata: error
       });
 
+      let errorResponseBody = (error.response) ? error.response.data : null;
+
       let resBody;
-      if (req.admin_sfUserName){
-        resBody = response(false, null, 404, 'Wrong username and password was entered; Or there is no SF User Connected to this user/pass');
+      if (errorResponseBody != null && errorResponseBody.error == 'invalid_grant'){
+        resBody = response(false, null, 404, 'Wrong username/password.');
         res.status(404).send(resBody);
       } else {
-        resBody = response(false, null, 500, 'Something Went Wrong.');
+        resBody = response(false, null, 500, 'Something Went Wrong.Check Logs.');
         res.status(500).send(resBody);
       }
       res.body = error;
