@@ -5,11 +5,14 @@ const myResponse = require('../../controllers/myResponse');
 async function loginApi(req, res, next) {
     let username = req.body.username,
         password = req.body.password,
-        sfToken = req.sf_access_token;
+        sfToken = req.sf_access_token,
+        loginRole = req.loginRole;
     let resBody;
 
+
+
     try {
-        const result = await userController.login(sfToken, username, password);
+        const result = await userController.login(sfToken, username, password, loginRole);
         if (result.success) {
             if (result.data && result.data.data && result.data.data.role == req.loginRole) {
                 resBody = result.data;      // Salesforce response
