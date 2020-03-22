@@ -2,6 +2,12 @@ const response = require("../controllers/myResponse");
 const bodyParser = require("body-parser");
 const jsforce = require('jsforce');
 const dotenv = require('dotenv');
+const crypto = require('crypto');
+// Encryption data
+const passString = process.env.ENCRYPTION_KEY || 'defaultPa5Sword!@#';
+const key = crypto.createHash('sha256').update(String(passString)).digest('base64').substr(0, 32);
+const iv = crypto.randomBytes(16);
+
 dotenv.config();
 
 async function getRecordTypeId(sfConn, sObjName, recordTypeName){
@@ -25,6 +31,16 @@ async function getRecordTypeId(sfConn, sObjName, recordTypeName){
     //     return result.recordTypeId;
     // });
 
+}
+
+async function getRecordTypeName(sfConn, sObjName, recordTypeId){
+    let result;
+    
+    let sObjDescribe = await sfConn.sobject(sObjName).describe();
+    let recordTypesList = sObjDescribe.recordTypeInfos;
+    result = recordTypesList.find(o => o.recordTypeId == recordTypeId).name;
+
+    return result;
 }
 
 function isJSON(req, res, next){
@@ -101,14 +117,33 @@ function getFormattedDate() {
     return str;
 }
 
+function encryptData(data) {
+    let cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(key), iv);
+    let encrypted = cipher.update(data);
+    encrypted = Buffer.concat([encrypted, cipher.final()]);
+    return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
+}
+
+function decrypt(text) {
+    let iv = Buffer.from(text.iv, 'hex');
+    let encryptedText = Buffer.from(text.encryptedData, 'hex');
+    let decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(key), iv);
+    let decrypted = decipher.update(encryptedText);
+    decrypted = Buffer.concat([decrypted, decipher.final()]);
+    return decrypted.toString();
+   }
+
 
 
 module.exports = {
     getRecordTypeId,
+    getRecordTypeName,
     isJSON,
     fixPhoneNumber,
     makeSFConnection,
     addPairToReqNeeds,
     getFormattedDate,
-    checkJwtTokenEssentialData
+    checkJwtTokenEssentialData,
+    encryptData,
+    decrypt
 }

@@ -2,34 +2,71 @@ const myToolkit = require('../../controllers/myToolkit');
 const myResponse = require('../../controllers/myResponse');
 const apiLogger = require('../apiLogger');
 const opportunityController = require('../../controllers/opportunityController');
-const {salesforceException} = require('../../controllers/customeException');
+const {salesforceException, inputValidationException} = require('../../controllers/customeException');
 const _ = require('lodash');
 const async = require('async');
-const agentUserController = require('../../controllers/agentUserController');
+const userController = require('../../controllers/userController');
+const queryHelper = require('../../controllers/sfHelpers/queryHelper');
+const crudHelper = require('../../controllers/sfHelpers/crudHelper');
 const auth = require('../../controllers/auth');
+
+const app = require('../../app');
+
+const logger = require('../../controllers/customeLogger');
 
 async function saveApplicationApi(req, res, next) {
     let resBody;
-
-    // const referral_id = req.jwtData.referral_id;
-    // const jwtDataLack = myToolkit.checkJwtTokenEssentialData(req.jwtData, 'referral_id');
-    // if (jwtDataLack.length) {
-    //     resBody = myResponse(false, null, 400, "The token is not provided these data: " + jwtDataLack.join(','));
-    //     res.status(400).send(resBody);
-    //     res.body = resBody;
-    //     return next();
-    // }
-
     const sfConn = req.needs.sfConn;
+
+    let payload = req.needs.payload;
+    let toBeAttachedFiledIds = req.needs.toBeAttachedFiledIds;
+
+    try {
+        let result = await opportunityController.saveApplication(sfConn, payload, toBeAttachedFiledIds);
+
+        if (result) {
+            resBody = myResponse(true, {id: result}, 200, 'Application has been saved.');
+            res.status(200).send(resBody);
+            res.body = resBody;
+        } else {
+            resBody = myResponse(false, null, 500 , 'Unable to save application.');
+            res.status(500).send(resBody);
+            res.body = resBody;
+        }
+    
+    } catch (err) {
+        console.log(err);
+        
+        if (err instanceof salesforceException){
+            resBody = myResponse(false, null, err.statusCode, err.message, err.metadata);
+            res.status(err.statusCode).send(resBody);
+        } else if (err instanceof inputValidationException) {
+            resBody = myResponse(false, null, err.statusCode, err.message, err.metadata);
+            res.status(err.statusCode).send(resBody);
+        } else {
+            resBody = myResponse(false, null, 500, err.message);
+            res.status(500).send(resBody);
+        }
+
+        res.body = resBody;
+    }
+
+    return next();
+}
+
+async function prepareSavePayload(req, res, next) {
+    const sfConn = req.needs.sfConn;
+
     let today = new Date();             // keeps today's date
     let clostDate = today;
-    clostDate.setMonth(clostDate.getMonth() + 1);
-
     let acquisitionReq = req.body.acquisition,
         realEstateReq = req.body.real_estate;
-    
     let toBeAttachedFiledIds = [];
+    let acquisitionPayload = {},
+        realEstatePayload = {},
+        oppRecordTypeId;
 
+    clostDate.setMonth(clostDate.getMonth() + 1);
 
     // Prepare payloads
     let payload = {
@@ -42,8 +79,13 @@ async function saveApplicationApi(req, res, next) {
             // Defualt Values
             stageName: 'Created',
             CloseDate: clostDate,
+            UTM_Source__c: req.body.utm_source,
+            UTM_Medium__c: req.body.utm_medium,
+            UTM_Campaign__c: req.body.utm_campaign,
+            Referral_ID__c: req.body.referral_id,
+            Last_referral_date__c: req.body.last_referral_date,
             Name: `Saved Opp @ ${myToolkit.getFormattedDate()} - ${req.body.personalNumber}`,
-            Broker_ID__c: req.body.broker_id        
+            Broker_ID__c: req.body.broker_id
         },
         contact: {
             Email: req.body.email,
@@ -60,22 +102,53 @@ async function saveApplicationApi(req, res, next) {
         bankid: req.body.bankid
     }
 
-    
-    let acquisitionPayload = {},
-        realEstatePayload = {},
-        oppRecordTypeId;
-
+    // set opp.Id if oppId exists in req.body
     if (req.body.oppId) {
         payload.opp.Id = req.body.oppId
     };
     
     if (acquisitionReq && _.size(acquisitionReq) != 0) {
         oppRecordTypeId = await myToolkit.getRecordTypeId(sfConn, 'Opportunity', 'Business Acquisition Loan');
+        // upsert Acquisition Object Account (If not exist: Generic, else: recordType not changed)
+        if (acquisitionReq.object_organization_number) {
+            // Try to get Acc
+            // Get Account with orgNumber
+			let getAccWhereCluase = {
+				Organization_Number__c: acquisitionReq.object_organization_number
+			}
+			account = await queryHelper.getSingleQueryResult(sfConn, 'Account', getAccWhereCluase);
+            accId = (account != null) ? account.Id : null;
+
+            if (!accId) {
+                let genericAccRecordTypeId = await myToolkit.getRecordTypeId(sfConn, 'Account', 'Generic');
+
+                let acqObjectInfo = {
+                    Organization_Number__c: acquisitionReq.object_organization_number,
+                    Name: acquisitionReq.object_company_name || acquisitionReq.object_organization_number,
+                    recordTypeId: genericAccRecordTypeId
+                }
+                let acquisitionObjectData = await crudHelper.upsertSobjectInSf(sfConn, 'Account', acqObjectInfo, accId);
+                accId = (acquisitionObjectData != null) ? acquisitionObjectData.id : null;
+            }
+
+            if (accId) {
+                payload.opp.Acquisition_Object__c = accId;
+            } else {
+                resBody = myResponse(false, null, 500 , 'Something wents wrong. \'object_company_name\' or \'object_organization_number\' have some problems. Please recheck.');
+                res.status(500).send(resBody);
+                res.body = resBody;
+                
+                // return next();
+                return apiLogger(req, res, () => {return;});			//instead of calling next()
+            }
+
+        }
+
         acquisitionPayload = {
-            // _objName: req.body.objName,
             // _objCompanyName : req.body.acquisition.objCompanyName,
             // _objOrgNumber : req.body.acquisition.objOrgNumber,
             recordTypeId: oppRecordTypeId,
+            Object_Name__c: acquisitionReq.object_name,
             Object_Price__c: acquisitionReq.object_price,
             Object_Industry__c: acquisitionReq.object_industry,
             Object_Annual_Report__c: acquisitionReq.object_annual_report,
@@ -104,8 +177,8 @@ async function saveApplicationApi(req, res, next) {
         if(acquisitionReq.object_income_statement) toBeAttachedFiledIds.push(acquisitionReq.object_income_statement);
         if(acquisitionReq.account_balance_sheet) toBeAttachedFiledIds.push(acquisitionReq.account_balance_sheet);
         if(acquisitionReq.account_income_statement) toBeAttachedFiledIds.push(acquisitionReq.account_income_statement);
-        if(acquisitionReq.additional_files.length) toBeAttachedFiledIds = toBeAttachedFiledIds.concat(acquisitionReq.additional_files);
-        if(acquisitionReq.business_plan.length) toBeAttachedFiledIds = toBeAttachedFiledIds.concat(acquisitionReq.business_plan);
+        if(acquisitionReq.additional_files && acquisitionReq.additional_files.length) toBeAttachedFiledIds = toBeAttachedFiledIds.concat(acquisitionReq.additional_files);
+        if(acquisitionReq.business_plan && acquisitionReq.business_plan.length) toBeAttachedFiledIds = toBeAttachedFiledIds.concat(acquisitionReq.business_plan);
 
     }
 
@@ -133,39 +206,10 @@ async function saveApplicationApi(req, res, next) {
         if (realEstateReq.real_estate_document) toBeAttachedFiledIds.push(realEstateReq.real_estate_document);
     }
 
-
-    try {
-        let result = await opportunityController.saveApplication(sfConn, payload, toBeAttachedFiledIds);
-
-        if (result) {
-            resBody = myResponse(true, {id: result}, 200, 'Application has been saved.');
-            res.status(200).send(resBody);
-            res.body = resBody;
-        } else {
-            resBody = myResponse(false, null, 500 , 'Unable to save application.');
-            res.status(500).send(resBody);
-            res.body = resBody;
-        }
-    
-    } catch (err) {
-        console.log(err);
-        switch (true) {
-            case err instanceof salesforceException:
-                resBody = myResponse(false, null, err.statusCode, err.message, err.metadata);
-                res.status(err.statusCode).send(resBody);
-                break;
-        
-            default:
-                resBody = myResponse(false, null, 500, err.message);
-                res.status(500).send(resBody);
-                break;
-        }
-
-        res.body = resBody;
-    }
+    req.needs.payload = payload;
+    req.needs.toBeAttachedFiledIds = toBeAttachedFiledIds;
 
     return next();
-            
 }
 
 async function saveAppExtraValidation(req, res, next) {
@@ -191,7 +235,7 @@ async function saveAppExtraValidation(req, res, next) {
 
     } else if (req.body.broker_id) {
         try {
-            let result = await agentUserController.getAgentContactDetailByAgentId(sfConn, req.body.broker_id);
+            let result = await userController.getAgentContactDetailByAgentId(sfConn, req.body.broker_id);
             if (!result) {
                 resBody = myResponse(false, null, 400, "Invalid Broker ID.");
                 res.status(400).send(resBody);
@@ -268,9 +312,212 @@ function authMwDecision(req,res, next) {
     }
 }
 
+
+async function fillRequestOfSavedOpp(req, res, next) {
+    const sfConn = req.needs.sfConn;
+    const oppId = req.body.oppId;
+    let resBody;
+    let hasResponse = false;
+    let recordTypeName;
+
+    if (oppId != null && oppId.trim() != '') {
+        try{
+            let savedOppData = await opportunityController.getSavedOppRequiredDataById(sfConn, oppId);
+            
+            try {
+                recordTypeName = await myToolkit.getRecordTypeName(sfConn, 'opportunity', savedOppData.RecordTypeId);
+            } catch (e) {
+                logger.error('getRecordTypeName func => fillRequestOfSavedOpp', e);
+                recordTypeName = null;
+            }
+
+            if (savedOppData == null) {
+                resBody = myResponse(false, null, 400, 'oppId is invalid');
+                res.status(400).send(resBody);
+                
+                hasResponse = true;
+            } else if (savedOppData != null && savedOppData.StageName != 'Created') {
+                resBody = myResponse(false, null, 403, 'Stage of the Saved Opportunity is invalid, it equals to \'' + savedOppData.StageName + '\'');
+                res.status(403).send(resBody);
+                
+                hasResponse = true;
+            } else if (savedOppData != null && savedOppData.PrimaryContactVerified__c != true) {
+                resBody = myResponse(false, null, 403, 'The contact of this saved opportunity is not verified yet.');
+                res.status(403).send(resBody);
+
+                hasResponse = true;
+            } else {
+                req.body.orgNumber = req.body.orgNumber || (savedOppData.Account) ? savedOppData.Account.Organization_Number__c : null;
+                req.body.orgName = req.body.orgName || (savedOppData.Account) ? savedOppData.Account.Name : null;
+                req.body.personalNumber = req.body.personalNumber || (savedOppData.PrimaryContact__r) ? savedOppData.PrimaryContact__r.Personal_Identity_Number__c : null;
+                req.body.amount = req.body.amount || savedOppData.Amount;
+                req.body.amourtizationPeriod = req.body.amourtizationPeriod || savedOppData.AmortizationPeriod__c;
+                req.body.email = req.body.email || (savedOppData.PrimaryContact__r) ? savedOppData.PrimaryContact__r.Email : null;
+                req.body.phoneNumber = req.body.phoneNumber || (savedOppData.PrimaryContact__r) ? savedOppData.PrimaryContact__r.Phone || savedOppData.PrimaryContact__r.MobilePhone : null;
+                req.body.need = req.body.need || (savedOppData.Need__c) ? savedOppData.Need__c.split(';') : null;
+                req.body.needDescription = req.body.needDescription || savedOppData.NeedDescription__c;
+                req.body.referral_id = req.body.referral_id || savedOppData.Referral_ID__c;
+                req.body.utm_source = req.body.utm_source || savedOppData.UTM_Source__c;
+                req.body.utm_medium = req.body.utm_medium || savedOppData.UTM_Medium__c;
+                req.body.utm_campaign = req.body.utm_campaign || savedOppData.UTM_Campaign__c;
+                req.body.ad_gd = req.body.ad_gd || savedOppData.Last_referral_date__c;
+                req.body.bankid = {
+                    userInfo : {
+                        name : (savedOppData.PrimaryContact__r) ? savedOppData.PrimaryContact__r.Name : null
+                    }
+                }
+
+                if (recordTypeName && recordTypeName == 'Business Acquisition Loan'){
+                    // acqusition data
+                    req.body.acquisition = {
+                        object_name : savedOppData.Object_Name__c,
+                        object_organization_number: (savedOppData.Acquisition_Object__r) ? savedOppData.Acquisition_Object__r.Organization_Number__c : null,
+                        object_company_name : (savedOppData.Acquisition_Object__r) ? savedOppData.Acquisition_Object__r.Name : null,
+                        object_price: savedOppData.Object_Price__c,
+                        object_industry: savedOppData.Object_Industry__c,
+                        object_annual_report: savedOppData.Object_Annual_Report__c,
+                        object_balance_sheet: savedOppData.Object_Balance_Sheet__c,
+                        object_income_statement: savedOppData.Object_Income_Statement__c,
+                        object_valuation_letter: savedOppData.Object_Valuation_Letter__c,
+                        account_balance_sheet: savedOppData.Account_Balance_Sheet__c,
+                        account_income_statement: savedOppData.Account_Income_Statement__c,
+                        available_guarantees: savedOppData.Available_Guarantees__c,
+                        available_guarantees_description: savedOppData.Available_Guarantees_Description__c,
+                        purchaser_profile: savedOppData.Purchaser_Profile__c,
+                        own_investment_amount: savedOppData.Own_Investment_Amount__c,
+                        own_investment_details: savedOppData.Own_Investment_Details__c,
+                        additional_files: (savedOppData.Additional_files__c != null) ? savedOppData.Additional_files__c.split(';') : null,
+                        business_plan: (savedOppData.Business_Plan__c != null) ? savedOppData.Business_Plan__c.split(';') : null,
+                        additional_details: savedOppData.Additional_details__c,
+                        purchase_type: savedOppData.Purchase_type__c,
+                        description: savedOppData.Description
+                    }
+
+                    req.body.acquisition = _.omitBy(req.body.acquisition, _.isNull);
+                } else if (recordTypeName && recordTypeName == 'Real Estate') {
+                    // real_estate data
+                    req.body.real_estate = {
+                        real_estate_type : savedOppData.Real_Estate_Type__c,
+                        real_estate_usage_category : (savedOppData.Real_Estate_Usage_Category__c) ? savedOppData.Real_Estate_Usage_Category__c.split(',') : null,
+                        real_estate_price : savedOppData.Real_Estate_Price__c,
+                        real_estate_taxation_value : savedOppData.Real_Estate_Taxation_Value__c,
+                        real_estate_size : savedOppData.Real_Estate_Size__c,
+                        real_estate_address : savedOppData.Real_Estate_Address__c,
+                        real_estate_city : savedOppData.Real_Estate_City__c,
+                        real_estate_link : savedOppData.Real_Estate_Link__c,
+                        real_estate_description : savedOppData.Real_Estate_Description__c,
+                        real_estate_document : savedOppData.Real_Estate_Document__c,
+                        own_investment_amount : savedOppData.Own_Investment_Amount__c,
+                        description : savedOppData.Description,
+                        additional_details : savedOppData.Additional_details__c
+                    }
+
+                    req.body.real_estate = _.omitBy(req.body.real_estate, _.isNull);
+                }
+
+                req.body = _.omitBy(req.body, _.isNull);
+            }
+
+        } catch (e) {
+            logger.error('fillRequestOfSavedOpp Error', {metadata: e});
+
+            resBody = myResponse(false, null, 500, 'Something Went Wrong', e);
+            res.status(500).send(resBody);
+            
+            hasResponse = true;
+        }        
+    }
+
+    if (hasResponse) {
+        res.body = resBody;
+        return apiLogger(req, res, () => {return;});			//instead of calling next()
+    } else {
+        return next();
+    }
+}
+
+async function saveAppBeforeSubmit(req, res, next) {
+    let sfConn = req.needs.sfConn;
+    let realEstateReq = req.body.real_estate,
+        acquisitionReq = req.body.acquisition;
+
+    let payload,
+        toBeAttachedFiledIds;
+    let result;
+    
+    let isRealEstate = (realEstateReq && _.size(realEstateReq) != 0);
+    let isAcquisition = (acquisitionReq && _.size(acquisitionReq) != 0);
+    let isCustomer = (!req.body.broker_id || (req.body.broker_id && req.body.broker_id.trim() == ''));
+    let hasOppId = (req.body.oppId && req.body.oppId.trim != '');
+    
+    // Check if app is a real-estate & the user is customer (Not Agent)
+    if (isAcquisition
+        || (isAcquisition && isRealEstate)
+        || ((isRealEstate || isAcquisition) && hasOppId)
+        || ((isRealEstate || isAcquisition) && !isCustomer)) {
+            resBody = myResponse(false, null, 400, 'Bad requset. Please check your req body.');
+            res.status(400).send(resBody);
+            res.body = resBody;
+            
+            return apiLogger(req, res, () => {return;});			//instead of calling next()
+
+    } else if (isRealEstate && isCustomer) {
+        try {
+            await prepareSavePayload(req,res, () => {return;});
+            payload = req.needs.payload;
+            toBeAttachedFiledIds = req.needs.toBeAttachedFiledIds;
+        } catch (error) {
+            logger.error('saveAppBeforeSubmit - on prepareSavePayload Block', {metadata: error});
+
+            resBody = myResponse(false, null, 500 , 'Preparing Save Payload encountered a problem.');
+            res.status(500).send(resBody);
+            res.body = resBody;
+            
+            return apiLogger(req, res, () => {return;});			//instead of calling next()
+        }
+
+        try {
+            result = await opportunityController.saveApplication(sfConn, payload, toBeAttachedFiledIds);
+
+            if (result) {
+                req.body.oppId = result;
+                return next();
+            } else {
+                resBody = myResponse(false, null, 500 , 'Something Wents wrong. Application could not be saved before submitting.');
+                res.status(500).send(resBody);
+                res.body = resBody;
+                
+                return apiLogger(req, res, () => {return;});			//instead of calling next()
+            }
+        } catch (error) {
+            logger.error('saveAppBeforeSubmit - on saveApplication Block', {metadata: error});
+        
+            if (error instanceof salesforceException){
+                resBody = myResponse(false, null, error.statusCode, error.message, error.metadata);
+                res.status(error.statusCode).send(resBody);
+            } else if (error instanceof inputValidationException) {
+                resBody = myResponse(false, null, error.statusCode, error.message, error.metadata);
+                res.status(error.statusCode).send(resBody);
+            } else {
+                resBody = myResponse(false, null, 500, error.message);
+                res.status(500).send(resBody);
+            }
+    
+            res.body = resBody;
+
+            return apiLogger(req, res, () => {return;});			//instead of calling next()
+        }
+    } else {
+        return next();
+    }
+}
+
 module.exports = {
     saveApplicationApi,
     saveAppExtraValidation,
     getCompaniesList,
-    authMwDecision
+    authMwDecision,
+    fillRequestOfSavedOpp,
+    saveAppBeforeSubmit,
+    prepareSavePayload
 }

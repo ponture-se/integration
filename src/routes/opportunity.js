@@ -8,12 +8,14 @@ const getSFConnection = require("../middlewares/sfMiddleware");
 const opportunityMW = require("../middlewares/sfMiddlewares/opportunityMW");
 
 router.get("/needslist", auth.getSalesForceToken, controller.getNeedsList);
+
 router.get(
   "/companies",
-  auth.verifyToken,
-  // auth.noAuthNeeded,
+  // auth.verifyToken,
+  auth.noAuthNeeded,
   auth.getRoaringToken,
-  controller.getCompanies
+  // controller.getCompanies
+  opportunityMW.getCompaniesList
 );
 
 
@@ -22,6 +24,11 @@ router.post(
   auth.verifyToken,
   auth.getRoaringToken,
   auth.getSalesForceToken,
+  getSFConnection,
+  opportunityMW.saveAppBeforeSubmit,
+  opportunityMW.fillRequestOfSavedOpp,
+  opportunityValidationRules.submitValidation(),
+  validate,
   controller.submit
 );
 
@@ -65,6 +72,7 @@ router.post(
   validate,
   getSFConnection,
   opportunityMW.saveAppExtraValidation,
+  opportunityMW.prepareSavePayload,
   opportunityMW.saveApplicationApi
 );
 
