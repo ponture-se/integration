@@ -381,6 +381,56 @@ exports.submit = [
 							return next();
 						} else {
 							for (var attr in results) req.body[attr] = results[attr].value;
+
+							token = req.sf_access_token;
+							var apiRoot =
+								process.env.SALESFORCE_API_ROOT || "https://cs85.salesforce.com"; // for prod set to https://api.zignsec.com/v2
+							var config = {
+								url: "/services/apexrest/submitWithoutCallout",
+								baseURL: apiRoot,
+								method: "post",
+								data: req.body,
+								headers: {
+									Authorization: "Bearer " + token
+								}
+							};
+							console.log("Sending submit to salesforce : " + config);
+							axios(config)
+								.then(function (response) {
+									console.log(JSON.stringify(response.data));
+									res.status(200).send(response.data);
+									res.body = response.data;
+									return next();
+								})
+								.catch(function (error) {
+									if (error.response) {
+										// The request was made and the server responded with a status code
+										// that falls out of the range of 2xx
+										console.log(error.response.data);
+										console.log(error.response.status);
+										console.log(error.response.headers);
+
+										res.status(error.response.status).send(error.response.data);
+										res.body = error.response.data;
+									} else if (error.request) {
+										// The request was made but no response was received
+										// `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+										// http.ClientRequest in node.js
+										console.log(error.request);
+										let msg = "No response from BankID server";
+										res.status(500).send(msg);
+										res.body = msg; // For logging purpose
+									} else {
+										// Something happened in setting up the request that triggered an Error
+										console.log("Error", error.message);
+										res.status(500).send(error.message);
+										res.body = error.message; // For logging purpose
+									}
+									console.log(error.config);
+									console.log(error.toJSON());
+									// return Promise.reject(error.response);
+									return next();
+								});
 						}
 					});
 			} else {
@@ -388,56 +438,57 @@ exports.submit = [
 					companyId: "",
 					___realCompany___: false
 				}
-			}
-			token = req.sf_access_token;
-			var apiRoot =
-				process.env.SALESFORCE_API_ROOT || "https://cs85.salesforce.com"; // for prod set to https://api.zignsec.com/v2
-			var config = {
-				url: "/services/apexrest/submitWithoutCallout",
-				baseURL: apiRoot,
-				method: "post",
-				data: req.body,
-				headers: {
-					Authorization: "Bearer " + token
-				}
-			};
-			console.log("Sending submit to salesforce : " + config);
-			axios(config)
-				.then(function (response) {
-					console.log(JSON.stringify(response.data));
-					res.status(200).send(response.data);
-					res.body = response.data;
-					return next();
-				})
-				.catch(function (error) {
-					if (error.response) {
-						// The request was made and the server responded with a status code
-						// that falls out of the range of 2xx
-						console.log(error.response.data);
-						console.log(error.response.status);
-						console.log(error.response.headers);
 
-						res.status(error.response.status).send(error.response.data);
-						res.body = error.response.data;
-					} else if (error.request) {
-						// The request was made but no response was received
-						// `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-						// http.ClientRequest in node.js
-						console.log(error.request);
-						let msg = "No response from BankID server";
-						res.status(500).send(msg);
-						res.body = msg; // For logging purpose
-					} else {
-						// Something happened in setting up the request that triggered an Error
-						console.log("Error", error.message);
-						res.status(500).send(error.message);
-						res.body = error.message; // For logging purpose
+				token = req.sf_access_token;
+				var apiRoot =
+					process.env.SALESFORCE_API_ROOT || "https://cs85.salesforce.com"; // for prod set to https://api.zignsec.com/v2
+				var config = {
+					url: "/services/apexrest/submitWithoutCallout",
+					baseURL: apiRoot,
+					method: "post",
+					data: req.body,
+					headers: {
+						Authorization: "Bearer " + token
 					}
-					console.log(error.config);
-					console.log(error.toJSON());
-					// return Promise.reject(error.response);
-					return next();
-				});
+				};
+				console.log("Sending submit to salesforce : " + config);
+				axios(config)
+					.then(function (response) {
+						console.log(JSON.stringify(response.data));
+						res.status(200).send(response.data);
+						res.body = response.data;
+						return next();
+					})
+					.catch(function (error) {
+						if (error.response) {
+							// The request was made and the server responded with a status code
+							// that falls out of the range of 2xx
+							console.log(error.response.data);
+							console.log(error.response.status);
+							console.log(error.response.headers);
+
+							res.status(error.response.status).send(error.response.data);
+							res.body = error.response.data;
+						} else if (error.request) {
+							// The request was made but no response was received
+							// `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+							// http.ClientRequest in node.js
+							console.log(error.request);
+							let msg = "No response from BankID server";
+							res.status(500).send(msg);
+							res.body = msg; // For logging purpose
+						} else {
+							// Something happened in setting up the request that triggered an Error
+							console.log("Error", error.message);
+							res.status(500).send(error.message);
+							res.body = error.message; // For logging purpose
+						}
+						console.log(error.config);
+						console.log(error.toJSON());
+						// return Promise.reject(error.response);
+						return next();
+					});
+			}
 		}
 	}
 ];
