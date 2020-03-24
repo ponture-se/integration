@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const cnf = require("../config");
 const myToolkit = require('./myToolkit');
 const queryHelper = require('./sfHelpers/queryHelper');
+const crudHelper = require('./sfHelpers/crudHelper');
 const myResponse = require('./myResponse');
 const { salesforceException } = require('./customeException');
 
@@ -135,9 +136,30 @@ async function manualMatchMakingController(sfConn, oppId, partnersId, role) {
     return result;
 }
 
+async function closeSPOController(sfConn, spoId) {
+    let spoObj,
+        result,
+        updatePayload = {
+            Stage__c : 'Closed'
+        }
+    
+    result = await crudHelper.updateSobjectInSf(sfConn, 'Supplier_Partner_Opportunity__c', updatePayload, spoId);
+    
+    // if spoId is incorrect it will throw error, otherwise it will get updated spo (extra: if result is null becuase of wrong spoId, this will throw error)
+    spoObj = await crudHelper.readSobjectInSf(sfConn, 'Supplier_Partner_Opportunity__c', spoId);
+        
+    if (result) {
+        return spoObj;
+    } else {
+        return null;
+    }
+    
+}
+
 module.exports = {
     login,
     getAgentContactDetailByAgentId,
     getPartnerForMatchMakeController,
-    manualMatchMakingController
+    manualMatchMakingController,
+    closeSPOController
 }
