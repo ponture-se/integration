@@ -37,8 +37,20 @@ function manualMatchMakingValidation() {
 
 	];
 }
-  module.exports = {
-	loginValidation,
+
+function closeSPOValidation() {
+	return [
+		query('spoId').isString().withMessage('It Should be String')
+            .exists().withMessage("Required Key/Value Pair")
+            .trim()
+            .notEmpty().withMessage("Can not be Empty")
+	];
+}
+
+
+module.exports = {
+  loginValidation,
   getPartnerForMatchMakeValidation,
-  manualMatchMakingValidation
-  }
+  manualMatchMakingValidation,
+  closeSPOValidation
+}

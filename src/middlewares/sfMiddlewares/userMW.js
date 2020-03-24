@@ -1,6 +1,8 @@
 const myToolkit = require('../../controllers/myToolkit');
 const userController = require('../../controllers/userController');
 const myResponse = require('../../controllers/myResponse');
+const { salesforceException } = require('../../controllers/customeException');
+const jsonResHelper = require('../../controllers/sfHelpers/jsonResHelper');
 
 async function loginApi(req, res, next) {
     let username = req.body.username,
@@ -124,8 +126,59 @@ async function doManualMatchMakingAPI(req, res, next) {
     return next();
 }
 
+async function closeSpoAPI(req, res, next) {
+    let sfConn = req.needs.sfConn,
+        spoId = req.query.spoId,
+        role = req.jwtData.role,
+        responseSPO;
+
+    let resBody;
+
+    if (!role || role != 'admin') {
+        resBody = myResponse(false, null, 403, 'Not allowed.');
+        res.status(403).send(resBody);
+        res.body = resBody;
+    } else {
+        try {
+            responseSPO = await userController.closeSPOController(sfConn, spoId);
+
+            let finalResponse = {
+                id: responseSPO.Id,
+                stage: responseSPO.Stage__c,
+                // opp_id: responseSPO.OpportunityId__c,
+                close_date: responseSPO.Close_Date__c
+            };
+
+            if (responseSPO) {
+                resBody =myResponse(true, finalResponse, 200);
+                res.status(200).send(resBody);
+            } else {
+                throw Error('Something wents wrong when changing the spo stage.');
+            }
+
+            res.body = resBody;
+
+        } catch (err) {
+            if (err instanceof salesforceException) {
+                resBody = myResponse(false, null, err.statusCode, err.message, err.metadata);
+            } else {
+                resBody = myResponse(false, null, 500, 'Internal Server Error.', err);   
+            }
+
+            res.status(resBody.statusCode).send(resBody);
+            res.body = resBody;
+        }
+    }
+
+    // This is the Last Middleware, So anyway it should call next (API Logger)
+    return next();
+
+}
+
+
 module.exports = {
     loginApi,
     getPartnerForMatchMakeAPI,
-    doManualMatchMakingAPI
+    doManualMatchMakingAPI,
+    closeSpoAPI
 }
