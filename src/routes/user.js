@@ -45,12 +45,12 @@ router.post('/manualMatchMaking',
             getSFConnection,
             userMW.doManualMatchMakingAPI);
 
-router.put('/closeSPO',
-            auth.verifyToken,
-            userValidationRules.closeSPOValidation(),
-            validate,
-            getSFConnection,
-            userMW.closeSpoAPI);
+// router.put('/closeSPO',
+//             auth.verifyToken,
+//             userValidationRules.closeSPOValidation(),
+//             validate,
+//             getSFConnection,
+//             userMW.closeSpoAPI);
 
 
 module.exports = router;
