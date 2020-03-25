@@ -124,10 +124,11 @@ async function getPartnerForMatchMakeController(sfConn, oppId, role) {
     return result;
 }
 
-async function manualMatchMakingController(sfConn, oppId, partnersId, role) {
+async function manualMatchMakingController(sfConn, oppId, partnersId, with_submit, role) {
     let body = {
         "opp_id": oppId,
         "partners_id": partnersId,
+        "with_submit": with_submit,
         "role": role
     }
     // Error handeled in parent middleware.

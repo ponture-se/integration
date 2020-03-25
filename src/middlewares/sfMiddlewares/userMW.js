@@ -101,6 +101,7 @@ async function doManualMatchMakingAPI(req, res, next) {
     let sfConn = req.needs.sfConn,
         oppId = req.body.opp_id,
         partnersId = req.body.partners_id,
+        with_submit = req.body.with_submit,
         role = req.jwtData.role;
 
     let resBody;
@@ -112,7 +113,7 @@ async function doManualMatchMakingAPI(req, res, next) {
     } else {
         // let result;
         try {
-            resBody = await userController.manualMatchMakingController(sfConn, oppId, partnersId, role);
+            resBody = await userController.manualMatchMakingController(sfConn, oppId, partnersId, with_submit, role);
             res.status(200).send(resBody);
             res.body = resBody;
         } catch (e) {
