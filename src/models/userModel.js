@@ -33,7 +33,11 @@ function manualMatchMakingValidation() {
                       .isLength({
                         min: 1
                       }).withMessage("At least one value should exist")
-                      .isArray().withMessage("Value Must be Array")
+                      .isArray().withMessage("Value Must be Array"),
+    body('with_submit').isBoolean().withMessage('It Should be boolean')
+                  .isIn([true, false]).withMessage("Valid Values are: true, false")
+                  .exists().withMessage("Required Key/Value Pair")
+                  .notEmpty().withMessage("Can not be Empty"),
 
 	];
 }
