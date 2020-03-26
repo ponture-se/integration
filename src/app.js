@@ -9,6 +9,7 @@ var bodyParser = require("body-parser");
 var helmet = require("helmet");
 var compression = require("compression");
 const dotenv = require('dotenv');
+const axiosLogger = require('./middlewares/axiosLogger');
 dotenv.config();
 
 var app = express();
@@ -25,6 +26,8 @@ winston.add(new winston.transports.MongoDB({
 winston.add(new winston.transports.File({
     filename: 'apiLogs.log'
 }));
+
+app.use(axiosLogger);
 
 app.use(compression()); //Compress all routes
 app.use(helmet());
