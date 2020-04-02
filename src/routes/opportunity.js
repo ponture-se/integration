@@ -76,5 +76,14 @@ router.post(
   opportunityMW.saveApplicationApi
 );
 
+router.get(
+  "/offersOfLatestOpp",
+  auth.verifyToken,
+  opportunityValidationRules.offersOfLatestOppValidation(),
+  validate,
+  getSFConnection,
+  opportunityMW.offersOfLatestOppApi
+);
+
 
 module.exports = router;
