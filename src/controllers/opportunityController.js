@@ -1056,3 +1056,14 @@ async function getSavedOppRequiredDataById(sfConn, oppId){
 	return result;
 }
 exports.getSavedOppRequiredDataById = getSavedOppRequiredDataById;
+
+
+async function offersOfLatestOppController(sfConn, personalNum) {
+	let params = '?personalNum=' + personalNum;
+
+	let result = await sfConn.apex.get('/offersListForLatestOpp' + params);
+
+	return result;
+}
+
+exports.offersOfLatestOppController = offersOfLatestOppController;

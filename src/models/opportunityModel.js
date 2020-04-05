@@ -1,6 +1,7 @@
 const {
 	body,
-	oneOf
+	oneOf,
+	query
 } = require('express-validator');
 
 
@@ -503,7 +504,17 @@ function submitValidation() {
 	];
 }
 
+function offersOfLatestOppValidation() {
+	return [
+		query('personalNum').isNumeric().withMessage('It Should be Numeric')
+							.exists().withMessage("Required Key/Value Pair")
+							.notEmpty().withMessage("Can not be Empty")
+							.matches(/^([0-9]*[-]?)[0-9]*$/).withMessage('Invalid Pattern'),
+	];
+}
+
 module.exports = {
 	saveAppValidation,
-	submitValidation
+	submitValidation,
+	offersOfLatestOppValidation
 }
