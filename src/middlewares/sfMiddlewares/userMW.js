@@ -118,7 +118,7 @@ async function doManualMatchMakingAPI(req, res, next) {
             res.body = resBody;
         } catch (e) {
             resBody = myResponse(false, null, e.statusCode, e.message, e);
-            res.status(resBody.statusCode).send(resBody);
+            res.status(resBody.statusCode || 500).send(resBody);
             res.body = resBody;
         }
     }
