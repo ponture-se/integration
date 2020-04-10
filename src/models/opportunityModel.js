@@ -509,12 +509,32 @@ function offersOfLatestOppValidation() {
 		query('personalNum').isNumeric().withMessage('It Should be Numeric')
 							.exists().withMessage("Required Key/Value Pair")
 							.notEmpty().withMessage("Can not be Empty")
-							.matches(/^([0-9]*[-]?)[0-9]*$/).withMessage('Invalid Pattern'),
+							.matches(/^([0-9]*[-]?)[0-9]*$/).withMessage('Invalid Pattern')
+	];
+}
+
+
+function acceptOfferValidation() {
+	return [
+		query('offerId').isString().withMessage("It Should be String")
+						.exists().withMessage("Required Key/Value Pair")
+						.trim()
+						.notEmpty().withMessage("Can not be Empty"),
+		query('email').isEmail().withMessage('It Should be an Email')
+						.exists().withMessage("Required Key/Value Pair")
+						.trim()
+						.notEmpty().withMessage("Can not be Empty"),
+		query('phoneNumber').isString().withMessage("Value Must be Numeric.")
+							.exists().withMessage("Required Key/Value Pair")
+							.trim()
+							.notEmpty().withMessage("Can not be Empty")
+							.matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[0-9]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.')
 	];
 }
 
 module.exports = {
 	saveAppValidation,
 	submitValidation,
-	offersOfLatestOppValidation
+	offersOfLatestOppValidation,
+	acceptOfferValidation
 }
