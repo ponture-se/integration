@@ -48,6 +48,8 @@ router.get(
 router.put(
   "/acceptoffer",
   auth.verifyToken,
+  opportunityValidationRules.acceptOfferValidation(),
+  validate,
   auth.getSalesForceToken,
   controller.acceptOffer
 );

@@ -1,6 +1,7 @@
 const {
 	body,
-	oneOf
+	oneOf,
+	query
 } = require('express-validator');
 
 
@@ -503,7 +504,26 @@ function submitValidation() {
 	];
 }
 
+function acceptOfferValidation() {
+	return [
+		query('offerId').isString().withMessage("It Should be String")
+						.exists().withMessage("Required Key/Value Pair")
+						.trim()
+						.notEmpty().withMessage("Can not be Empty"),
+		query('email').isEmail().withMessage('It Should be an Email')
+						.exists().withMessage("Required Key/Value Pair")
+						.trim()
+						.notEmpty().withMessage("Can not be Empty"),
+		query('phoneNumber').isString().withMessage("Value Must be Numeric.")
+							.exists().withMessage("Required Key/Value Pair")
+							.trim()
+							.notEmpty().withMessage("Can not be Empty")
+							.matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[0-9]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.')
+	];
+}
+
 module.exports = {
 	saveAppValidation,
-	submitValidation
+	submitValidation,
+	acceptOfferValidation
 }
