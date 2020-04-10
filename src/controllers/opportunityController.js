@@ -22,6 +22,7 @@ const {
 } = require('./customeException');
 const contactEv = require('./contactEvidenceController');
 const logger = require('./customeLogger');
+const productCtrl = require('./productController');
 
 exports.getCompanies = [
 	// Validate fields
@@ -615,6 +616,15 @@ exports.getOffers = function (req, res, next) {
 	console.log(config);
 	axios(config)
 		.then(function (response) {
+			let resposeBody = response.data;
+			try{
+				let newOffersList = productCtrl.setTagForOffersList(_.get(resposeBody, 'data.offers', []));
+				resposeBody.data.offers = newOffersList;
+			} catch(e) {
+				logger.error('setTagForOffersList - offersPerOpp', {metadata: e});
+			}
+
+
 			res.status(200).send(response.data);
 			res.body = response.data;
 			return next();
