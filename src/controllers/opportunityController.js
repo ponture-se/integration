@@ -1018,7 +1018,7 @@ async function offersOfLatestOppController(sfConn, personalNum) {
 		let offerList = _.get(result, 'data.offers', []);
 		let newOfferList = productCtrl.setTagForOffersList(offerList);
 
-		result.offers = newOfferList;
+		result.data.offers = newOfferList;
 	} catch(e) {
 		logger.error('offersOfLatestOppController - setTagForOffersList Error', {metadata: e});
 	}
