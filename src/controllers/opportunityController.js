@@ -1073,6 +1073,18 @@ async function offersOfLatestOppController(sfConn, personalNum) {
 
 	let result = await sfConn.apex.get('/offersListForLatestOpp' + params);
 
+	// if the code, reaches here, it means the result returns success
+	try {
+		let offerList = _.get(result, 'data.offers', []);
+		let newOfferList = productCtrl.setTagForOffersList(offerList);
+
+		result.data.offers = newOfferList;
+	} catch(e) {
+		logger.error('offersOfLatestOppController - setTagForOffersList Error', {metadata: e});
+	}
+
+
+
 	return result;
 }
 
