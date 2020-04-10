@@ -8,16 +8,21 @@ function setTagForOffersList(offerList) {
 
     // calculate to find value
     offerList.forEach(o => {
-        let rate = _.get(o, 'Amount', 0) / _.get(o, 'Loan_Period', 1);
+        let amount = _.get(o, 'Amount');
+        let loanPeriod = _.get(o, 'Loan_Period');
 
-        if (rate > mostExpensiveOfferValue) {
-            mostExpensiveOfferValue = rate;
-            mostExpensiveOfferId = _.get(o, 'Id', '__');
-        }
+        if (amount && loanPeriod ){
+            let rate = amount / loanPeriod;
 
-        if (rate < cheepestOfferValue) {
-            cheepestOfferValue = rate;
-            cheepestOfferId = _.get(o, 'Id', '__');
+            if (rate > mostExpensiveOfferValue) {
+                mostExpensiveOfferValue = rate;
+                mostExpensiveOfferId = _.get(o, 'Id', '__');
+            }
+
+            if (rate < cheepestOfferValue) {
+                cheepestOfferValue = rate;
+                cheepestOfferId = _.get(o, 'Id', '__');
+            }
         }
     });
 
@@ -29,7 +34,7 @@ function setTagForOffersList(offerList) {
         if (offerId && offerId == cheepestOfferId) {
             tag.push('cheepest');
         }
-        if (offerId == mostExpensiveOfferId) {
+        if (offerId && offerId == mostExpensiveOfferId) {
             tag.push('biggest');
         }
 
