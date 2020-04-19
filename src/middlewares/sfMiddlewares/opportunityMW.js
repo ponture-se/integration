@@ -512,6 +512,25 @@ async function saveAppBeforeSubmit(req, res, next) {
     }
 }
 
+
+async function offersOfLatestOppApi(req, res, next) {
+    let sfConn = req.needs.sfConn,
+        personalNum = req.query.personalNum;
+    let resBody;
+
+    try {
+        resBody = await opportunityController.offersOfLatestOppController(sfConn, personalNum);
+        res.status(200).send(resBody);
+        res.body = resBody;
+    } catch (e) {
+        resBody = myResponse(false, null, e.statusCode, e.message, e);
+        res.status(resBody.statusCode).send(resBody);
+        res.body = resBody;
+    }
+
+    return next();
+}
+
 module.exports = {
     saveApplicationApi,
     saveAppExtraValidation,
@@ -519,5 +538,6 @@ module.exports = {
     authMwDecision,
     fillRequestOfSavedOpp,
     saveAppBeforeSubmit,
-    prepareSavePayload
+    prepareSavePayload,
+    offersOfLatestOppApi
 }
