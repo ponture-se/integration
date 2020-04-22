@@ -5,7 +5,7 @@ var auth = require("../controllers/auth");
 
 router.get(
   "/getcompanyinfo",
-  auth.noAuthNeeded,
+  // auth.noAuthNeeded,
   auth.getRoaringToken,
   controller.getcompanyinfo
 );
