@@ -14,8 +14,8 @@ router.get(
   // auth.verifyToken,
   // auth.noAuthNeeded,
   auth.getRoaringToken,
-  // controller.getCompanies
-  opportunityMW.getCompaniesList
+  controller.getCompanies
+  // opportunityMW.getCompaniesList
 );
 
 
