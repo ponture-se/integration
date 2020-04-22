@@ -12,10 +12,10 @@ router.get("/needslist", auth.getSalesForceToken, controller.getNeedsList);
 router.get(
   "/companies",
   // auth.verifyToken,
-  auth.noAuthNeeded,
+  // auth.noAuthNeeded,
   auth.getRoaringToken,
-  // controller.getCompanies
-  opportunityMW.getCompaniesList
+  controller.getCompanies
+  // opportunityMW.getCompaniesList
 );
 
 
