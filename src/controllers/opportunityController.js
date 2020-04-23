@@ -22,6 +22,7 @@ const {
 } = require('./customeException');
 const contactEv = require('./contactEvidenceController');
 const logger = require('./customeLogger');
+const productCtrl = require('./productController');
 
 exports.getCompanies = [
 	// Validate fields
@@ -666,6 +667,15 @@ exports.getOffers = function (req, res, next) {
 	console.log(config);
 	axios(config)
 		.then(function (response) {
+			let resposeBody = response.data;
+			try{
+				let newOffersList = productCtrl.setTagForOffersList(_.get(resposeBody, 'data.offers', []));
+				resposeBody.data.offers = newOffersList;
+			} catch(e) {
+				logger.error('setTagForOffersList - offersPerOpp', {metadata: e});
+			}
+
+
 			res.status(200).send(response.data);
 			res.body = response.data;
 			return next();
@@ -1062,6 +1072,18 @@ async function offersOfLatestOppController(sfConn, personalNum) {
 	let params = '?personalNum=' + personalNum;
 
 	let result = await sfConn.apex.get('/offersListForLatestOpp' + params);
+
+	// if the code, reaches here, it means the result returns success
+	try {
+		let offerList = _.get(result, 'data.offers', []);
+		let newOfferList = productCtrl.setTagForOffersList(offerList);
+
+		result.data.offers = newOfferList;
+	} catch(e) {
+		logger.error('offersOfLatestOppController - setTagForOffersList Error', {metadata: e});
+	}
+
+
 
 	return result;
 }
