@@ -245,10 +245,12 @@ function submitValidation() {
 			[
 				body('orgNumber').isNumeric().withMessage('It Should be Numeric')
 					.exists().withMessage("Required Key/Value Pair")
+					.trim()
 					.notEmpty().withMessage("Can not be Empty")
 					.matches(/^([0-9]){6}-?([0-9]){4}$/).withMessage('Invalid Pattern'),
 				body('orgName').isString().withMessage('It Should be String')
 					.exists().withMessage("Required Key/Value Pair")
+					.trim()
 					.notEmpty().withMessage("Can not be Empty")
 			],
 			body('need').exists().withMessage("Required Key/Value Pair")
@@ -260,23 +262,27 @@ function submitValidation() {
 		], "'orgName' & 'orgNumber' must exist if 'need' is something different from 'purchase_of_business'"),
 		body('personalNumber').isNumeric().withMessage('It Should be Numeric')
 			.exists().withMessage("Required Key/Value Pair")
+			.trim()
 			.notEmpty().withMessage("Can not be Empty")
 			.matches(/^([0-9]*[-]?)[0-9]*$/).withMessage('Invalid Pattern'),
 		body('amount').isNumeric().withMessage('It Should be Numeric')
 			.exists().withMessage("Required Key/Value Pair")
+			.trim()
 			.notEmpty().withMessage("Can not be Empty"),
 		body('amourtizationPeriod').isNumeric().withMessage('It Should be Numeric')
 			.exists().withMessage("Required Key/Value Pair")
+			.trim()
 			.notEmpty().withMessage("Can not be Empty"),
 		// body('lastName').isString().withMessage('It Should be String')
 		// 	.exists().withMessage("Required Key/Value Pair")
 		// 	.notEmpty().withMessage("Can not be Empty"),
 		// body('firstName').isString().withMessage('It Should be String').optional(),
-		body('email').isEmail().withMessage('It Should be an Email')
-					.exists().withMessage("Required Key/Value Pair")
-					.notEmpty().withMessage("Can not be Empty"),
+		body('email').exists().withMessage("Required Key/Value Pair")
+					.trim()
+					.notEmpty().withMessage("Can not be Empty")
+					.isEmail().withMessage('It Should be an Email'),
 		body('phoneNumber').isNumeric().withMessage("Value Must be Numeric.")
-			.matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[0-9]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.')
+			// .matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[0-9]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.')
 			.exists().withMessage("Required Key/Value Pair")
 			.notEmpty().withMessage("Can not be Empty"),
 		body('need').exists().withMessage("Required Key/Value Pair")
