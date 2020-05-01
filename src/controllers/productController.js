@@ -29,14 +29,11 @@ function tag_addCheapestTagForOffersList(offerList) {
 
     // calculate to find value
     offerList.forEach(o => {
-        let thirdFieldApiName = _.get(o, ['outline', '2', 'apiName']);
-        let thirdFieldValue = (thirdFieldApiName)
-                                ? _.get(o, ['detail', thirdFieldApiName])
-                                : null;
+        let totalMonthlyPayment = _.get(o, ['detail', 'Total_monthly_payment']);
 
-        if (thirdFieldValue && _.isNumber(thirdFieldValue)){
-            if (thirdFieldValue < cheapestOfferValue) {
-                cheapestOfferValue = thirdFieldValue;
+        if (totalMonthlyPayment && _.isNumber(totalMonthlyPayment)){
+            if (totalMonthlyPayment < cheapestOfferValue) {
+                cheapestOfferValue = totalMonthlyPayment;
                 cheapestOfferId = _.get(o, 'Id', '__');
             }
         }
