@@ -526,17 +526,17 @@ function acceptOfferValidation() {
 						.exists().withMessage("Required Key/Value Pair")
 						.trim()
 						.notEmpty().withMessage("Can not be Empty"),
-		query('email').isEmail().withMessage('It Should be an Email')
-						// .exists().withMessage("Required Key/Value Pair")
-						.optional()
+		query('email').optional()
 						.trim()
-						.notEmpty().withMessage("Can not be Empty"),
+						.notEmpty().withMessage("Can not be Empty")
+						.isEmail().withMessage('It Should be an Email'),
+						
 		query('phoneNumber').isString().withMessage("Value Must be Numeric.")
 							// .exists().withMessage("Required Key/Value Pair")
 							.optional()
 							.trim()
 							.notEmpty().withMessage("Can not be Empty")
-							.matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[0-9]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.')
+							// .matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[0-9]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.')
 	];
 }
 
