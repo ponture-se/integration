@@ -29,7 +29,18 @@ function tag_addCheapestTagForOffersList(offerList) {
 
     // calculate to find value
     offerList.forEach(o => {
-        let totalMonthlyPayment = _.get(o, ['detail', 'Total_monthly_payment']);
+
+        let detailsObj = _.get(o, 'detail', {});
+        let keys = Object.keys(detailsObj);
+        let totalMP_rightName = '';
+        for (let k of keys) {
+            if (k.toLowerCase() == 'total_monthly_payment') {
+                totalMP_rightName = k;
+                break;
+            }
+        }
+        
+        let totalMonthlyPayment = _.get(detailsObj, totalMP_rightName);
 
         if (totalMonthlyPayment && _.isNumber(totalMonthlyPayment)){
             if (totalMonthlyPayment < cheapestOfferValue) {
