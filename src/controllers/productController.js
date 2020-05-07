@@ -32,7 +32,7 @@ function tag_addCheapestTagForOffersList(offerList) {
 
         let detailsObj = _.get(o, 'detail', {});
         let keys = Object.keys(detailsObj);
-        let totalMP_rightName = '';
+        let totalMP_rightName = 'Total_monthly_payment';        // Default Value
         for (let k of keys) {
             if (k.toLowerCase() == 'total_monthly_payment') {
                 totalMP_rightName = k;
