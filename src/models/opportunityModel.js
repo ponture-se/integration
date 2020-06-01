@@ -277,6 +277,7 @@ function submitValidation() {
 		// 	.exists().withMessage("Required Key/Value Pair")
 		// 	.notEmpty().withMessage("Can not be Empty"),
 		// body('firstName').isString().withMessage('It Should be String').optional(),
+		body('givenRevenue').isNumeric().withMessage('It Should be Numeric').optional(),
 		body('email').exists().withMessage("Required Key/Value Pair")
 					.trim()
 					.notEmpty().withMessage("Can not be Empty")
