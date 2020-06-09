@@ -9,6 +9,7 @@ const userController = require('../../controllers/userController');
 const queryHelper = require('../../controllers/sfHelpers/queryHelper');
 const crudHelper = require('../../controllers/sfHelpers/crudHelper');
 const auth = require('../../controllers/auth');
+const roaring = require('../../controllers/roaring');
 
 const app = require('../../app');
 
@@ -531,6 +532,91 @@ async function offersOfLatestOppApi(req, res, next) {
     return next();
 }
 
+async function createOpportunityMw(req, res, next) {
+    let sfConn = req.needs.sfConn;
+    let roaingToken = req.roaring_access_token;
+    let resBody;
+
+    try {
+        let today = new Date();             // keeps today's date
+        let clostDate = today;
+
+        let payload = {
+            opp: {
+                Amount: req.body.amount,
+                AmortizationPeriod__c: req.body.amourtizationPeriod,
+                Need__c: req.body.need.join(';'),
+                NeedDescription__c: req.body.needDescription,
+                stageName: 'App Review',
+                CloseDate: clostDate,
+                UTM_Source__c: req.body.utm_source,
+                UTM_Medium__c: req.body.utm_medium,
+                UTM_Campaign__c: req.body.utm_campaign,
+                Referral_ID__c: req.body.referral_id,
+                Last_referral_date__c: req.body.last_referral_date,
+                Name: `Saved Opp @ ${myToolkit.getFormattedDate()} - ${req.body.personalNumber}`,
+            },
+            contact: {
+                Email: req.body.email,
+                Phone : req.body.phoneNumber,
+                Personal_Identity_Number__c: req.body.personalNumber,
+                // lastName: req.body.lastName,
+                // firstName: req.body.firstName
+            },
+            account: {
+                Organization_Number__c: req.body.orgNumber,
+                Name: req.body.orgName
+            }
+        }
+
+        let result = await opportunityController.createOpportunityController(sfConn, roaingToken, payload);
+        if (result) {
+            resBody = myResponse(true, result, 200);
+            res.status(200).send(resBody);
+
+            return next();
+        }
+        else {
+            resBody = myResponse(false, null, 500, 'Something went wrong');
+            res.status(500).send(resBody);
+        }
+    } catch (error) {
+        resBody = myResponse(false, null, 500, error.message || 'Something went wrong', error);
+        res.status(500).send(resBody);
+    }
+}
+
+async function fillReqWithRoaringData(req, res, next) {
+    let resBody;
+
+    let roaingToken = req.roaring_access_token;
+
+    let orgNumber = req.body.orgNumber,
+        orgName = req.body.orgName,
+        personalNum = req.body.personalNum;
+    
+
+    roaring.getRoaringData(roaingToken, orgNumber, orgName, personalNum, (errors, results) => {
+        let roaringData = {};
+
+        if (!results ||
+            (results && _.size(results) == 0) ||
+            !results.hasOwnProperty('overview') ||
+            (results.hasOwnProperty('overview') && !results.overview.hasOwnProperty('value'))) {
+
+            resBody = myResponse(false, null, 500, 'Roaring data has some problem', errors);
+            res.status(500).send(resBody);
+
+        } else {
+            for (var attr in results) roaringData[attr] = results[attr].value;
+            
+            req.body = _.assign({}, req.body, roaringData);
+
+            return next();
+        }
+    })
+}
+
 module.exports = {
     saveApplicationApi,
     saveAppExtraValidation,
@@ -539,5 +625,7 @@ module.exports = {
     fillRequestOfSavedOpp,
     saveAppBeforeSubmit,
     prepareSavePayload,
-    offersOfLatestOppApi
+    offersOfLatestOppApi,
+    createOpportunityMw,
+    fillReqWithRoaringData
 }
