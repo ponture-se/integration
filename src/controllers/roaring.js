@@ -1,5 +1,9 @@
 const axios = require("axios");
 const qs = require('qs');
+const async = require("async");
+const reflectAll = require("async/reflectAll");
+const _ = require('lodash');
+const { salesforceException } = require('./customeException');
 
 function callRoaring(
     callback,
@@ -79,7 +83,131 @@ function callRoaring(
 }
 
 
+function getRoaringData(token, orgNumber, orgName, personalNumber, afterTasksCompleted) {
+  var tasks = {
+    overview: function (callback) {
+      callRoaring(
+        callback,
+        "/se/company/overview/1.1/" + orgNumber,
+        "get",
+        undefined,
+        "COMPANY_OVERVIEW_INVALID_RESPONSE",
+        "COMPANY_OVERVIEW_API_ERROR",
+        token
+      );
+    },
+    ecoOverview: function (callback) {
+      callRoaring(
+        callback,
+        "/se/company/economy-overview/1.1/" + orgNumber,
+        "get",
+        undefined,
+        "COMPANY_ECOOVERVIEW_INVALID_RESPONSE",
+        "COMPANY_ECOOVERVIEW_API_ERROR",
+        token
+      );
+    },
+    boardMembers: function (callback) {
+      callRoaring(
+        callback,
+        "/se/company/board-members/1.1/" + orgNumber,
+        "get",
+        undefined,
+        "COMPANY_BOARDMEMBERS_INVALID_RESPONSE",
+        "COMPANY_BOARDMEMBERS_API_ERROR",
+        token
+      );
+    },
+    beneficialOwners: function (callback) {
+      callRoaring(
+        callback,
+        "/se/beneficialowner/1.0/company/" + orgNumber,
+        "get",
+        undefined,
+        "COMPANY_BENEFICIAL_INVALID_RESPONSE",
+        "COMPANY_BENEFICIAL_API_ERROR",
+        token
+      );
+    },
+    signatory: function (callback) {
+      callRoaring(
+        callback,
+        "/se/company/signatory/1.1/" + orgNumber,
+        "get",
+        undefined,
+        "COMPANY_SIGNATORY_INVALID_RESPONSE",
+        "COMPANY_SIGNATORY_API_ERROR",
+        token
+      );
+    },
+    cmpSanctionInfo: function (callback) {
+      callRoaring(
+        callback,
+        "/global/sanctions-lists/1.0/search",
+        "get", {
+          name: orgName
+        },
+        "COMPANY_SANCTION_INVALID_RESPONSE",
+        "COMPANY_SANCTION_API_ERROR",
+        token
+      );
+    },
+    // perSanctionInfo: function (callback) {
+    //   callRoaring(
+    //     callback,
+    //     "/global/sanctions-lists/1.0/search",
+    //     "get", {
+    //       name: req.body.bankid.userInfo.name
+    //     },
+    //     "PERSON_SACNTION_INVALID_RESPONSE",
+    //     "PERSON_SACNTION_API_ERROR",
+    //     token
+    //   );
+    // },
+    pepInfo: function (callback) {
+      callRoaring(
+        callback,
+        "/nordic/pep/1.0/search",
+        "get", {
+          personalNumber: personalNumber,
+          countryCode: "se"
+        },
+        "PEP_INVALID_RESPONSE",
+        "PEP_API_ERROR",
+        token
+      );
+    }
+  };
+
+
+  async.parallel(async.reflectAll(tasks), afterTasksCompleted);
+  
+}
+
+async function getPersonalInfo(roaringToken, personalNumber) {
+	let apiRoot = process.env.ROARING_API_ROOT || "https://api.roaring.io";
+
+    let config = {
+      url: 'person/1.0/person',
+      baseURL: apiRoot,
+      method: 'Get',
+      headers: {
+        Authorization: "Bearer " + roaringToken
+      },
+      params: {
+			personalNumber: personalNumber
+		}
+	};
+	
+	let result = await axios(config);
+	
+	return result;
+}
+
+
   module.exports = {
       callRoaring,
-      getRoaringToken
+      getRoaringToken,
+	  getRoaringData,
+	  getPersonalInfo
   }

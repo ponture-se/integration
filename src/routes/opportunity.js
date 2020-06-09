@@ -88,4 +88,15 @@ router.get(
 );
 
 
+router.post(
+  "/createOpp",
+  // auth.verifyToken,
+  opportunityValidationRules.createOppValidation(),
+  validate,
+  auth.getRoaringToken,
+  // opportunityMW.fillReqWithRoaringData,
+  getSFConnection,
+  opportunityMW.createOpportunityMw
+);
+
 module.exports = router;
