@@ -23,6 +23,8 @@ const {
 const contactEv = require('./contactEvidenceController');
 const logger = require('./customeLogger');
 const productCtrl = require('./productController');
+const Constants = require('./Constants');
+const roaring = require('./roaring');
 
 exports.getCompanies = [
 	// Validate fields
@@ -1089,3 +1091,79 @@ async function offersOfLatestOppController(sfConn, personalNum) {
 }
 
 exports.offersOfLatestOppController = offersOfLatestOppController;
+
+
+async function createOpportunityController(sfConn, roaringToken, payload) {
+	let accountInfo = payload.account,
+		contactInfo = payload.contact,
+		oppInfo = payload.opp;
+
+	let account,
+		contact,
+		accId,
+		contactId,
+		accUpsertResult,
+		contactUpsertResult,
+		oppUpsertResult;
+
+	// Get Account with orgNumber
+	let getAccWhereCluase = {
+		Organization_Number__c: accountInfo.Organization_Number__c
+	}
+	account = await queryHelper.getSingleQueryResult(sfConn, 'Account', getAccWhereCluase);
+	accId = (account != null) ? account.Id : null;
+
+	// Upsert Account
+	accUpsertResult = await crudHelper.upsertSobjectInSf(sfConn, 'Account', accountInfo, accId);
+	oppInfo['AccountId'] = accUpsertResult.id;
+
+	// Get Contact with personalNum
+	let getContactWhereCluase = {
+		Personal_Identity_Number__c: contactInfo.Personal_Identity_Number__c
+	}
+	contact = await queryHelper.getSingleQueryResult(sfConn, 'Contact', getContactWhereCluase);
+	contactId = (contact != null) ? contact.Id : null;
+	if (!contactId) {
+		try {
+			let roaringPersonInfo = await roaring.getPersonalInfo(roaringToken, contactInfo.Personal_Identity_Number__c);
+			let mainPersonalInfo = _.get(roaringPersonInfo, ['data', 'posts', '0', 'details', '0'], {});
+			contactInfo.lastName =  _.get(mainPersonalInfo, 'surName', 'Contact ' + contactInfo.Personal_Identity_Number__c),
+			contactInfo.firstName =  _.get(mainPersonalInfo, 'firstName', '')
+		} catch (error) {
+			logger.error('Roaring Personal Info Error', {metadata: {
+				error: error
+			}});
+			
+			contactInfo.lastName = 'Contact ' + contactInfo.Personal_Identity_Number__c;
+			contactInfo.firstName = '';
+		}
+	}
+	// Upsert Contact
+	contactInfo['AccountId'] = accUpsertResult.id;
+	contactUpsertResult = await crudHelper.upsertSobjectInSf(sfConn, 'Contact', contactInfo, contactId);
+
+	oppInfo['PrimaryContact__c'] = contactUpsertResult.id;
+	oppInfo['Notification__c'] = true;
+
+
+	// Opportunity Processing
+	// Insert Opportunity
+	oppUpsertResult = await crudHelper.insertSobjectInSf(sfConn, 'Opportunity', oppInfo);
+	
+
+	if (oppUpsertResult) {
+		let dataBody = {
+			oppId: oppUpsertResult.id,
+		}
+
+		if (oppInfo.Amount > Constants.MIN_AMOUNT_FOR_BANKID_BYPASS) {
+			dataBody.bankIdRequired = false;
+		} else {
+			dataBody.bankIdRequired = true;
+		}
+		return dataBody;
+	} else {
+		return null;
+	}
+}
+exports.createOpportunityController = createOpportunityController;
