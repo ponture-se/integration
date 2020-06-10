@@ -68,9 +68,31 @@ class inputValidationException extends Error {
 }
 
 
+class notFoundException extends Error {
+    constructor(message, errObj = null) {
+        super(message);
+        this.name = this.constructor.name;
+        this.statusCode = 404;
+        this.metadata = errObj;
+    }
+}
+
+class badRequestException extends Error {
+    constructor(message, errObj = null) {
+        super(message);
+        this.name = this.constructor.name;
+        this.statusCode = 400;
+        this.metadata = errObj;
+    }
+}
+
+
 
 module.exports = {
     salesforceException,
     externalCalloutException,
-    inputValidationException
+    inputValidationException,
+    notFoundException,
+    badRequestException
+    
 }
