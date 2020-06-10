@@ -83,7 +83,7 @@ function callRoaring(
 }
 
 
-function getRoaringData(token, orgNumber, orgName, personalNumber, afterTasksCompleted) {
+function getRoaringData(token, orgNumber, orgName, personalNumber, personName, afterTasksCompleted) {
   var tasks = {
     overview: function (callback) {
       callRoaring(
@@ -152,18 +152,18 @@ function getRoaringData(token, orgNumber, orgName, personalNumber, afterTasksCom
         token
       );
     },
-    // perSanctionInfo: function (callback) {
-    //   callRoaring(
-    //     callback,
-    //     "/global/sanctions-lists/1.0/search",
-    //     "get", {
-    //       name: req.body.bankid.userInfo.name
-    //     },
-    //     "PERSON_SACNTION_INVALID_RESPONSE",
-    //     "PERSON_SACNTION_API_ERROR",
-    //     token
-    //   );
-    // },
+    perSanctionInfo: function (callback) {
+      callRoaring(
+        callback,
+        "/global/sanctions-lists/1.0/search",
+        "get", {
+          name: personName
+        },
+        "PERSON_SACNTION_INVALID_RESPONSE",
+        "PERSON_SACNTION_API_ERROR",
+        token
+      );
+    },
     pepInfo: function (callback) {
       callRoaring(
         callback,

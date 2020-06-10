@@ -32,6 +32,20 @@ router.post(
   controller.submit
 );
 
+router.post(
+  "/submit/v2",
+  auth.verifyToken,
+  auth.getRoaringToken,
+  auth.getSalesForceToken,
+  getSFConnection,
+  // opportunityMW.saveAppBeforeSubmit,
+  opportunityMW.fillSubmitReqBodyFromExistingOppMw,
+  opportunityValidationRules.submitV2Validation(),
+  validate,
+  opportunityMW.fillReqWithRoaringData,
+  opportunityMW.submit_v2
+);
+
 router.get(
   "/requests",
   auth.verifyToken,

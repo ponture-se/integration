@@ -1,8 +1,9 @@
 const myToolkit = require('../../controllers/myToolkit');
+const axios = require("axios");
 const myResponse = require('../../controllers/myResponse');
 const apiLogger = require('../apiLogger');
 const opportunityController = require('../../controllers/opportunityController');
-const {salesforceException, inputValidationException} = require('../../controllers/customeException');
+const {salesforceException, inputValidationException, notFoundException} = require('../../controllers/customeException');
 const _ = require('lodash');
 const async = require('async');
 const userController = require('../../controllers/userController');
@@ -540,6 +541,7 @@ async function createOpportunityMw(req, res, next) {
     try {
         let today = new Date();             // keeps today's date
         let clostDate = today;
+        clostDate.setMonth(clostDate.getMonth() + 1);
 
         let payload = {
             opp: {
@@ -549,6 +551,7 @@ async function createOpportunityMw(req, res, next) {
                 NeedDescription__c: req.body.needDescription,
                 stageName: 'App Review',
                 CloseDate: clostDate,
+                Given_Revenue__c: req.body.givenRevenue,
                 UTM_Source__c: req.body.utm_source,
                 UTM_Medium__c: req.body.utm_medium,
                 UTM_Campaign__c: req.body.utm_campaign,
@@ -593,10 +596,11 @@ async function fillReqWithRoaringData(req, res, next) {
 
     let orgNumber = req.body.orgNumber,
         orgName = req.body.orgName,
-        personalNum = req.body.personalNum;
+        personalNum = req.body.personalNumber,
+        personName = req.body.bankid.userInfo.name;
     
 
-    roaring.getRoaringData(roaingToken, orgNumber, orgName, personalNum, (errors, results) => {
+    roaring.getRoaringData(roaingToken, orgNumber, orgName, personalNum, personName, (errors, results) => {
         let roaringData = {};
 
         if (!results ||
@@ -617,6 +621,117 @@ async function fillReqWithRoaringData(req, res, next) {
     })
 }
 
+
+async function fillSubmitReqBodyFromExistingOppMw(req, res, next) {
+    const sfConn = req.needs.sfConn;
+    const oppId = req.body.oppId;
+    let resBody;
+
+    try{
+        let existingOpp = await opportunityController.getSavedOppRequiredDataById_enhanced(sfConn, oppId);
+
+        if (existingOpp.StageName != 'App Review') {
+            resBody = myResponse(false, null, 403, 'Stage of the Existing Opportunity is invalid, it equals to \'' + existingOpp.StageName + '\'');
+            res.status(403).send(resBody);
+
+            res.body = resBody;
+            return apiLogger(req, res, () => {return;});			//instead of calling next()
+        }
+
+        req.body.orgNumber = req.body.orgNumber || (existingOpp.Account) ? existingOpp.Account.Organization_Number__c : null;
+        req.body.orgName = req.body.orgName || (existingOpp.Account) ? existingOpp.Account.Name : null;
+        req.body.personalNumber = req.body.personalNumber || (existingOpp.PrimaryContact__r) ? existingOpp.PrimaryContact__r.Personal_Identity_Number__c : null;
+        req.body.amount = req.body.amount || existingOpp.Amount;
+        req.body.amourtizationPeriod = req.body.amourtizationPeriod || existingOpp.AmortizationPeriod__c;
+        req.body.email = req.body.email || (existingOpp.PrimaryContact__r) ? existingOpp.PrimaryContact__r.Email : null;
+        req.body.phoneNumber = req.body.phoneNumber || (existingOpp.PrimaryContact__r) ? existingOpp.PrimaryContact__r.Phone || existingOpp.PrimaryContact__r.MobilePhone : null;
+        req.body.need = req.body.need || (existingOpp.Need__c) ? existingOpp.Need__c.split(';') : null;
+        req.body.needDescription = req.body.needDescription || existingOpp.NeedDescription__c;
+        req.body.givenRevenue = req.body.givenRevenue || existingOpp.Given_Revenue__c || null;
+        req.body.referral_id = req.body.referral_id || existingOpp.Referral_ID__c;
+        req.body.utm_source = req.body.utm_source || existingOpp.UTM_Source__c;
+        req.body.utm_medium = req.body.utm_medium || existingOpp.UTM_Medium__c;
+        req.body.utm_campaign = req.body.utm_campaign || existingOpp.UTM_Campaign__c;
+        req.body.ad_gd = req.body.ad_gd || existingOpp.Last_referral_date__c;
+        // req.body.bankid = req.body.bankid;
+
+        req.body = _.omitBy(req.body, _.isNull);
+        // }
+
+        return next();
+
+    } catch (e) {
+        if (e instanceof notFoundException) {
+            resBody = myResponse(false, null, e.statusCode, e.message, e);
+            res.status(e.statusCode || 404).send(resBody);
+        } else if (e instanceof salesforceException){
+            resBody = myResponse(false, null, e.statusCode, e.message, e);
+            res.status(e.statusCode || 500).send(resBody);
+        } else {
+            resBody = myResponse(false, null, 500, 'Something Went Wrong', e);
+            res.status(500).send(resBody);
+        }
+
+        res.body = resBody;
+        return apiLogger(req, res, () => {return;});			//instead of calling next()
+    }        
+}
+
+
+
+function submit_v2(req, res, next) {
+	let token = req.sf_access_token;
+	var apiRoot =
+		process.env.SALESFORCE_API_ROOT || "https://cs85.salesforce.com"; // for prod set to https://api.zignsec.com/v2
+	var config = {
+		url: "/services/apexrest/submit/v2",
+		baseURL: apiRoot,
+		method: "post",
+		data: req.body,
+		headers: {
+			Authorization: "Bearer " + token
+		}
+	};
+	console.log("Sending submit to salesforce : " + config);
+	
+	axios(config)
+		.then(function (response) {
+			console.log(JSON.stringify(response.data));
+			res.status(200).send(response.data);
+			res.body = response.data;
+			return next();
+		})
+		.catch(function (error) {
+			if (error.response) {
+				// The request was made and the server responded with a status code
+				// that falls out of the range of 2xx
+				console.log(error.response.data);
+				console.log(error.response.status);
+				console.log(error.response.headers);
+
+				res.status(error.response.status).send(error.response.data);
+				res.body = error.response.data;
+			} else if (error.request) {
+				// The request was made but no response was received
+				// `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+				// http.ClientRequest in node.js
+				console.log(error.request);
+				let msg = "No response from BankID server";
+				res.status(500).send(msg);
+				res.body = msg; // For logging purpose
+			} else {
+				// Something happened in setting up the request that triggered an Error
+				console.log("Error", error.message);
+				res.status(500).send(error.message);
+				res.body = error.message; // For logging purpose
+			}
+			console.log(error.config);
+			console.log(error.toJSON());
+			// return Promise.reject(error.response);
+			return next();
+		});
+}
+
 module.exports = {
     saveApplicationApi,
     saveAppExtraValidation,
@@ -627,5 +742,7 @@ module.exports = {
     prepareSavePayload,
     offersOfLatestOppApi,
     createOpportunityMw,
-    fillReqWithRoaringData
+    fillReqWithRoaringData,
+    fillSubmitReqBodyFromExistingOppMw,
+    submit_v2
 }
