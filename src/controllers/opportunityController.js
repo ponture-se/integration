@@ -18,7 +18,9 @@ const fileController = require('./fileController');
 const {
 	salesforceException,
 	externalCalloutException,
-	inputValidationException
+	inputValidationException,
+	notFoundException,
+	badRequestException
 } = require('./customeException');
 const contactEv = require('./contactEvidenceController');
 const logger = require('./customeLogger');
@@ -1068,6 +1070,35 @@ async function getSavedOppRequiredDataById(sfConn, oppId){
 	return result;
 }
 exports.getSavedOppRequiredDataById = getSavedOppRequiredDataById;
+
+async function getSavedOppRequiredDataById_enhanced(sfConn, oppId){
+	let whereCluase = {
+		id: oppId
+	};
+	let selectCluase = `*, 
+						account.Name, 
+						account.Organization_Number__c,
+						PrimaryContact__r.Name,
+						PrimaryContact__r.Personal_Identity_Number__c,
+						PrimaryContact__r.Email,
+						PrimaryContact__r.Phone,
+						PrimaryContact__r.MobilePhone,
+						Acquisition_Object__r.Name,
+						Acquisition_Object__r.Organization_Number__c
+						`;
+	try {
+		let result = await queryHelper.getQueryResultWithThrowingException(sfConn, 'Opportunity', whereCluase, selectCluase);
+
+		if (result.length > 0) {
+			return result[0];
+		} else {
+			throw new notFoundException('Opportunity with given oppId not Found', {givenOppId: oppId});
+		}
+	} catch (err) {
+		throw new salesforceException('oppId is Incorrect.', err, 400);
+	}
+}
+exports.getSavedOppRequiredDataById_enhanced = getSavedOppRequiredDataById_enhanced;
 
 
 async function offersOfLatestOppController(sfConn, personalNum) {
