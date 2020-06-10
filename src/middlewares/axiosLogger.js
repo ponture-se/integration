@@ -2,6 +2,7 @@ const axios = require("axios");
 const winston = require("winston");
 require('winston-mongodb');
 const dotenv = require('dotenv');
+const _ = require('lodash');
 dotenv.config();
 
 axios.interceptors.response.use(response => {
@@ -18,8 +19,8 @@ axios.interceptors.response.use(response => {
 },
 error =>{
     try{
-        let repsonseOfError = error.response;
-        setDatabaseCollectionName(repsonseOfError.config || error.config);
+        let repsonseOfError = _.get(error, 'response', {});
+        setDatabaseCollectionName(_.get(repsonseOfError, 'config') || _.get(error, 'config') || {});
         let data = prepareLogData(repsonseOfError || error);
         
         logger(data.logLevel, data.title, data.data);
