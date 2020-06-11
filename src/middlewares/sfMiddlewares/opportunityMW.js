@@ -15,6 +15,7 @@ const roaring = require('../../controllers/roaring');
 const app = require('../../app');
 
 const logger = require('../../controllers/customeLogger');
+const Constants = require('../../controllers/Constants');
 
 async function saveApplicationApi(req, res, next) {
     let resBody;
@@ -630,7 +631,7 @@ async function fillSubmitReqBodyFromExistingOppMw(req, res, next) {
     try{
         let existingOpp = await opportunityController.getSavedOppRequiredDataById_enhanced(sfConn, oppId);
 
-        if (existingOpp.StageName != 'App Review') {
+        if (existingOpp.StageName != Constants.OPP_STAGE_OF_OPP_CREATION_WITHOUT_BANK_ID) {
             resBody = myResponse(false, null, 403, 'Stage of the Existing Opportunity is invalid, it equals to \'' + existingOpp.StageName + '\'');
             res.status(403).send(resBody);
 
