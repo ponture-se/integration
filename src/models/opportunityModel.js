@@ -569,7 +569,7 @@ function createOppValidation() {
 			.trim()
 			.notEmpty().withMessage("Can not be Empty")
 			.isEmail().withMessage('It Should be an Email'),
-		body('phoneNumber').isNumeric().withMessage("Value Must be Numeric.")
+		body('phoneNumber').isString().withMessage("Value Must be String.")
 			// .matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[0-9]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.')
 			.exists().withMessage("Required Key/Value Pair")
 			.notEmpty().withMessage("Can not be Empty"),
@@ -621,7 +621,7 @@ function submitV2Validation() {
 			.trim()
 			.notEmpty().withMessage("Can not be Empty")
 			.isEmail().withMessage('It Should be an Email'),
-		body('phoneNumber').isNumeric().withMessage("Value Must be Numeric.")
+		body('phoneNumber').isString().withMessage("Value Must be String.")
 			// .matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[0-9]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.')
 			.exists().withMessage("Required Key/Value Pair")
 			.notEmpty().withMessage("Can not be Empty"),
