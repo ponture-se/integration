@@ -40,7 +40,7 @@ function saveAppValidation() {
 		body('firstName').isString().withMessage('It Should be String').optional(),
 		body('email').isEmail().withMessage('It Should be an Email').optional(),
 		body('phoneNumber').isString().withMessage("Value Must be String.")
-			.matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[0-9]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.')
+			// .matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[0-9]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.')
 			.optional(),
 		body('need').exists().withMessage("Required Key/Value Pair")
 			.isLength({

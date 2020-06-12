@@ -43,8 +43,8 @@ function leadValidationRules() {
     body('phone').isString().withMessage("Value Must be Numeric.")
                   .exists().withMessage("Required Key/Value Pair")
                   .trim()
-                  .notEmpty().withMessage("Can not be Empty")
-                  .matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[0-9]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.'),
+                  .notEmpty().withMessage("Can not be Empty"),
+                  // .matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[0-9]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.'),
     body('email').isEmail().withMessage("Value Must be Email.")
                   .exists().withMessage("Required Key/Value Pair"),
     body('situation').isString().withMessage("Value Must be String.")
