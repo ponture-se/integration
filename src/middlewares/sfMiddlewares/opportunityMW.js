@@ -553,6 +553,7 @@ async function createOpportunityMw(req, res, next) {
                 stageName: 'App Review',
                 CloseDate: clostDate,
                 Given_Revenue__c: req.body.givenRevenue,
+                Product_Code__c: req.body.pcode,
                 UTM_Source__c: req.body.utm_source,
                 UTM_Medium__c: req.body.utm_medium,
                 UTM_Campaign__c: req.body.utm_campaign,
@@ -649,6 +650,7 @@ async function fillSubmitReqBodyFromExistingOppMw(req, res, next) {
         req.body.need = req.body.need || (existingOpp.Need__c) ? existingOpp.Need__c.split(';') : null;
         req.body.needDescription = req.body.needDescription || existingOpp.NeedDescription__c;
         req.body.givenRevenue = req.body.givenRevenue || existingOpp.Given_Revenue__c || null;
+        req.body.Product_Code__c = req.body.Product_Code__c || existingOpp.Product_Code__c || null;
         req.body.referral_id = req.body.referral_id || existingOpp.Referral_ID__c;
         req.body.utm_source = req.body.utm_source || existingOpp.UTM_Source__c;
         req.body.utm_medium = req.body.utm_medium || existingOpp.UTM_Medium__c;
