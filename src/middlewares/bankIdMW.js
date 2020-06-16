@@ -31,11 +31,11 @@ async function checkOppForBankIdVerification(req, res, next) {
         let amount = _.get(opp, 'Amount');
 
         if (primaryContactVerified == true) {
-            resBody = myResponse(false, null, 403, 'Primary Contact of this opp was already verified.');
+            resBody = myResponse(false, null, 403, 'Primary Contact of this opp was already verified.', null, "ALREADY_VERIFIED");
         } else if (stage != Constants.OPP_STAGE_OF_OPP_CREATION_WITHOUT_BANK_ID) {
-            resBody = myResponse(false, null, 403, 'Opp stage is invalid and equal to: ' + stage);
+            resBody = myResponse(false, null, 403, 'Opp stage is invalid and equal to: ' + stage, null, "INVALID_OPP_STAGE");
         } else if (amount > Constants.MIN_AMOUNT_FOR_BANKID_BYPASS) {
-            resBody = myResponse(false, null, 403, 'BankId Verification not needed, due to amount value: ' + amount);
+            resBody = myResponse(false, null, 403, 'BankId Verification not needed, due to amount value: ' + amount, null, "VERIFICATION_NOT_NEEDED");
         } else {
             req.body.personalNumber = _.get(opp, 'PrimaryContact__r.Personal_Identity_Number__c', 'Invalid Personal Number');
             return next();
