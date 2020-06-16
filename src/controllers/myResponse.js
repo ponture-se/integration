@@ -1,10 +1,13 @@
-function response(success, data, statusCode, message = null, errors = []){
+function response(success, data, statusCode, message = null, errors = [], errorCode = null){
     let res = {};
     res.success = success;
     res.message = message;
     res.errors = wrapErrorsInList(errors);
     res.data = data;
     res.statusCode = statusCode;
+    if (errorCode != null) {
+        res.errorCode = errorCode;
+    }
 
     return res;
 }
