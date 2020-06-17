@@ -6,6 +6,7 @@ let opportunityValidationRules = require('../models/opportunityModel');
 const validate = require("../middlewares/validate");
 const getSFConnection = require("../middlewares/sfMiddleware");
 const opportunityMW = require("../middlewares/sfMiddlewares/opportunityMW");
+const bankIdMW = require("../middlewares/bankIdMW");
 
 router.get("/needslist", auth.getSalesForceToken, controller.getNeedsList);
 
@@ -42,6 +43,7 @@ router.post(
   opportunityMW.fillSubmitReqBodyFromExistingOppMw,
   opportunityValidationRules.submitV2Validation(),
   validate,
+  bankIdMW.checkOppForBankIdVerification,
   opportunityMW.fillReqWithRoaringData,
   opportunityMW.submit_v2
 );
