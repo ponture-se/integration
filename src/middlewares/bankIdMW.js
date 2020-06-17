@@ -58,7 +58,15 @@ async function checkOppForBankIdVerification(req, res, next) {
     
 }
 
+function returnCheckCriteriaResponse (req, res, next) {
+    let resBody = myResponse(true, null, 200, 'Criteria was met.');
+    res.status(200).send(resBody);
+
+    return next();
+}
+
 
 module.exports = {
-    checkOppForBankIdVerification
+    checkOppForBankIdVerification,
+    returnCheckCriteriaResponse
 }
