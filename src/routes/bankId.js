@@ -16,6 +16,15 @@ router.post("/tokenWithOppId",
             getSFConnection,
             bankIdMw.checkOppForBankIdVerification,
             controller.authenticate);
+
+router.post("/checkCriteria", 
+            auth.noAuthNeeded,
+            bankIdModel.tokenWithOppIdValidationModel(),
+            validate,
+            getSFConnection,
+            bankIdMw.checkOppForBankIdVerification,
+            bankIdMw.returnCheckCriteriaResponse);
+
 router.get("/collect", auth.verifyToken, controller.collect);
 router.post("/cancel", auth.verifyToken, controller.cancel);
 router.post("/sign", auth.noAuthNeeded, controller.sign);
