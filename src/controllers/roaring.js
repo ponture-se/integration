@@ -204,10 +204,41 @@ async function getPersonalInfo(roaringToken, personalNumber) {
 	return result;
 }
 
+function getOverviewAndEcoFromRoaring(token, orgNumber, afterTasksCompleted) {
+  var tasks = {
+    overview: function (callback) {
+      callRoaring(
+        callback,
+        "/se/company/overview/1.1/" + orgNumber,
+        "get",
+        undefined,
+        "COMPANY_OVERVIEW_INVALID_RESPONSE",
+        "COMPANY_OVERVIEW_API_ERROR",
+        token
+      );
+    },
+    ecoOverview: function (callback) {
+      callRoaring(
+        callback,
+        "/se/company/economy-overview/1.1/" + orgNumber,
+        "get",
+        undefined,
+        "COMPANY_ECOOVERVIEW_INVALID_RESPONSE",
+        "COMPANY_ECOOVERVIEW_API_ERROR",
+        token
+      );
+    }
+  };
+
+  async.parallel(async.reflectAll(tasks), afterTasksCompleted);
+  
+}
+
 
   module.exports = {
       callRoaring,
       getRoaringToken,
-	  getRoaringData,
-	  getPersonalInfo
+      getRoaringData,
+      getPersonalInfo,
+      getOverviewAndEcoFromRoaring
   }
