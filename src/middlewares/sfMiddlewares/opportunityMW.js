@@ -573,10 +573,16 @@ async function createOpportunityMw(req, res, next) {
                 // firstName: req.body.firstName
             },
             account: {
-                Organization_Number__c: req.body.orgNumber,
+                Organization_Number__c: req.body.orgNumber,                
                 Name: req.body.orgName
             }
         }
+
+        if (_.get(req, 'needs.legalForm', '') != '')
+            payload.account.Legal_Form_code_list__c = _.get(req, 'needs.legalForm', '');
+        
+        if (_.get(req, 'needs.turnOver', '') != '')
+            payload.account.Turnover__c = _.get(req, 'needs.turnOver', '');
 
         let result = await opportunityController.createOpportunityController(sfConn, roaingToken, payload);
         if (result) {
@@ -610,35 +616,40 @@ async function checkIfBankIdVerificationNeeded(req, res, next) {
 	let orgNumber = req.body.orgNumber,
         amount = req.body.amount,
         needs = req.body.need;
-	
-	// 1st Condition Checking
-	if (amount > Constants.MIN_AMOUNT_FOR_BANKID_BYPASS) {
-        myToolkit.addPairToReqNeeds(req, 'bankIdRequired', false);
-        return next();
-    }
+        
+    roaring.getOverviewAndEcoFromRoaring(roaringToken, orgNumber, (errors, results) => {
+        let legalForm = _.get(results, 'overview.value.legalGroupCode', '');
+        let turnOver = _.get(results, 'ecoOverview.value.netTurnover', '');
 
-    // 3rd Condition Checking
-	if (amount > Constants.MIN_AMOUNT_FOR_NON_GENERAL_NEED_TO_BANKID_BYPASS) {
-		let allNeedsPassed = true;
-		
-		for (let need of needs) {
-			if (!Constants.NON_GENERAL_LIQUIDITY_NEEDS.includes(need)) {
-				allNeedsPassed = false;
-				break;
-			}
-		}
+        myToolkit.addPairToReqNeeds(req, 'legalForm', legalForm);
+        myToolkit.addPairToReqNeeds(req, 'turnOver', turnOver);
 
-		if (allNeedsPassed == true) {
+        // 1st Condition Checking
+        if (amount > Constants.MIN_AMOUNT_FOR_BANKID_BYPASS) {
             myToolkit.addPairToReqNeeds(req, 'bankIdRequired', false);
             return next();
-		}
-    }
-    
-    // 2nd Condition Checking
-    roaring.getOverviewAndEcoFromRoaring(roaringToken, orgNumber, (errors, results) => {
-        let legalForm = _.get(results, 'overview.value.legalGroupCode');
-        let turnOver = _.get(results, 'ecoOverview.value.netTurnover');
+        }
 
+
+        // 3rd Condition Checking
+        if (amount > Constants.MIN_AMOUNT_FOR_NON_GENERAL_NEED_TO_BANKID_BYPASS) {
+            let allNeedsPassed = true;
+            
+            for (let need of needs) {
+                if (!Constants.NON_GENERAL_LIQUIDITY_NEEDS.includes(need)) {
+                    allNeedsPassed = false;
+                    break;
+                }
+            }
+
+            if (allNeedsPassed == true) {
+                myToolkit.addPairToReqNeeds(req, 'bankIdRequired', false);
+                return next();
+            }
+        }
+
+        
+        // 2nd Condition Checking
         if (legalForm != null && legalForm.toLowerCase() == 'ab' &&
             turnOver != null && parseInt(turnOver) > Constants.MIN_TURNOVER_FOR_AB_COMPANY_TO_BANKID_BYPASS &&
             amount > Constants.MIN_AMOUNT_FOR_AB_COMPANY_TO_BANKID_BYPASS) {
