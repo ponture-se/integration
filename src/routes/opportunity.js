@@ -112,6 +112,7 @@ router.post(
   auth.getRoaringToken,
   // opportunityMW.fillReqWithRoaringData,
   getSFConnection,
+  opportunityMW.checkIfBankIdVerificationNeeded,
   opportunityMW.createOpportunityMw
 );
 

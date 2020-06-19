@@ -1183,18 +1183,10 @@ async function createOpportunityController(sfConn, roaringToken, payload) {
 	
 
 	if (oppUpsertResult) {
-		let dataBody = {
-			oppId: oppUpsertResult.id,
-		}
-
-		if (oppInfo.Amount > Constants.MIN_AMOUNT_FOR_BANKID_BYPASS) {
-			dataBody.bankIdRequired = false;
-		} else {
-			dataBody.bankIdRequired = true;
-		}
-		return dataBody;
+		return oppUpsertResult.id;
 	} else {
 		return null;
 	}
 }
 exports.createOpportunityController = createOpportunityController;
+
