@@ -704,13 +704,13 @@ async function fillSubmitReqBodyFromExistingOppMw(req, res, next) {
     try{
         let existingOpp = await opportunityController.getSavedOppRequiredDataById_enhanced(sfConn, oppId);
 
-        if (existingOpp.StageName != Constants.OPP_STAGE_OF_OPP_CREATION_WITHOUT_BANK_ID) {
-            resBody = myResponse(false, null, 403, 'Stage of the Existing Opportunity is invalid, it equals to \'' + existingOpp.StageName + '\'');
-            res.status(403).send(resBody);
+        // if (existingOpp.StageName.toLowerCase() != Constants.OPP_STAGE_OF_OPP_CREATION_WITH_NO_BANK_ID_NEEDED) {
+        //     resBody = myResponse(false, null, 403, 'Stage of the Existing Opportunity is invalid, it equals to \'' + existingOpp.StageName + '\'');
+        //     res.status(403).send(resBody);
 
-            res.body = resBody;
-            return apiLogger(req, res, () => {return;});			//instead of calling next()
-        }
+        //     res.body = resBody;
+        //     return apiLogger(req, res, () => {return;});			//instead of calling next()
+        // }
 
         req.body.orgNumber = req.body.orgNumber || (existingOpp.Account) ? existingOpp.Account.Organization_Number__c : null;
         req.body.orgName = req.body.orgName || (existingOpp.Account) ? existingOpp.Account.Name : null;
