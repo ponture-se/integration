@@ -520,6 +520,18 @@ function offersOfLatestOppValidation() {
 	];
 }
 
+function offersOfLatestOppV2Validation() {
+	return [
+		query('personalNum').isNumeric().withMessage('It Should be Numeric')
+							.exists().withMessage("Required Key/Value Pair")
+							.notEmpty().withMessage("Can not be Empty")
+							.matches(/^([0-9]*[-]?)[0-9]*$/).withMessage('Invalid Pattern'),
+		query('orgNumber').isString().withMessage("It Should be String")
+						.exists().withMessage("Required Key/Value Pair")
+						.notEmpty().withMessage("Can not be Empty")
+	];
+}
+
 
 function acceptOfferValidation() {
 	return [
@@ -689,6 +701,7 @@ module.exports = {
 	saveAppValidation,
 	submitValidation,
 	offersOfLatestOppValidation,
+	offersOfLatestOppV2Validation,
 	acceptOfferValidation,
 	createOppValidation,
 	submitV2Validation
