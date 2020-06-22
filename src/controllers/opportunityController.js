@@ -27,6 +27,7 @@ const logger = require('./customeLogger');
 const productCtrl = require('./productController');
 const Constants = require('./Constants');
 const roaring = require('./roaring');
+const { checkOppForBankIdVerificationController } = require("./bankIdController");
 
 exports.getCompanies = [
 	// Validate fields
@@ -1114,6 +1115,24 @@ async function offersOfLatestOppController(sfConn, personalNum) {
 		result.data.offers = newOfferList;
 	} catch(e) {
 		logger.error('offersOfLatestOppController - setTagForOffersList Error', {metadata: e});
+	}
+
+	try {
+		let inputObj = {
+            stage: _.get(result, 'data.opportunityDetail.opportunityStage'),
+            primaryContactVerified: _.get(result, 'data.other.primaryContactVerified'),
+            amount: _.get(result, 'data.opportunityDetail.amount'),
+            needs: _.map(_.get(result, 'data.opportunityDetail.need', []), 'apiName'),
+            legalForms: _.get(result, 'data.other.legalForm', ''),
+            turnOver: _.get(result, 'data.other.turnOver')
+        }
+		let bankIdRequired = checkOppForBankIdVerificationController(inputObj);
+		
+		delete result.data.other;
+		result.data.bankIdRequired = (bankIdRequired == true) ? true : false;
+	} catch (e) {
+		logger.error('offersOfLatestOppController - getBankIdRequired Error', {metadata: e});
+		result.data.bankIdRequired = null;
 	}
 
 
