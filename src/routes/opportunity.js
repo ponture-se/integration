@@ -106,7 +106,7 @@ router.get(
 router.get(
   "/offersOfLatestOpp/v2",
   auth.verifyToken,
-  opportunityValidationRules.offersOfLatestOppValidation(),
+  opportunityValidationRules.offersOfLatestOppV2Validation(),
   validate,
   getSFConnection,
   opportunityMW.offersOfLatestOppV2Api
