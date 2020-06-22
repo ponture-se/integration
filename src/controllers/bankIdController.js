@@ -3,6 +3,9 @@ const jwt = require("jsonwebtoken");
 const cnf = require("../config");
 const { check, validationResult } = require("express-validator");
 const { sanitizeBody } = require("express-validator");
+const _ = require('lodash');
+const myResponse = require('./myResponse');
+const Constants = require("./Constants");
 
 exports.authenticate = [
   // Validate fields
@@ -445,3 +448,54 @@ exports.cancel = [
       });
   }
 ];
+
+
+exports.checkOppForBankIdVerificationController = function checkOppForBankIdVerificationController(inputObject) {
+	let bankIdRequired = true;
+	let resBody;
+
+	let stage = _.get(inputObject, 'stage');
+	let primaryContactVerified = _.get(inputObject, 'primaryContactVerified');
+	let amount = _.get(inputObject, 'amount');
+	let needs = _.get(inputObject, 'needs', []);
+	let legalForms = _.get(inputObject, 'legalForms', '').toLowerCase();
+	let turnOver = _.get(inputObject, 'turnOver');
+
+	if (primaryContactVerified == true) {
+		bankIdRequired = false;
+		resBody = myResponse(false, null, 403, 'Primary Contact of this opp was already verified.', null, "ALREADY_VERIFIED");
+	} else if (Constants.INVALID_OPP_STAGE_FOR_BANKID_CHECKING.includes(stage.toLowerCase())) {
+		bankIdRequired = false;
+		resBody = myResponse(false, null, 403, 'Opp stage is invalid and equal to: ' + stage, null, "INVALID_OPP_STAGE");
+	} else if (amount > Constants.MIN_AMOUNT_FOR_BANKID_BYPASS) {
+		bankIdRequired = false;
+		resBody = myResponse(false, null, 403, 'BankId Verification not needed, due to amount value: ' + amount, null, "VERIFICATION_NOT_NEEDED");
+	}
+	
+	if (bankIdRequired && amount > Constants.MIN_AMOUNT_FOR_NON_GENERAL_NEED_TO_BANKID_BYPASS) {
+		let allNeedsPassed = true;
+		
+		for (let need of needs) {
+			if (!Constants.NON_GENERAL_LIQUIDITY_NEEDS.includes(need)) {
+				allNeedsPassed = false;
+				break;
+			}
+		}
+		if (allNeedsPassed == true) {
+			bankIdRequired = false;
+			resBody = myResponse(false, null, 403, "This need and amount doesn't need bankId", null, "NEED_AMOUNT_BYPASS");
+		}
+	}
+	if (bankIdRequired && legalForms != null && legalForms.includes('ab') &&
+				turnOver != null && parseInt(turnOver) > Constants.MIN_TURNOVER_FOR_AB_COMPANY_TO_BANKID_BYPASS &&
+				amount > Constants.MIN_AMOUNT_FOR_AB_COMPANY_TO_BANKID_BYPASS) {
+					bankIdRequired = false;
+					resBody = myResponse(false, null, 403, "The company legal form and other conditions doesn't need bankId", null, "LEGAL_FORM_BYPASS");
+	}
+
+	if (bankIdRequired) {
+		return true;
+	} else {
+		return resBody;
+	}
+}
