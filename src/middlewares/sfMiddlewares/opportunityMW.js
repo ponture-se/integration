@@ -526,7 +526,7 @@ async function offersOfLatestOppApi(req, res, next) {
         res.status(200).send(resBody);
         res.body = resBody;
     } catch (e) {
-        resBody = myResponse(false, null, e.statusCode, e.message, e);
+        resBody = myResponse(false, null, e.statusCode || 500, e.message, e);
         res.status(resBody.statusCode).send(resBody);
         res.body = resBody;
     }
@@ -771,7 +771,7 @@ function submit_v2(req, res, next) {
 	
 	axios(config)
 		.then(function (response) {
-			console.log(JSON.stringify(response.data));
+            console.log(JSON.stringify(response.data));
 			res.status(200).send(response.data);
 			res.body = response.data;
 			return next();
