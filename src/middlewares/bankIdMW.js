@@ -4,14 +4,13 @@ const { salesforceException, notFoundException} = require('../controllers/custom
 const Constants = require('../controllers/Constants');
 const apiLogger = require('./apiLogger');
 const queryHelper = require('../controllers/sfHelpers/queryHelper');
+const bankIdController = require('../controllers/bankIdController');
 
 async function checkOppForBankIdVerification(req, res, next) {
     let resBody;
 
     let oppId = req.body.oppId;
     let sfConn = req.needs.sfConn;
-
-    let bankIdRequired = true;
 
     try {
         let opp;
@@ -31,48 +30,23 @@ async function checkOppForBankIdVerification(req, res, next) {
             throw new salesforceException('oppId is Incorrect.', err, 400);
         }
 
-        let stage = _.get(opp, 'StageName');
-        let primaryContactVerified = _.get(opp, 'PrimaryContactVerified__c');
-        let amount = _.get(opp, 'Amount');
-        let needs = _.get(opp, 'Need__c', '').toLowerCase().split(';');
-        let legalForms = _.get(opp, 'Account.Legal_Form_code_list__c', '').toLowerCase().split(';');
-        let turnOver = _.get(opp, 'Account.Turnover__c');
 
-        if (primaryContactVerified == true) {
-            bankIdRequired = false;
-            resBody = myResponse(false, null, 403, 'Primary Contact of this opp was already verified.', null, "ALREADY_VERIFIED");
-        } else if (Constants.INVALID_OPP_STAGE_FOR_BANKID_CHECKING.includes(stage.toLowerCase())) {
-            bankIdRequired = false;
-            resBody = myResponse(false, null, 403, 'Opp stage is invalid and equal to: ' + stage, null, "INVALID_OPP_STAGE");
-        } else if (amount > Constants.MIN_AMOUNT_FOR_BANKID_BYPASS) {
-            bankIdRequired = false;
-            resBody = myResponse(false, null, 403, 'BankId Verification not needed, due to amount value: ' + amount, null, "VERIFICATION_NOT_NEEDED");
+        let inputObj = {
+            stage: _.get(opp, 'StageName'),
+            primaryContactVerified: _.get(opp, 'PrimaryContactVerified__c'),
+            amount: _.get(opp, 'Amount'),
+            needs: _.get(opp, 'Need__c', '').toLowerCase().split(';'),
+            legalForms: _.get(opp, 'Account.Legal_Form_code_list__c', '').split(';'),
+            turnOver: _.get(opp, 'Account.Turnover__c')
         }
+
+        let result = bankIdController.checkOppForBankIdVerificationController(inputObj);
         
-        if (bankIdRequired && amount > Constants.MIN_AMOUNT_FOR_NON_GENERAL_NEED_TO_BANKID_BYPASS) {
-            let allNeedsPassed = true;
-            
-            for (let need of needs) {
-                if (!Constants.NON_GENERAL_LIQUIDITY_NEEDS.includes(need)) {
-                    allNeedsPassed = false;
-                    break;
-                }
-            }
-            if (allNeedsPassed == true) {
-                bankIdRequired = false;
-                resBody = myResponse(false, null, 403, "This need and amount doesn't need bankId", null, "NEED_AMOUNT_BYPASS");
-            }
-        }
-        if (bankIdRequired && legalForms != null && legalForms.includes('ab') &&
-                    turnOver != null && parseInt(turnOver) > Constants.MIN_TURNOVER_FOR_AB_COMPANY_TO_BANKID_BYPASS &&
-                    amount > Constants.MIN_AMOUNT_FOR_AB_COMPANY_TO_BANKID_BYPASS) {
-                        bankIdRequired = false;
-                        resBody = myResponse(false, null, 403, "The company legal form and other conditions doesn't need bankId", null, "LEGAL_FORM_BYPASS");
-        }
-        
-        if (bankIdRequired){
+        if (result == true){
             req.body.personalNumber = _.get(opp, 'PrimaryContact__r.Personal_Identity_Number__c', 'Invalid Personal Number');
             return next();
+        } else {
+            resBody = result;
         }
 
     } catch (error) {
@@ -88,7 +62,6 @@ async function checkOppForBankIdVerification(req, res, next) {
     res.status(resBody.statusCode).send(resBody);
     res.body = resBody;
     return apiLogger(req, res, () => {return;});			//instead of calling next()
-    
     
 }
 
