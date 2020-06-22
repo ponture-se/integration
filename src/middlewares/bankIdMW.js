@@ -36,7 +36,7 @@ async function checkOppForBankIdVerification(req, res, next) {
             primaryContactVerified: _.get(opp, 'PrimaryContactVerified__c'),
             amount: _.get(opp, 'Amount'),
             needs: _.get(opp, 'Need__c', '').toLowerCase().split(';'),
-            legalForms: _.get(opp, 'Account.Legal_Form_code_list__c', '').split(';'),
+            legalForms: _.get(opp, 'Account.Legal_Form_code_list__c', ''),
             turnOver: _.get(opp, 'Account.Turnover__c')
         }
 
