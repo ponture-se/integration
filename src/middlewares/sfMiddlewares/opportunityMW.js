@@ -534,6 +534,25 @@ async function offersOfLatestOppApi(req, res, next) {
     return next();
 }
 
+async function offersOfLatestOppV2Api(req, res, next) {
+    let sfConn = req.needs.sfConn,
+        personalNum = req.query.personalNum,
+        orgNumber = req.query.orgNumber;
+    let resBody;
+
+    try {
+        resBody = await opportunityController.offersOfLatestOppV2Controller(sfConn, personalNum, orgNumber);
+        res.status(200).send(resBody);
+        res.body = resBody;
+    } catch (e) {
+        resBody = myResponse(false, null, e.statusCode || 500, e.message, e);
+        res.status(resBody.statusCode).send(resBody);
+        res.body = resBody;
+    }
+
+    return next();
+}
+
 async function createOpportunityMw(req, res, next) {
     let sfConn = req.needs.sfConn;
     let roaingToken = req.roaring_access_token;
@@ -817,6 +836,7 @@ module.exports = {
     saveAppBeforeSubmit,
     prepareSavePayload,
     offersOfLatestOppApi,
+    offersOfLatestOppV2Api,
     createOpportunityMw,
     checkIfBankIdVerificationNeeded,
     fillReqWithRoaringData,
