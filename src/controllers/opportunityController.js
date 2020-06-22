@@ -28,6 +28,7 @@ const productCtrl = require('./productController');
 const Constants = require('./Constants');
 const roaring = require('./roaring');
 const { checkOppForBankIdVerificationController } = require("./bankIdController");
+const qs = require('qs');
 
 exports.getCompanies = [
 	// Validate fields
@@ -1139,8 +1140,52 @@ async function offersOfLatestOppController(sfConn, personalNum) {
 
 	return result;
 }
-
 exports.offersOfLatestOppController = offersOfLatestOppController;
+
+async function offersOfLatestOppV2Controller(sfConn, personalNum, orgNumber) {
+	let params = qs.stringify(
+		{
+			personalNum: personalNum,
+			orgNumber: orgNumber
+		}
+	);
+
+	let result = await sfConn.apex.get('/offersListForLatestOpp/v2' + '?' + params);
+
+	// if the code, reaches here, it means the result returns success
+	try {
+		let offerList = _.get(result, 'data.offers', []);
+		let newOfferList = productCtrl.setTagForOffersList(offerList);
+
+		result.data.offers = newOfferList;
+	} catch(e) {
+		logger.error('offersOfLatestOppV2Controller - setTagForOffersList Error', {metadata: e});
+	}
+
+	try {
+		let inputObj = {
+            stage: _.get(result, 'data.opportunityDetail.opportunityStage'),
+            primaryContactVerified: _.get(result, 'data.other.primaryContactVerified'),
+            amount: _.get(result, 'data.opportunityDetail.amount'),
+            needs: _.map(_.get(result, 'data.opportunityDetail.need', []), 'apiName'),
+            legalForms: _.get(result, 'data.other.legalForm', ''),
+            turnOver: _.get(result, 'data.other.turnOver')
+        }
+		let bankIdRequired = checkOppForBankIdVerificationController(inputObj);
+		
+		delete result.data.other;
+		result.data.bankIdRequired = (bankIdRequired == true) ? true : false;
+	} catch (e) {
+		logger.error('offersOfLatestOppV2Controller - getBankIdRequired Error', {metadata: e});
+		result.data.bankIdRequired = null;
+	}
+
+
+
+	return result;
+}
+
+exports.offersOfLatestOppV2Controller = offersOfLatestOppV2Controller;
 
 
 async function createOpportunityController(sfConn, roaringToken, payload) {
