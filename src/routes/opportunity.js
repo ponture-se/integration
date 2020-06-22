@@ -103,6 +103,15 @@ router.get(
   opportunityMW.offersOfLatestOppApi
 );
 
+router.get(
+  "/offersOfLatestOpp/v2",
+  auth.verifyToken,
+  opportunityValidationRules.offersOfLatestOppValidation(),
+  validate,
+  getSFConnection,
+  opportunityMW.offersOfLatestOppV2Api
+);
+
 
 router.post(
   "/createOpp",
