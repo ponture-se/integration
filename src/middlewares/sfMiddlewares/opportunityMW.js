@@ -574,6 +574,9 @@ async function createOpportunityMw(req, res, next) {
                 stageName: (isBankIdRequired) 
                             ? Constants.OPP_STAGE_OF_OPP_CREATION_WITH_BANK_ID_NEEDED
                             : Constants.OPP_STAGE_OF_OPP_CREATION_WITH_NO_BANK_ID_NEEDED,
+                Key_Deal__c: (isBankIdRequired) 
+                            ? false
+                            : true,
                 CloseDate: clostDate,
                 Given_Revenue__c: req.body.givenRevenue,
                 Product_Code__c: req.body.pcode,
