@@ -693,16 +693,15 @@ async function fillReqWithRoaringData(req, res, next) {
     let orgNumber = req.body.orgNumber,
         orgName = req.body.orgName,
         personalNum = req.body.personalNumber,
-        personName = req.body.bankid.userInfo.name;
+        personName = _.get(req, 'body.bankid.userInfo.name') || _.get(req, 'body.firstName' + '') + ' ' + _.get(req, 'body.lastName' + '');
     
 
     roaring.getRoaringData(roaingToken, orgNumber, orgName, personalNum, personName, (errors, results) => {
         let roaringData = {};
 
         if (!results ||
-            (results && _.size(results) == 0) ||
-            !results.hasOwnProperty('overview') ||
-            (results.hasOwnProperty('overview') && !results.overview.hasOwnProperty('value'))) {
+            _.has(results, 'overview.value') ||
+            _.has(results, 'ecoOverview.value')) {
 
             resBody = myResponse(false, null, 500, 'Roaring data has some problem', errors);
             res.status(500).send(resBody);
@@ -714,7 +713,7 @@ async function fillReqWithRoaringData(req, res, next) {
 
             return next();
         }
-    })
+    });
 }
 
 async function getPersonRoaringDataMW(req, res, next) {
