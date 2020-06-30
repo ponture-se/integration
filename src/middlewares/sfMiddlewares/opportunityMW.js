@@ -717,6 +717,27 @@ async function fillReqWithRoaringData(req, res, next) {
     })
 }
 
+async function getPersonRoaringDataMW(req, res, next) {
+    let roaringToken = req.roaring_access_token;
+    let personalNum = req.body.personalNumber;
+    
+    try {
+        let roaringPersonInfo = await roaring.getPersonalInfo(roaringToken, personalNum);
+        let mainPersonalInfo = _.get(roaringPersonInfo, ['data', 'posts', '0', 'details', '0'], {});
+        req.body.lastName =  _.get(mainPersonalInfo, 'surName', 'Contact ' + personalNum),
+        req.body.firstName =  _.get(mainPersonalInfo, 'firstName', '')
+    } catch (error) {
+        logger.error('Roaring Personal Info Error', {metadata: {
+            error: error
+        }});
+        
+        req.body.lastName = 'Contact ' + personalNum;
+        req.body.firstName = '';
+    }
+
+    return next();
+}
+
 
 async function fillSubmitReqBodyFromExistingOppMw(req, res, next) {
     const sfConn = req.needs.sfConn;
@@ -844,5 +865,6 @@ module.exports = {
     checkIfBankIdVerificationNeeded,
     fillReqWithRoaringData,
     fillSubmitReqBodyFromExistingOppMw,
-    submit_v2
+    submit_v2,
+    getPersonRoaringDataMW
 }
