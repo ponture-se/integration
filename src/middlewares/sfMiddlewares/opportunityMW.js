@@ -637,52 +637,45 @@ async function checkIfBankIdVerificationNeeded(req, res, next) {
     
 	let orgNumber = req.body.orgNumber,
         amount = req.body.amount,
-        needs = req.body.need;
+        needs = req.body.need,
+        legalForm = _.get(req, 'body.overview.legalGroupCode', ''),
+        turnOver = _.get(req, 'body.ecoOverview.netTurnover', '');
+
+    // 1st Condition Checking
+    if (amount > Constants.MIN_AMOUNT_FOR_BANKID_BYPASS) {
+        myToolkit.addPairToReqNeeds(req, 'bankIdRequired', false);
+        return next();
+    }
+
+
+    // 3rd Condition Checking
+    if (amount > Constants.MIN_AMOUNT_FOR_NON_GENERAL_NEED_TO_BANKID_BYPASS) {
+        let allNeedsPassed = true;
         
-    roaring.getOverviewAndEcoFromRoaring(roaringToken, orgNumber, (errors, results) => {
-        let legalForm = _.get(results, 'overview.value.legalGroupCode', '');
-        let turnOver = _.get(results, 'ecoOverview.value.netTurnover', '');
+        for (let need of needs) {
+            if (!Constants.NON_GENERAL_LIQUIDITY_NEEDS.includes(need)) {
+                allNeedsPassed = false;
+                break;
+            }
+        }
 
-        myToolkit.addPairToReqNeeds(req, 'legalForm', legalForm);
-        myToolkit.addPairToReqNeeds(req, 'turnOver', turnOver);
-
-        // 1st Condition Checking
-        if (amount > Constants.MIN_AMOUNT_FOR_BANKID_BYPASS) {
+        if (allNeedsPassed == true) {
             myToolkit.addPairToReqNeeds(req, 'bankIdRequired', false);
             return next();
         }
+    }
 
-
-        // 3rd Condition Checking
-        if (amount > Constants.MIN_AMOUNT_FOR_NON_GENERAL_NEED_TO_BANKID_BYPASS) {
-            let allNeedsPassed = true;
-            
-            for (let need of needs) {
-                if (!Constants.NON_GENERAL_LIQUIDITY_NEEDS.includes(need)) {
-                    allNeedsPassed = false;
-                    break;
-                }
-            }
-
-            if (allNeedsPassed == true) {
-                myToolkit.addPairToReqNeeds(req, 'bankIdRequired', false);
-                return next();
-            }
-        }
-
-        
-        // 2nd Condition Checking
-        if (legalForm != null && legalForm.toLowerCase() == 'ab' &&
-            turnOver != null && parseInt(turnOver) > Constants.MIN_TURNOVER_FOR_AB_COMPANY_TO_BANKID_BYPASS &&
-            amount > Constants.MIN_AMOUNT_FOR_AB_COMPANY_TO_BANKID_BYPASS) {
-                myToolkit.addPairToReqNeeds(req, 'bankIdRequired', false);
-                return next();
-            } else {
-                myToolkit.addPairToReqNeeds(req, 'bankIdRequired', true);
-                return next();
-            }
-    });
     
+    // 2nd Condition Checking
+    if (legalForm != null && legalForm.toLowerCase() == 'ab' &&
+        turnOver != null && parseInt(turnOver) > Constants.MIN_TURNOVER_FOR_AB_COMPANY_TO_BANKID_BYPASS &&
+        amount > Constants.MIN_AMOUNT_FOR_AB_COMPANY_TO_BANKID_BYPASS) {
+            myToolkit.addPairToReqNeeds(req, 'bankIdRequired', false);
+            return next();
+        } else {
+            myToolkit.addPairToReqNeeds(req, 'bankIdRequired', true);
+            return next();
+        }
 }
 
 async function fillReqWithRoaringData(req, res, next) {
