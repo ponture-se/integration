@@ -591,8 +591,8 @@ async function createOpportunityMw(req, res, next) {
                 Email: req.body.email,
                 Phone : req.body.phoneNumber,
                 Personal_Identity_Number__c: req.body.personalNumber,
-                // lastName: req.body.lastName,
-                // firstName: req.body.firstName
+                lastName: req.body.lastName,
+                firstName: req.body.firstName
             },
             account: {
                 Organization_Number__c: req.body.orgNumber,                
@@ -600,18 +600,16 @@ async function createOpportunityMw(req, res, next) {
             }
         }
 
-        if (_.get(req, 'needs.legalForm', '') != '')
-            payload.account.Legal_Form_code_list__c = _.get(req, 'needs.legalForm', '');
-        
-        if (_.get(req, 'needs.turnOver', '') != '')
-            payload.account.Turnover__c = _.get(req, 'needs.turnOver', '');
 
-        let result = await opportunityController.createOpportunityController(sfConn, roaingToken, payload);
+        let result = await opportunityController.createOpportunityController(sfConn, payload);
         if (result) {
             let resData = {
                 oppId: result,
                 bankIdRequired: isBankIdRequired
             }
+
+            req.body.oppId = resData.oppId;
+            req.body.bankIdRequired = resData.bankIdRequired;
 
             resBody = myResponse(true, resData, 200);
             res.body = resBody;
@@ -637,52 +635,45 @@ async function checkIfBankIdVerificationNeeded(req, res, next) {
     
 	let orgNumber = req.body.orgNumber,
         amount = req.body.amount,
-        needs = req.body.need;
+        needs = req.body.need,
+        legalForm = _.get(req, 'body.overview.legalGroupCode', ''),
+        turnOver = _.get(req, 'body.ecoOverview.netTurnover', '');
+
+    // 1st Condition Checking
+    if (amount > Constants.MIN_AMOUNT_FOR_BANKID_BYPASS) {
+        myToolkit.addPairToReqNeeds(req, 'bankIdRequired', false);
+        return next();
+    }
+
+
+    // 3rd Condition Checking
+    if (amount > Constants.MIN_AMOUNT_FOR_NON_GENERAL_NEED_TO_BANKID_BYPASS) {
+        let allNeedsPassed = true;
         
-    roaring.getOverviewAndEcoFromRoaring(roaringToken, orgNumber, (errors, results) => {
-        let legalForm = _.get(results, 'overview.value.legalGroupCode', '');
-        let turnOver = _.get(results, 'ecoOverview.value.netTurnover', '');
+        for (let need of needs) {
+            if (!Constants.NON_GENERAL_LIQUIDITY_NEEDS.includes(need)) {
+                allNeedsPassed = false;
+                break;
+            }
+        }
 
-        myToolkit.addPairToReqNeeds(req, 'legalForm', legalForm);
-        myToolkit.addPairToReqNeeds(req, 'turnOver', turnOver);
-
-        // 1st Condition Checking
-        if (amount > Constants.MIN_AMOUNT_FOR_BANKID_BYPASS) {
+        if (allNeedsPassed == true) {
             myToolkit.addPairToReqNeeds(req, 'bankIdRequired', false);
             return next();
         }
+    }
 
-
-        // 3rd Condition Checking
-        if (amount > Constants.MIN_AMOUNT_FOR_NON_GENERAL_NEED_TO_BANKID_BYPASS) {
-            let allNeedsPassed = true;
-            
-            for (let need of needs) {
-                if (!Constants.NON_GENERAL_LIQUIDITY_NEEDS.includes(need)) {
-                    allNeedsPassed = false;
-                    break;
-                }
-            }
-
-            if (allNeedsPassed == true) {
-                myToolkit.addPairToReqNeeds(req, 'bankIdRequired', false);
-                return next();
-            }
-        }
-
-        
-        // 2nd Condition Checking
-        if (legalForm != null && legalForm.toLowerCase() == 'ab' &&
-            turnOver != null && parseInt(turnOver) > Constants.MIN_TURNOVER_FOR_AB_COMPANY_TO_BANKID_BYPASS &&
-            amount > Constants.MIN_AMOUNT_FOR_AB_COMPANY_TO_BANKID_BYPASS) {
-                myToolkit.addPairToReqNeeds(req, 'bankIdRequired', false);
-                return next();
-            } else {
-                myToolkit.addPairToReqNeeds(req, 'bankIdRequired', true);
-                return next();
-            }
-    });
     
+    // 2nd Condition Checking
+    if (legalForm != null && legalForm.toLowerCase() == 'ab' &&
+        turnOver != null && parseInt(turnOver) > Constants.MIN_TURNOVER_FOR_AB_COMPANY_TO_BANKID_BYPASS &&
+        amount > Constants.MIN_AMOUNT_FOR_AB_COMPANY_TO_BANKID_BYPASS) {
+            myToolkit.addPairToReqNeeds(req, 'bankIdRequired', false);
+            return next();
+        } else {
+            myToolkit.addPairToReqNeeds(req, 'bankIdRequired', true);
+            return next();
+        }
 }
 
 async function fillReqWithRoaringData(req, res, next) {
@@ -693,16 +684,15 @@ async function fillReqWithRoaringData(req, res, next) {
     let orgNumber = req.body.orgNumber,
         orgName = req.body.orgName,
         personalNum = req.body.personalNumber,
-        personName = req.body.bankid.userInfo.name;
+        personName = _.get(req, 'body.bankid.userInfo.name') || _.get(req, 'body.firstName' + '') + ' ' + _.get(req, 'body.lastName' + '');
     
 
     roaring.getRoaringData(roaingToken, orgNumber, orgName, personalNum, personName, (errors, results) => {
         let roaringData = {};
 
         if (!results ||
-            (results && _.size(results) == 0) ||
-            !results.hasOwnProperty('overview') ||
-            (results.hasOwnProperty('overview') && !results.overview.hasOwnProperty('value'))) {
+            !_.has(results, 'overview.value') ||
+            !_.has(results, 'ecoOverview.value')) {
 
             resBody = myResponse(false, null, 500, 'Roaring data has some problem', errors);
             res.status(500).send(resBody);
@@ -714,7 +704,28 @@ async function fillReqWithRoaringData(req, res, next) {
 
             return next();
         }
-    })
+    });
+}
+
+async function getPersonRoaringDataMW(req, res, next) {
+    let roaringToken = req.roaring_access_token;
+    let personalNum = req.body.personalNumber;
+    
+    try {
+        let roaringPersonInfo = await roaring.getPersonalInfo(roaringToken, personalNum);
+        let mainPersonalInfo = _.get(roaringPersonInfo, ['data', 'posts', '0', 'details', '0'], {});
+        req.body.lastName =  _.get(mainPersonalInfo, 'surName', 'Contact ' + personalNum),
+        req.body.firstName =  _.get(mainPersonalInfo, 'firstName', '')
+    } catch (error) {
+        logger.error('Roaring Personal Info Error', {metadata: {
+            error: error
+        }});
+        
+        req.body.lastName = 'Contact ' + personalNum;
+        req.body.firstName = '';
+    }
+
+    return next();
 }
 
 
@@ -830,6 +841,50 @@ function submit_v2(req, res, next) {
 }
 
 
+async function updateAccountAndQualify(req, res, next) {
+    let sfConn = req.needs.sfConn;
+
+    try {
+        let result = await sfConn.apex.post("/updateCreatedApp", req.body);
+
+        logger.info("updateAccountAndQualify Success", {
+            metadata: {
+                req: {
+                    body: req.body,
+                    headers: req.headers,
+                    params: req.params,
+                    query: req.query
+                },
+                res: {
+                    body: res.body,
+                    headers: req.headers,
+                },
+                sfResult: result
+            }
+        } )
+
+    } catch (e) {
+        logger.error("updateAccountAndQualify Error", {
+            metadata: {
+                req: {
+                    body: req.body,
+                    headers: req.headers,
+                    params: req.params,
+                    query: req.query
+                },
+                res: {
+                    body: res.body,
+                    headers: req.headers,
+                },
+                error: e
+            }
+        })
+    }
+
+    return next();
+}
+
+
 module.exports = {
     saveApplicationApi,
     saveAppExtraValidation,
@@ -844,5 +899,7 @@ module.exports = {
     checkIfBankIdVerificationNeeded,
     fillReqWithRoaringData,
     fillSubmitReqBodyFromExistingOppMw,
-    submit_v2
+    submit_v2,
+    getPersonRoaringDataMW,
+    updateAccountAndQualify
 }
