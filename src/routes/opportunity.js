@@ -36,7 +36,7 @@ router.post(
 router.post(
   "/submit/v2",
   auth.verifyToken,
-  auth.getRoaringToken,
+  // auth.getRoaringToken,
   auth.getSalesForceToken,
   getSFConnection,
   // opportunityMW.saveAppBeforeSubmit,
@@ -44,7 +44,7 @@ router.post(
   opportunityValidationRules.submitV2Validation(),
   validate,
   bankIdMW.checkOppForBankIdVerification,
-  opportunityMW.fillReqWithRoaringData,
+  // opportunityMW.fillReqWithRoaringData,
   opportunityMW.submit_v2
 );
 
