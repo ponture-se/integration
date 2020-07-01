@@ -591,8 +591,8 @@ async function createOpportunityMw(req, res, next) {
                 Email: req.body.email,
                 Phone : req.body.phoneNumber,
                 Personal_Identity_Number__c: req.body.personalNumber,
-                // lastName: req.body.lastName,
-                // firstName: req.body.firstName
+                lastName: req.body.lastName,
+                firstName: req.body.firstName
             },
             account: {
                 Organization_Number__c: req.body.orgNumber,                
@@ -600,18 +600,16 @@ async function createOpportunityMw(req, res, next) {
             }
         }
 
-        if (_.get(req, 'needs.legalForm', '') != '')
-            payload.account.Legal_Form_code_list__c = _.get(req, 'needs.legalForm', '');
-        
-        if (_.get(req, 'needs.turnOver', '') != '')
-            payload.account.Turnover__c = _.get(req, 'needs.turnOver', '');
 
-        let result = await opportunityController.createOpportunityController(sfConn, roaingToken, payload);
+        let result = await opportunityController.createOpportunityController(sfConn, payload);
         if (result) {
             let resData = {
                 oppId: result,
                 bankIdRequired: isBankIdRequired
             }
+
+            req.body.oppId = resData.oppId;
+            req.body.bankIdRequired = resData.bankIdRequired;
 
             resBody = myResponse(true, resData, 200);
             res.body = resBody;
@@ -693,8 +691,8 @@ async function fillReqWithRoaringData(req, res, next) {
         let roaringData = {};
 
         if (!results ||
-            _.has(results, 'overview.value') ||
-            _.has(results, 'ecoOverview.value')) {
+            !_.has(results, 'overview.value') ||
+            !_.has(results, 'ecoOverview.value')) {
 
             resBody = myResponse(false, null, 500, 'Roaring data has some problem', errors);
             res.status(500).send(resBody);
@@ -843,6 +841,50 @@ function submit_v2(req, res, next) {
 }
 
 
+async function updateAccountAndQualify(req, res, next) {
+    let sfConn = req.needs.sfConn;
+
+    try {
+        let result = await sfConn.apex.post("/updateCreatedApp", req.body);
+
+        logger.info("updateAccountAndQualify Success", {
+            metadata: {
+                req: {
+                    body: req.body,
+                    headers: req.headers,
+                    params: req.params,
+                    query: req.query
+                },
+                res: {
+                    body: res.body,
+                    headers: req.headers,
+                },
+                sfResult: result
+            }
+        } )
+
+    } catch (e) {
+        logger.error("updateAccountAndQualify Error", {
+            metadata: {
+                req: {
+                    body: req.body,
+                    headers: req.headers,
+                    params: req.params,
+                    query: req.query
+                },
+                res: {
+                    body: res.body,
+                    headers: req.headers,
+                },
+                error: e
+            }
+        })
+    }
+
+    return next();
+}
+
+
 module.exports = {
     saveApplicationApi,
     saveAppExtraValidation,
@@ -858,5 +900,6 @@ module.exports = {
     fillReqWithRoaringData,
     fillSubmitReqBodyFromExistingOppMw,
     submit_v2,
-    getPersonRoaringDataMW
+    getPersonRoaringDataMW,
+    updateAccountAndQualify
 }

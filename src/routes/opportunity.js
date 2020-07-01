@@ -119,10 +119,12 @@ router.post(
   opportunityValidationRules.createOppValidation(),
   validate,
   auth.getRoaringToken,
-  // opportunityMW.fillReqWithRoaringData,
   getSFConnection,
+  opportunityMW.getPersonRoaringDataMW,
+  opportunityMW.fillReqWithRoaringData,
   opportunityMW.checkIfBankIdVerificationNeeded,
-  opportunityMW.createOpportunityMw
+  opportunityMW.createOpportunityMw,
+  opportunityMW.updateAccountAndQualify
 );
 
 module.exports = router;
