@@ -1188,7 +1188,7 @@ async function offersOfLatestOppV2Controller(sfConn, personalNum, orgNumber) {
 exports.offersOfLatestOppV2Controller = offersOfLatestOppV2Controller;
 
 
-async function createOpportunityController(sfConn, roaringToken, payload) {
+async function createOpportunityController(sfConn, payload) {
 	let accountInfo = payload.account,
 		contactInfo = payload.contact,
 		oppInfo = payload.opp;
@@ -1218,21 +1218,7 @@ async function createOpportunityController(sfConn, roaringToken, payload) {
 	}
 	contact = await queryHelper.getSingleQueryResult(sfConn, 'Contact', getContactWhereCluase);
 	contactId = (contact != null) ? contact.Id : null;
-	if (!contactId) {
-		try {
-			let roaringPersonInfo = await roaring.getPersonalInfo(roaringToken, contactInfo.Personal_Identity_Number__c);
-			let mainPersonalInfo = _.get(roaringPersonInfo, ['data', 'posts', '0', 'details', '0'], {});
-			contactInfo.lastName =  _.get(mainPersonalInfo, 'surName', 'Contact ' + contactInfo.Personal_Identity_Number__c),
-			contactInfo.firstName =  _.get(mainPersonalInfo, 'firstName', '')
-		} catch (error) {
-			logger.error('Roaring Personal Info Error', {metadata: {
-				error: error
-			}});
-			
-			contactInfo.lastName = 'Contact ' + contactInfo.Personal_Identity_Number__c;
-			contactInfo.firstName = '';
-		}
-	}
+	
 	// Upsert Contact
 	contactInfo['AccountId'] = accUpsertResult.id;
 	contactUpsertResult = await crudHelper.upsertSobjectInSf(sfConn, 'Contact', contactInfo, contactId);
