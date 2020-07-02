@@ -18,11 +18,17 @@ const fileController = require('./fileController');
 const {
 	salesforceException,
 	externalCalloutException,
-	inputValidationException
+	inputValidationException,
+	notFoundException,
+	badRequestException
 } = require('./customeException');
 const contactEv = require('./contactEvidenceController');
 const logger = require('./customeLogger');
 const productCtrl = require('./productController');
+const Constants = require('./Constants');
+const roaring = require('./roaring');
+const { checkOppForBankIdVerificationController } = require("./bankIdController");
+const qs = require('qs');
 
 exports.getCompanies = [
 	// Validate fields
@@ -1067,6 +1073,35 @@ async function getSavedOppRequiredDataById(sfConn, oppId){
 }
 exports.getSavedOppRequiredDataById = getSavedOppRequiredDataById;
 
+async function getSavedOppRequiredDataById_enhanced(sfConn, oppId){
+	let whereCluase = {
+		id: oppId
+	};
+	let selectCluase = `*, 
+						account.Name, 
+						account.Organization_Number__c,
+						PrimaryContact__r.Name,
+						PrimaryContact__r.Personal_Identity_Number__c,
+						PrimaryContact__r.Email,
+						PrimaryContact__r.Phone,
+						PrimaryContact__r.MobilePhone,
+						Acquisition_Object__r.Name,
+						Acquisition_Object__r.Organization_Number__c
+						`;
+	try {
+		let result = await queryHelper.getQueryResultWithThrowingException(sfConn, 'Opportunity', whereCluase, selectCluase);
+
+		if (result.length > 0) {
+			return result[0];
+		} else {
+			throw new notFoundException('Opportunity with given oppId not Found', {givenOppId: oppId});
+		}
+	} catch (err) {
+		throw new salesforceException('oppId is Incorrect.', err, 400);
+	}
+}
+exports.getSavedOppRequiredDataById_enhanced = getSavedOppRequiredDataById_enhanced;
+
 
 async function offersOfLatestOppController(sfConn, personalNum) {
 	let params = '?personalNum=' + personalNum;
@@ -1083,9 +1118,137 @@ async function offersOfLatestOppController(sfConn, personalNum) {
 		logger.error('offersOfLatestOppController - setTagForOffersList Error', {metadata: e});
 	}
 
+	try {
+		let inputObj = {
+            stage: _.get(result, 'data.opportunityDetail.opportunityStage'),
+            primaryContactVerified: _.get(result, 'data.other.primaryContactVerified'),
+            amount: _.get(result, 'data.opportunityDetail.amount'),
+            needs: _.map(_.get(result, 'data.opportunityDetail.need', []), 'apiName'),
+            legalForms: _.get(result, 'data.other.legalForm', ''),
+            turnOver: _.get(result, 'data.other.turnOver')
+        }
+		let bankIdRequired = checkOppForBankIdVerificationController(inputObj);
+		
+		delete result.data.other;
+		result.data.bankIdRequired = (bankIdRequired == true) ? true : false;
+	} catch (e) {
+		logger.error('offersOfLatestOppController - getBankIdRequired Error', {metadata: e});
+		result.data.bankIdRequired = null;
+	}
+
+
+
+	return result;
+}
+exports.offersOfLatestOppController = offersOfLatestOppController;
+
+async function offersOfLatestOppV2Controller(sfConn, personalNum, orgNumber) {
+	let params = qs.stringify(
+		{
+			personalNum: personalNum,
+			orgNumber: orgNumber
+		}
+	);
+
+	let result = await sfConn.apex.get('/offersListForLatestOpp/v2' + '?' + params);
+
+	// if the code, reaches here, it means the result returns success
+	try {
+		let offerList = _.get(result, 'data.offers', []);
+		let newOfferList = productCtrl.setTagForOffersList(offerList);
+
+		result.data.offers = newOfferList;
+	} catch(e) {
+		logger.error('offersOfLatestOppV2Controller - setTagForOffersList Error', {metadata: e});
+	}
+
+	try {
+		let inputObj = {
+            stage: _.get(result, 'data.opportunityDetail.opportunityStage'),
+            primaryContactVerified: _.get(result, 'data.other.primaryContactVerified'),
+            amount: _.get(result, 'data.opportunityDetail.amount'),
+            needs: _.map(_.get(result, 'data.opportunityDetail.need', []), 'apiName'),
+            legalForms: _.get(result, 'data.other.legalForm', ''),
+            turnOver: _.get(result, 'data.other.turnOver')
+        }
+		let bankIdRequired = checkOppForBankIdVerificationController(inputObj);
+		
+		delete result.data.other;
+		result.data.bankIdRequired = (bankIdRequired == true) ? true : false;
+	} catch (e) {
+		logger.error('offersOfLatestOppV2Controller - getBankIdRequired Error', {metadata: e});
+		result.data.bankIdRequired = null;
+	}
+
 
 
 	return result;
 }
 
-exports.offersOfLatestOppController = offersOfLatestOppController;
+exports.offersOfLatestOppV2Controller = offersOfLatestOppV2Controller;
+
+
+async function createOpportunityController(sfConn, payload) {
+	let accountInfo = payload.account,
+		contactInfo = payload.contact,
+		oppInfo = payload.opp;
+
+	let account,
+		contact,
+		accId,
+		contactId,
+		accUpsertResult,
+		contactUpsertResult,
+		oppUpsertResult;
+
+	// Get Account with orgNumber
+	let getAccWhereCluase = {
+		Organization_Number__c: accountInfo.Organization_Number__c
+	}
+	account = await queryHelper.getSingleQueryResult(sfConn, 'Account', getAccWhereCluase);
+	accId = (account != null) ? account.Id : null;
+
+	// Upsert Account
+	accUpsertResult = await crudHelper.upsertSobjectInSf(sfConn, 'Account', accountInfo, accId);
+	oppInfo['AccountId'] = accUpsertResult.id;
+
+	// Get Contact with personalNum
+	let getContactWhereCluase = {
+		Personal_Identity_Number__c: contactInfo.Personal_Identity_Number__c
+	}
+	contact = await queryHelper.getSingleQueryResult(sfConn, 'Contact', getContactWhereCluase);
+	contactId = (contact != null) ? contact.Id : null;
+	if (contactId != null) {
+		contactInfo.firstName = contact.FirstName || contactInfo.firstName;
+		contactInfo.lastName = contact.LastName ||contactInfo.lastName;
+	}
+	
+	// Upsert Contact
+	contactInfo['AccountId'] = accUpsertResult.id;
+	contactUpsertResult = await crudHelper.upsertSobjectInSf(sfConn, 'Contact', contactInfo, contactId);
+
+	oppInfo['PrimaryContact__c'] = contactUpsertResult.id;
+	oppInfo['Notification__c'] = true;
+
+
+	// Opportunity Processing
+	// Insert Opportunity
+	oppUpsertResult = await crudHelper.insertSobjectInSf(sfConn, 'Opportunity', oppInfo);
+	
+
+	if (oppUpsertResult) {
+		return {
+			oppId: oppUpsertResult.id,
+			userInfo: {
+				contactId: contactUpsertResult.id,
+				firstName: (contactId != null) ? contact.FirstName : contactInfo.firstName,
+				lastName: (contactId != null) ? contact.LastName : contactInfo.lastName,
+				email: (contactId != null) ? contact.Email : contactInfo.Email
+			}
+		};
+	} else {
+		return null;
+	}
+}
+exports.createOpportunityController = createOpportunityController;
+

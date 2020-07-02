@@ -1,18 +1,21 @@
 const myToolkit = require('../../controllers/myToolkit');
+const axios = require("axios");
 const myResponse = require('../../controllers/myResponse');
 const apiLogger = require('../apiLogger');
 const opportunityController = require('../../controllers/opportunityController');
-const {salesforceException, inputValidationException} = require('../../controllers/customeException');
+const {salesforceException, inputValidationException, notFoundException} = require('../../controllers/customeException');
 const _ = require('lodash');
 const async = require('async');
 const userController = require('../../controllers/userController');
 const queryHelper = require('../../controllers/sfHelpers/queryHelper');
 const crudHelper = require('../../controllers/sfHelpers/crudHelper');
 const auth = require('../../controllers/auth');
+const roaring = require('../../controllers/roaring');
 
 const app = require('../../app');
 
 const logger = require('../../controllers/customeLogger');
+const Constants = require('../../controllers/Constants');
 
 async function saveApplicationApi(req, res, next) {
     let resBody;
@@ -523,13 +526,365 @@ async function offersOfLatestOppApi(req, res, next) {
         res.status(200).send(resBody);
         res.body = resBody;
     } catch (e) {
-        resBody = myResponse(false, null, e.statusCode, e.message, e);
+        resBody = myResponse(false, null, e.statusCode || 500, e.message, e);
         res.status(resBody.statusCode).send(resBody);
         res.body = resBody;
     }
 
     return next();
 }
+
+async function offersOfLatestOppV2Api(req, res, next) {
+    let sfConn = req.needs.sfConn,
+        personalNum = req.query.personalNum,
+        orgNumber = req.query.orgNumber;
+    let resBody;
+
+    try {
+        resBody = await opportunityController.offersOfLatestOppV2Controller(sfConn, personalNum, orgNumber);
+        res.status(200).send(resBody);
+        res.body = resBody;
+    } catch (e) {
+        resBody = myResponse(false, null, e.statusCode || 500, e.message, e);
+        res.status(resBody.statusCode).send(resBody);
+        res.body = resBody;
+    }
+
+    return next();
+}
+
+async function createOpportunityMw(req, res, next) {
+    let sfConn = req.needs.sfConn;
+    let roaingToken = req.roaring_access_token;
+    let resBody;
+
+    let isBankIdRequired = _.get(req, 'needs.bankIdRequired', true);
+
+    try {
+        let today = new Date();             // keeps today's date
+        let clostDate = today;
+        clostDate.setMonth(clostDate.getMonth() + 1);
+
+        let payload = {
+            opp: {
+                Amount: req.body.amount,
+                AmortizationPeriod__c: req.body.amourtizationPeriod,
+                Need__c: req.body.need.join(';'),
+                NeedDescription__c: req.body.needDescription,
+                stageName: (isBankIdRequired) 
+                            ? Constants.OPP_STAGE_OF_OPP_CREATION_WITH_BANK_ID_NEEDED
+                            : Constants.OPP_STAGE_OF_OPP_CREATION_WITH_NO_BANK_ID_NEEDED,
+                Key_Deal__c: (isBankIdRequired) 
+                            ? false
+                            : true,
+                CloseDate: clostDate,
+                Given_Revenue__c: req.body.givenRevenue,
+                Product_Code__c: req.body.pcode,
+                UTM_Source__c: req.body.utm_source,
+                UTM_Medium__c: req.body.utm_medium,
+                UTM_Campaign__c: req.body.utm_campaign,
+                Referral_ID__c: req.body.referral_id,
+                Last_referral_date__c: req.body.last_referral_date,
+                Name: `Saved Opp @ ${myToolkit.getFormattedDate()} - ${req.body.personalNumber}`,
+            },
+            contact: {
+                Email: req.body.email,
+                Phone : req.body.phoneNumber,
+                Personal_Identity_Number__c: req.body.personalNumber,
+                lastName: req.body.lastName,
+                firstName: req.body.firstName
+            },
+            account: {
+                Organization_Number__c: req.body.orgNumber,                
+                Name: req.body.orgName
+            }
+        }
+
+
+        let result = await opportunityController.createOpportunityController(sfConn, payload);
+        if (result) {
+            let resData = {
+                oppId: result.oppId,
+                userInfo: result.userInfo,
+                bankIdRequired: isBankIdRequired
+            }
+
+            req.body.oppId = resData.oppId;
+            req.body.bankIdRequired = resData.bankIdRequired;
+
+            resBody = myResponse(true, resData, 200);
+            res.body = resBody;
+            res.status(200).send(resBody);
+        }
+        else {
+            resBody = myResponse(false, null, 500, 'Something went wrong');
+            res.body = resBody;
+            res.status(500).send(resBody);
+        }
+    } catch (error) {
+        resBody = myResponse(false, null, 500, error.message || 'Something went wrong', error);
+        res.body = resBody;
+        res.status(500).send(resBody);
+    }
+    
+    return next();
+}
+
+
+async function checkIfBankIdVerificationNeeded(req, res, next) {
+    let roaringToken = req.roaring_access_token;
+    
+	let orgNumber = req.body.orgNumber,
+        amount = req.body.amount,
+        needs = req.body.need,
+        legalForm = _.get(req, 'body.overview.legalGroupCode', ''),
+        turnOver = _.get(req, 'body.ecoOverview.netTurnover', '');
+
+    // 1st Condition Checking
+    if (amount > Constants.MIN_AMOUNT_FOR_BANKID_BYPASS) {
+        myToolkit.addPairToReqNeeds(req, 'bankIdRequired', false);
+        return next();
+    }
+
+
+    // 3rd Condition Checking
+    if (amount > Constants.MIN_AMOUNT_FOR_NON_GENERAL_NEED_TO_BANKID_BYPASS) {
+        let allNeedsPassed = true;
+        
+        for (let need of needs) {
+            if (!Constants.NON_GENERAL_LIQUIDITY_NEEDS.includes(need)) {
+                allNeedsPassed = false;
+                break;
+            }
+        }
+
+        if (allNeedsPassed == true) {
+            myToolkit.addPairToReqNeeds(req, 'bankIdRequired', false);
+            return next();
+        }
+    }
+
+    
+    // 2nd Condition Checking
+    if (legalForm != null && legalForm.toLowerCase() == 'ab' &&
+        turnOver != null && parseInt(turnOver) > Constants.MIN_TURNOVER_FOR_AB_COMPANY_TO_BANKID_BYPASS &&
+        amount > Constants.MIN_AMOUNT_FOR_AB_COMPANY_TO_BANKID_BYPASS) {
+            myToolkit.addPairToReqNeeds(req, 'bankIdRequired', false);
+            return next();
+        } else {
+            myToolkit.addPairToReqNeeds(req, 'bankIdRequired', true);
+            return next();
+        }
+}
+
+async function fillReqWithRoaringData(req, res, next) {
+    let resBody;
+
+    let roaingToken = req.roaring_access_token;
+
+    let orgNumber = req.body.orgNumber,
+        orgName = req.body.orgName,
+        personalNum = req.body.personalNumber,
+        personName = _.get(req, 'body.bankid.userInfo.name') || _.get(req, 'body.firstName' + '') + ' ' + _.get(req, 'body.lastName' + '');
+    
+
+    roaring.getRoaringData(roaingToken, orgNumber, orgName, personalNum, personName, (errors, results) => {
+        let roaringData = {};
+
+        if (!results ||
+            !_.has(results, 'overview.value') ||
+            !_.has(results, 'ecoOverview.value')) {
+
+            resBody = myResponse(false, null, 500, 'Roaring data has some problem', errors);
+            res.status(500).send(resBody);
+
+        } else {
+            for (var attr in results) roaringData[attr] = results[attr].value;
+            
+            req.body = _.assign({}, req.body, roaringData);
+
+            return next();
+        }
+    });
+}
+
+async function getPersonRoaringDataMW(req, res, next) {
+    let roaringToken = req.roaring_access_token;
+    let personalNum = req.body.personalNumber;
+    
+    try {
+        let roaringPersonInfo = await roaring.getPersonalInfo(roaringToken, personalNum);
+        let mainPersonalInfo = _.get(roaringPersonInfo, ['data', 'posts', '0', 'details', '0'], {});
+        req.body.lastName =  _.get(mainPersonalInfo, 'surName', 'Contact ' + personalNum),
+        req.body.firstName =  _.get(mainPersonalInfo, 'firstName', '')
+    } catch (error) {
+        logger.error('Roaring Personal Info Error', {metadata: {
+            error: error
+        }});
+        
+        req.body.lastName = 'Contact ' + personalNum;
+        req.body.firstName = '';
+    }
+
+    return next();
+}
+
+
+async function fillSubmitReqBodyFromExistingOppMw(req, res, next) {
+    const sfConn = req.needs.sfConn;
+    const oppId = req.body.oppId;
+    let resBody;
+
+    try{
+        let existingOpp = await opportunityController.getSavedOppRequiredDataById_enhanced(sfConn, oppId);
+
+        // if (existingOpp.StageName.toLowerCase() != Constants.OPP_STAGE_OF_OPP_CREATION_WITH_NO_BANK_ID_NEEDED) {
+        //     resBody = myResponse(false, null, 403, 'Stage of the Existing Opportunity is invalid, it equals to \'' + existingOpp.StageName + '\'');
+        //     res.status(403).send(resBody);
+
+        //     res.body = resBody;
+        //     return apiLogger(req, res, () => {return;});			//instead of calling next()
+        // }
+
+        req.body.orgNumber = req.body.orgNumber || (existingOpp.Account) ? existingOpp.Account.Organization_Number__c : null;
+        req.body.orgName = req.body.orgName || (existingOpp.Account) ? existingOpp.Account.Name : null;
+        req.body.personalNumber = req.body.personalNumber || (existingOpp.PrimaryContact__r) ? existingOpp.PrimaryContact__r.Personal_Identity_Number__c : null;
+        req.body.amount = req.body.amount || existingOpp.Amount;
+        req.body.amourtizationPeriod = req.body.amourtizationPeriod || existingOpp.AmortizationPeriod__c;
+        req.body.email = req.body.email || (existingOpp.PrimaryContact__r) ? existingOpp.PrimaryContact__r.Email : null;
+        req.body.phoneNumber = req.body.phoneNumber || (existingOpp.PrimaryContact__r) ? existingOpp.PrimaryContact__r.Phone || existingOpp.PrimaryContact__r.MobilePhone : null;
+        req.body.need = req.body.need || (existingOpp.Need__c) ? existingOpp.Need__c.split(';') : null;
+        req.body.needDescription = req.body.needDescription || existingOpp.NeedDescription__c;
+        req.body.givenRevenue = req.body.givenRevenue || existingOpp.Given_Revenue__c || null;
+        req.body.Product_Code__c = req.body.Product_Code__c || existingOpp.Product_Code__c || null;
+        req.body.referral_id = req.body.referral_id || existingOpp.Referral_ID__c;
+        req.body.utm_source = req.body.utm_source || existingOpp.UTM_Source__c;
+        req.body.utm_medium = req.body.utm_medium || existingOpp.UTM_Medium__c;
+        req.body.utm_campaign = req.body.utm_campaign || existingOpp.UTM_Campaign__c;
+        req.body.ad_gd = req.body.ad_gd || existingOpp.Last_referral_date__c;
+        // req.body.bankid = req.body.bankid;
+
+        req.body = _.omitBy(req.body, _.isNull);
+        // }
+
+        return next();
+
+    } catch (e) {
+        if (e instanceof notFoundException) {
+            resBody = myResponse(false, null, e.statusCode, e.message, e);
+            res.status(e.statusCode || 404).send(resBody);
+        } else if (e instanceof salesforceException){
+            resBody = myResponse(false, null, e.statusCode, e.message, e);
+            res.status(e.statusCode || 500).send(resBody);
+        } else {
+            resBody = myResponse(false, null, 500, 'Something Went Wrong', e);
+            res.status(500).send(resBody);
+        }
+
+        res.body = resBody;
+        return apiLogger(req, res, () => {return;});			//instead of calling next()
+    }        
+}
+
+
+
+function submit_v2(req, res, next) {
+	let token = req.sf_access_token;
+	var apiRoot =
+		process.env.SALESFORCE_API_ROOT || "https://cs85.salesforce.com"; // for prod set to https://api.zignsec.com/v2
+	var config = {
+		url: "/services/apexrest/submit/v2",
+		baseURL: apiRoot,
+		method: "post",
+		data: req.body,
+		headers: {
+			Authorization: "Bearer " + token
+		}
+	};
+	console.log("Sending submit to salesforce : " + config);
+	
+	axios(config)
+		.then(function (response) {
+            console.log(JSON.stringify(response.data));
+			res.status(200).send(response.data);
+			res.body = response.data;
+			return next();
+		})
+		.catch(function (error) {
+			if (error.response) {
+				// The request was made and the server responded with a status code
+				// that falls out of the range of 2xx
+				console.log(error.response.data);
+				console.log(error.response.status);
+				console.log(error.response.headers);
+
+				res.status(error.response.status).send(error.response.data);
+				res.body = error.response.data;
+			} else if (error.request) {
+				// The request was made but no response was received
+				// `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+				// http.ClientRequest in node.js
+				console.log(error.request);
+				let msg = "No response from BankID server";
+				res.status(500).send(msg);
+				res.body = msg; // For logging purpose
+			} else {
+				// Something happened in setting up the request that triggered an Error
+				console.log("Error", error.message);
+				res.status(500).send(error.message);
+				res.body = error.message; // For logging purpose
+			}
+			console.log(error.config);
+			console.log(error.toJSON());
+			// return Promise.reject(error.response);
+			return next();
+		});
+}
+
+
+async function updateAccountAndQualify(req, res, next) {
+    let sfConn = req.needs.sfConn;
+
+    try {
+        let result = await sfConn.apex.post("/updateCreatedApp", req.body);
+
+        logger.info("updateAccountAndQualify Success", {
+            metadata: {
+                req: {
+                    body: req.body,
+                    headers: req.headers,
+                    params: req.params,
+                    query: req.query
+                },
+                res: {
+                    body: res.body,
+                    headers: req.headers,
+                },
+                sfResult: result
+            }
+        } )
+
+    } catch (e) {
+        logger.error("updateAccountAndQualify Error", {
+            metadata: {
+                req: {
+                    body: req.body,
+                    headers: req.headers,
+                    params: req.params,
+                    query: req.query
+                },
+                res: {
+                    body: res.body,
+                    headers: req.headers,
+                },
+                error: e
+            }
+        })
+    }
+
+    return next();
+}
+
 
 module.exports = {
     saveApplicationApi,
@@ -539,5 +894,13 @@ module.exports = {
     fillRequestOfSavedOpp,
     saveAppBeforeSubmit,
     prepareSavePayload,
-    offersOfLatestOppApi
+    offersOfLatestOppApi,
+    offersOfLatestOppV2Api,
+    createOpportunityMw,
+    checkIfBankIdVerificationNeeded,
+    fillReqWithRoaringData,
+    fillSubmitReqBodyFromExistingOppMw,
+    submit_v2,
+    getPersonRoaringDataMW,
+    updateAccountAndQualify
 }

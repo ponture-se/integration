@@ -277,6 +277,7 @@ function submitValidation() {
 		// 	.exists().withMessage("Required Key/Value Pair")
 		// 	.notEmpty().withMessage("Can not be Empty"),
 		// body('firstName').isString().withMessage('It Should be String').optional(),
+		body('givenRevenue').isNumeric().withMessage('It Should be Numeric').optional(),
 		body('email').exists().withMessage("Required Key/Value Pair")
 					.trim()
 					.notEmpty().withMessage("Can not be Empty")
@@ -519,6 +520,18 @@ function offersOfLatestOppValidation() {
 	];
 }
 
+function offersOfLatestOppV2Validation() {
+	return [
+		query('personalNum').isNumeric().withMessage('It Should be Numeric')
+							.exists().withMessage("Required Key/Value Pair")
+							.notEmpty().withMessage("Can not be Empty")
+							.matches(/^([0-9]*[-]?)[0-9]*$/).withMessage('Invalid Pattern'),
+		query('orgNumber').isString().withMessage("It Should be String")
+						.exists().withMessage("Required Key/Value Pair")
+						.notEmpty().withMessage("Can not be Empty")
+	];
+}
+
 
 function acceptOfferValidation() {
 	return [
@@ -540,9 +553,156 @@ function acceptOfferValidation() {
 	];
 }
 
+function createOppValidation() {
+	return [
+		body('orgNumber').isNumeric().withMessage('It Should be Numeric')
+			.exists().withMessage("Required Key/Value Pair")
+			.trim()
+			.notEmpty().withMessage("Can not be Empty")
+			.matches(/^([0-9]){6}-?([0-9]){4}$/).withMessage('Invalid Pattern'),
+		body('orgName').isString().withMessage('It Should be String')
+			.exists().withMessage("Required Key/Value Pair")
+			.trim()
+			.notEmpty().withMessage("Can not be Empty"),
+		body('personalNumber').isNumeric().withMessage('It Should be Numeric')
+			.exists().withMessage("Required Key/Value Pair")
+			.trim()
+			.notEmpty().withMessage("Can not be Empty")
+			.matches(/^([0-9]*[-]?)[0-9]*$/).withMessage('Invalid Pattern'),
+		body('amount').isNumeric().withMessage('It Should be Numeric')
+			.exists().withMessage("Required Key/Value Pair")
+			.trim()
+			.notEmpty().withMessage("Can not be Empty"),
+		body('amourtizationPeriod').isNumeric().withMessage('It Should be Numeric')
+			.exists().withMessage("Required Key/Value Pair")
+			.trim()
+			.notEmpty().withMessage("Can not be Empty"),
+		body('email').exists().withMessage("Required Key/Value Pair")
+			.trim()
+			.notEmpty().withMessage("Can not be Empty")
+			.isEmail().withMessage('It Should be an Email'),
+		body('phoneNumber').isString().withMessage("Value Must be String.")
+			// .matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[0-9]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.')
+			.exists().withMessage("Required Key/Value Pair")
+			.notEmpty().withMessage("Can not be Empty"),
+		body('need').exists().withMessage("Required Key/Value Pair")
+			.isLength({
+				min: 1
+			}).withMessage("At least one value should exist")
+			.isArray().withMessage("Value Must be Array"),
+		body('needDescription').isString().withMessage('It Should be String').optional(),
+		body('givenRevenue').isNumeric().withMessage('It Should be Numeric').optional(),
+		body('utm_source').isString().withMessage('It Should be String').optional(),
+		body('utm_medium').isString().withMessage('It Should be String').optional(),
+		body('utm_campaign').isString().withMessage('It Should be String').optional(),
+		body('referral_id').isString().withMessage('It Should be String').optional(),
+		body('last_referral_date').isString().withMessage('It Should be String').optional()
+	];
+}
+
+
+function submitV2Validation() {
+	return [
+		body('oppId').isString().withMessage('It Should be String')
+					.exists().withMessage("Required Key/Value Pair")
+					.trim()
+					.notEmpty().withMessage("Can not be Empty"),
+		body('orgNumber').isNumeric().withMessage('It Should be Numeric')
+			.exists().withMessage("Required Key/Value Pair")
+			.trim()
+			.notEmpty().withMessage("Can not be Empty")
+			.matches(/^([0-9]){6}-?([0-9]){4}$/).withMessage('Invalid Pattern'),
+		body('orgName').isString().withMessage('It Should be String')
+			.exists().withMessage("Required Key/Value Pair")
+			.trim()
+			.notEmpty().withMessage("Can not be Empty"),
+		body('personalNumber').isNumeric().withMessage('It Should be Numeric')
+			.exists().withMessage("Required Key/Value Pair")
+			.trim()
+			.notEmpty().withMessage("Can not be Empty")
+			.matches(/^([0-9]*[-]?)[0-9]*$/).withMessage('Invalid Pattern'),
+		body('amount').isNumeric().withMessage('It Should be Numeric')
+			.exists().withMessage("Required Key/Value Pair")
+			.trim()
+			.notEmpty().withMessage("Can not be Empty"),
+		body('amourtizationPeriod').isNumeric().withMessage('It Should be Numeric')
+			.exists().withMessage("Required Key/Value Pair")
+			.trim()
+			.notEmpty().withMessage("Can not be Empty"),
+		body('email').exists().withMessage("Required Key/Value Pair")
+			.trim()
+			.notEmpty().withMessage("Can not be Empty")
+			.isEmail().withMessage('It Should be an Email'),
+		body('phoneNumber').isString().withMessage("Value Must be String.")
+			// .matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[0-9]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.')
+			.exists().withMessage("Required Key/Value Pair")
+			.notEmpty().withMessage("Can not be Empty"),
+		body('need').exists().withMessage("Required Key/Value Pair")
+			.isLength({
+				min: 1
+			}).withMessage("At least one value should exist")
+			.isArray().withMessage("Value Must be Array"),
+		body('needDescription').isString().withMessage('It Should be String').optional(),
+		body('givenRevenue').isNumeric().withMessage('It Should be Numeric').optional(),
+		body('utm_source').isString().withMessage('It Should be String').optional(),
+		body('utm_medium').isString().withMessage('It Should be String').optional(),
+		body('utm_campaign').isString().withMessage('It Should be String').optional(),
+		body('referral_id').isString().withMessage('It Should be String').optional(),
+		body('last_referral_date').isString().withMessage('It Should be String').optional(),
+		// bankId input validation
+		body('bankid')
+			.exists().withMessage('Required Key/Value Pair')
+			.notEmpty().withMessage("Can not be Empty"),
+		body('bankid.progressStatus')
+			.if(body('bankid').exists())
+			.equals('COMPLETE'),
+		body('bankid.signature')
+			.if(body('bankid.progressStatus').equals('COMPLETE'))
+			.if(body('bankid').exists())
+			.exists().withMessage("Required Key/Value Pair")
+			.notEmpty().withMessage("Can not be Empty")
+			.isString().withMessage("It Should be String"),
+		body('bankid.ocspResponse')
+			.if(body('bankid.progressStatus').equals('COMPLETE'))
+			.if(body('bankid').exists())
+			.exists().withMessage("Required Key/Value Pair")
+			.notEmpty().withMessage("Can not be Empty")
+			.isString().withMessage("It Should be String"),
+		body('bankid.userInfo')
+			.if(body('bankid.progressStatus').equals('COMPLETE'))
+			.if(body('bankid').exists())
+			.exists().withMessage("Required Key/Value Pair")
+			.notEmpty().withMessage("Can not be Empty"),
+		body('bankid.userInfo.givenName')
+			.if(body('bankid.progressStatus').equals('COMPLETE'))
+			.if(body('bankid.userInfo').exists())
+			.if(body('bankid').exists())
+			.exists().withMessage("Required Key/Value Pair")
+			.notEmpty().withMessage("Can not be Empty")
+			.isString().withMessage("It Should be String"),
+		body('bankid.userInfo.surname')
+			.if(body('bankid.progressStatus').equals('COMPLETE'))
+			.if(body('bankid.userInfo').exists())
+			.if(body('bankid').exists())
+			.exists().withMessage("Required Key/Value Pair")
+			.notEmpty().withMessage("Can not be Empty")
+			.isString().withMessage("It Should be String"),
+		body('bankid.userInfo.name')
+			.if(body('bankid.progressStatus').equals('COMPLETE'))
+			.if(body('bankid.userInfo').exists())
+			.if(body('bankid').exists())
+			.exists().withMessage("Required Key/Value Pair")
+			.notEmpty().withMessage("Can not be Empty")
+			.isString().withMessage("It Should be String"),
+	];
+}
+
 module.exports = {
 	saveAppValidation,
 	submitValidation,
 	offersOfLatestOppValidation,
-	acceptOfferValidation
+	offersOfLatestOppV2Validation,
+	acceptOfferValidation,
+	createOppValidation,
+	submitV2Validation
 }

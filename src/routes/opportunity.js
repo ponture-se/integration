@@ -6,6 +6,7 @@ let opportunityValidationRules = require('../models/opportunityModel');
 const validate = require("../middlewares/validate");
 const getSFConnection = require("../middlewares/sfMiddleware");
 const opportunityMW = require("../middlewares/sfMiddlewares/opportunityMW");
+const bankIdMW = require("../middlewares/bankIdMW");
 
 router.get("/needslist", auth.getSalesForceToken, controller.getNeedsList);
 
@@ -30,6 +31,21 @@ router.post(
   opportunityValidationRules.submitValidation(),
   validate,
   controller.submit
+);
+
+router.post(
+  "/submit/v2",
+  auth.verifyToken,
+  // auth.getRoaringToken,
+  auth.getSalesForceToken,
+  getSFConnection,
+  // opportunityMW.saveAppBeforeSubmit,
+  opportunityMW.fillSubmitReqBodyFromExistingOppMw,
+  opportunityValidationRules.submitV2Validation(),
+  validate,
+  bankIdMW.checkOppForBankIdVerification,
+  // opportunityMW.fillReqWithRoaringData,
+  opportunityMW.submit_v2
 );
 
 router.get(
@@ -87,5 +103,28 @@ router.get(
   opportunityMW.offersOfLatestOppApi
 );
 
+router.get(
+  "/offersOfLatestOpp/v2",
+  auth.verifyToken,
+  opportunityValidationRules.offersOfLatestOppV2Validation(),
+  validate,
+  getSFConnection,
+  opportunityMW.offersOfLatestOppV2Api
+);
+
+
+router.post(
+  "/createOpp",
+  // auth.verifyToken,
+  opportunityValidationRules.createOppValidation(),
+  validate,
+  auth.getRoaringToken,
+  getSFConnection,
+  opportunityMW.getPersonRoaringDataMW,
+  opportunityMW.fillReqWithRoaringData,
+  opportunityMW.checkIfBankIdVerificationNeeded,
+  opportunityMW.createOpportunityMw,
+  opportunityMW.updateAccountAndQualify
+);
 
 module.exports = router;

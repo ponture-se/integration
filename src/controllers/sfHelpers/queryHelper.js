@@ -91,6 +91,23 @@ async function getQueryResult(sfConn, sObj, where, select = "*", setRecordTypeId
     }
 }
 
+async function getQueryResultWithThrowingException(sfConn, sObj, where, select = "*", setRecordTypeId = false,  rTypeId = null){
+    if (setRecordTypeId && rTypeId != null) {
+        let newWhere = addRecordType2WhereClause(where, rTypeId);
+        if (newWhere.succuss) {
+            where = newWhere.value;
+        } else {
+            return null;
+        }
+    }
+
+    let records = await sfConn.sobject(sObj)
+                        .select(select)
+                        .where(where)
+                        .execute();
+    return records;
+}
+
 async function getSingleQueryResult(sfConn, sObj, where, select = "*", setRecordTypeId = false,  rTypeId = null){
     try {
         let resulsList = await getQueryResult(sfConn, sObj, where, select, setRecordTypeId, rTypeId);
@@ -111,5 +128,6 @@ module.exports = {
     hasRecordTypeInWhereClause,
     addRecordType2WhereClause,
     getQueryResult,
+    getQueryResultWithThrowingException,
     getSingleQueryResult
 }
