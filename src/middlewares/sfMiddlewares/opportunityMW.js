@@ -605,7 +605,7 @@ async function createOpportunityMw(req, res, next) {
         if (result) {
             let resData = {
                 oppId: result.oppId,
-                contactId: result.contactId,
+                userInfo: result.userInfo,
                 bankIdRequired: isBankIdRequired
             }
 
