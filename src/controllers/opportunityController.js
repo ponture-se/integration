@@ -1239,7 +1239,12 @@ async function createOpportunityController(sfConn, payload) {
 	if (oppUpsertResult) {
 		return {
 			oppId: oppUpsertResult.id,
-			contactId: contactUpsertResult.id
+			userInfo: {
+				contactId: contactUpsertResult.id,
+				firstName: (contactId != null) ? contact.FirstName : contactInfo.firstName,
+				lastName: (contactId != null) ? contact.LastName : contactInfo.lastName,
+				email: (contactId != null) ? contact.Email : contactInfo.Email
+			}
 		};
 	} else {
 		return null;
