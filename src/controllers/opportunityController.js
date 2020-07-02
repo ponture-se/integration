@@ -1218,6 +1218,10 @@ async function createOpportunityController(sfConn, payload) {
 	}
 	contact = await queryHelper.getSingleQueryResult(sfConn, 'Contact', getContactWhereCluase);
 	contactId = (contact != null) ? contact.Id : null;
+	if (contactId != null) {
+		contactInfo.firstName = contact.FirstName || contactInfo.firstName;
+		contactInfo.lastName = contact.LastName ||contactInfo.lastName;
+	}
 	
 	// Upsert Contact
 	contactInfo['AccountId'] = accUpsertResult.id;
