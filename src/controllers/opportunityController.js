@@ -1237,7 +1237,10 @@ async function createOpportunityController(sfConn, payload) {
 	
 
 	if (oppUpsertResult) {
-		return oppUpsertResult.id;
+		return {
+			oppId: oppUpsertResult.id,
+			contactId: contactUpsertResult.id
+		};
 	} else {
 		return null;
 	}

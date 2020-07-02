@@ -604,7 +604,8 @@ async function createOpportunityMw(req, res, next) {
         let result = await opportunityController.createOpportunityController(sfConn, payload);
         if (result) {
             let resData = {
-                oppId: result,
+                oppId: result.oppId,
+                contactId: result.contactId,
                 bankIdRequired: isBankIdRequired
             }
 
