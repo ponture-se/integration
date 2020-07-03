@@ -3,6 +3,9 @@ const {
 	oneOf,
 	query
 } = require('express-validator');
+const _ = require('lodash');
+const myResponse = require('../controllers/myResponse');
+const APIlogger = require('../middlewares/axiosLogger');
 
 
 function saveAppValidation() {
@@ -553,52 +556,7 @@ function acceptOfferValidation() {
 	];
 }
 
-function createOppValidation() {
-	return [
-		body('orgNumber').isNumeric().withMessage('It Should be Numeric')
-			.exists().withMessage("Required Key/Value Pair")
-			.trim()
-			.notEmpty().withMessage("Can not be Empty")
-			.matches(/^([0-9]){6}-?([0-9]){4}$/).withMessage('Invalid Pattern'),
-		body('orgName').isString().withMessage('It Should be String')
-			.exists().withMessage("Required Key/Value Pair")
-			.trim()
-			.notEmpty().withMessage("Can not be Empty"),
-		body('personalNumber').isNumeric().withMessage('It Should be Numeric')
-			.exists().withMessage("Required Key/Value Pair")
-			.trim()
-			.notEmpty().withMessage("Can not be Empty")
-			.matches(/^([0-9]*[-]?)[0-9]*$/).withMessage('Invalid Pattern'),
-		body('amount').isNumeric().withMessage('It Should be Numeric')
-			.exists().withMessage("Required Key/Value Pair")
-			.trim()
-			.notEmpty().withMessage("Can not be Empty"),
-		body('amourtizationPeriod').isNumeric().withMessage('It Should be Numeric')
-			.exists().withMessage("Required Key/Value Pair")
-			.trim()
-			.notEmpty().withMessage("Can not be Empty"),
-		body('email').exists().withMessage("Required Key/Value Pair")
-			.trim()
-			.notEmpty().withMessage("Can not be Empty")
-			.isEmail().withMessage('It Should be an Email'),
-		body('phoneNumber').isString().withMessage("Value Must be String.")
-			// .matches(/^(\+?46|0|0046)[\s\-]?[1-9][\s\-]?[0-9]([\s\-]?\d){6,7}$/).withMessage('Invalid Pattern.')
-			.exists().withMessage("Required Key/Value Pair")
-			.notEmpty().withMessage("Can not be Empty"),
-		body('need').exists().withMessage("Required Key/Value Pair")
-			.isLength({
-				min: 1
-			}).withMessage("At least one value should exist")
-			.isArray().withMessage("Value Must be Array"),
-		body('needDescription').isString().withMessage('It Should be String').optional(),
-		body('givenRevenue').isNumeric().withMessage('It Should be Numeric').optional(),
-		body('utm_source').isString().withMessage('It Should be String').optional(),
-		body('utm_medium').isString().withMessage('It Should be String').optional(),
-		body('utm_campaign').isString().withMessage('It Should be String').optional(),
-		body('referral_id').isString().withMessage('It Should be String').optional(),
-		body('last_referral_date').isString().withMessage('It Should be String').optional()
-	];
-}
+
 
 
 function submitV2Validation() {
@@ -695,6 +653,75 @@ function submitV2Validation() {
 			.notEmpty().withMessage("Can not be Empty")
 			.isString().withMessage("It Should be String"),
 	];
+}
+
+
+function createOppValidation(req, res, next) {
+	let orgNumberPattern =  /^([0-9]){6}-?([0-9]){4}$/,
+		personalNumPattern = /^([0-9]*[-]?)[0-9]*$/,
+		emailPattern = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+	let orgNumber = _.get(req, 'body.orgNumber'),
+		orgName = _.get(req, 'body.orgName'),
+		personalNumber = _.get(req, 'body.personalNumber'),
+		amount = parseFloat(_.get(req, 'body.amount')),
+		amourtizationPeriod = parseInt(_.get(req, 'body.amourtizationPeriod')),
+		email = _.get(req, 'body.email'),
+		phoneNumber = _.get(req, 'body.phoneNumber'),
+		need = _.get(req, 'body.need'),
+		needDescription = _.get(req, 'body.needDescription'),
+		givenRevenue = parseFloat(_.get(req, 'body.givenRevenue')),
+		utm_source = _.get(req, 'body.utm_source'),
+		utm_medium = _.get(req, 'body.utm_medium'),
+		utm_campaign = _.get(req, 'body.utm_campaign'),
+		referral_id = _.get(req, 'body.referral_id'),
+		last_referral_date = _.get(req, 'body.last_referral_date');
+
+	let resBody = myResponse(false, null, 400, null, null, null);
+
+	if (orgNumber == null || (typeof orgNumber == 'string' && orgNumber.trim() == '')) {
+		resBody.errorCode = 'EMPTY_ORGNUM';
+	} else if (orgNumber.trim().match(orgNumberPattern) == null) {
+		resBody.errorCode = 'INVALID_ORGNUM';
+	} else if (personalNumber == null || (typeof personalNumber == 'string' && personalNumber.trim() == '')) {
+		resBody.errorCode = 'EMPTY_PERNUM';
+	} else if (personalNumber.trim().match(personalNumPattern) == null) {
+		resBody.errorCode = 'INVALID_PERNUM';
+	} else if (orgName == null || (typeof orgName == 'string' && orgName.trim() == '')) {
+		resBody.errorCode = 'EMPTY_ORGNAME';
+	} else if (!amount || (amount && amount < 0)) {
+		resBody.errorCode = 'INVALID_AMOUNT';
+	} else if (!amourtizationPeriod || (amourtizationPeriod && amourtizationPeriod <0)) {
+		resBody.errorCode = 'INVALID_PERIOD';
+	} else if (email == null || (typeof email == 'string' && email.trim().match(emailPattern) == null)) {
+		resBody.errorCode = 'INVALID_EMAIL';
+	} else if (phoneNumber == null || (typeof phoneNumber == 'string' && phoneNumber.trim() == '')) {
+		resBody.errorCode = 'INVALID_PHONE';
+	} else if (!Array.isArray(need) || need.length < 1) {
+		resBody.errorCode = 'INVALID_NEED';
+	} else if (givenRevenue && givenRevenue <0) {
+		resBody.errorCode = 'INVALID_REVENUE';
+	} else if (needDescription && typeof needDescription != 'string') {
+		resBody.errorCode = 'INVALID_NEED_DESC';
+	} else if (utm_source && typeof utm_source != 'string') {
+		resBody.errorCode = 'INVALID_UTM_SRC';
+	} else if (utm_medium && typeof utm_medium != 'string') {
+		resBody.errorCode = 'INVALID_UTM_MED';
+	} else if (utm_campaign && typeof utm_campaign != 'string') {
+		resBody.errorCode = 'INVALID_UTM_CAMP';
+	} else if (referral_id && typeof referral_id != 'string') {
+		resBody.errorCode = 'INVALID_REF_ID';
+	} else if (last_referral_date && typeof last_referral_date != 'string') {
+		resBody.errorCode = 'INVALID_REF_DATE';
+	}
+	
+	if (resBody.errorCode != null) {
+		res.status(400).send(resBody);
+		res.body = resBody;
+		return APIlogger(req, res, () => {return;});			//instead of calling next()
+	} else {
+		return next();
+	}
 }
 
 module.exports = {
