@@ -33,10 +33,10 @@ const qs = require('qs');
 exports.getCompanies = [
 	// Validate fields
 	check("personalNumber")
-	.isNumeric()
+	.isString()
 	.isLength({
-		min: 12,
-		max: 12
+		min: 10,
+		max: 13
 	})
 	.withMessage("Personal number is invalid")
 	.matches(/^(19|20)?[0-9]{2}(0|1)[0-9][0-3][0-9][-]?[0-9]{4}$/)
@@ -95,8 +95,11 @@ exports.getCompanies = [
 					if (error.response) {
 						// The request was made and the server responded with a status code
 						// that falls out of the range of 2xx
-						if (error.response.status == 400 || error.response.status == 404) {
+						if (error.response.status == 400) {
 							res.status(200).send([]);
+							res.body = [];
+						} else if (error.response.status == 404) {
+							res.status(404).send([]);
 							res.body = [];
 						} else {
 							res.status(500).send(error.response.data);
