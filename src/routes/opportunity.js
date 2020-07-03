@@ -116,8 +116,7 @@ router.get(
 router.post(
   "/createOpp",
   // auth.verifyToken,
-  opportunityValidationRules.createOppValidation(),
-  validate,
+  opportunityValidationRules.createOppValidation,
   auth.getRoaringToken,
   getSFConnection,
   opportunityMW.getPersonRoaringDataMW,
