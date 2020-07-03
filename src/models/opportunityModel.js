@@ -5,7 +5,7 @@ const {
 } = require('express-validator');
 const _ = require('lodash');
 const myResponse = require('../controllers/myResponse');
-const APIlogger = require('../middlewares/axiosLogger');
+const apiLogger = require('../middlewares/apiLogger');
 
 
 function saveAppValidation() {
@@ -718,7 +718,7 @@ function createOppValidation(req, res, next) {
 	if (resBody.errorCode != null) {
 		res.status(400).send(resBody);
 		res.body = resBody;
-		return APIlogger(req, res, () => {return;});			//instead of calling next()
+		return apiLogger(req, res, () => {return;});			//instead of calling next()
 	} else {
 		return next();
 	}
