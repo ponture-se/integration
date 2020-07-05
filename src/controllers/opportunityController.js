@@ -33,10 +33,10 @@ const qs = require('qs');
 exports.getCompanies = [
 	// Validate fields
 	check("personalNumber")
-	.isNumeric()
+	.isString()
 	.isLength({
-		min: 12,
-		max: 12
+		min: 10,
+		max: 13
 	})
 	.withMessage("Personal number is invalid")
 	.matches(/^(19|20)?[0-9]{2}(0|1)[0-9][0-3][0-9][-]?[0-9]{4}$/)
@@ -56,7 +56,7 @@ exports.getCompanies = [
 				code: "INVALID_PERSONALNUMBER",
 				errors: errors.array()
 			};
-			res.status(422).json(resBody);
+			res.status(400).json(resBody);
 			res.body = resBody;
 			return next();
 		} else {
@@ -95,14 +95,22 @@ exports.getCompanies = [
 					if (error.response) {
 						// The request was made and the server responded with a status code
 						// that falls out of the range of 2xx
-						res.status(error.response.status).send(error.response.data);
-						res.body = error.response.data;
+						if (error.response.status == 400) {
+							res.status(200).send([]);
+							res.body = [];
+						} else if (error.response.status == 404) {
+							res.status(404).send([]);
+							res.body = [];
+						} else {
+							res.status(500).send(error.response.data);
+							res.body = error.response.data;
+						}
 					} else if (error.request) {
 						// The request was made but no response was received
 						// `error.request` is an instance of XMLHttpRequest in the browser and an instance of
 						// http.ClientRequest in node.js
 						resBody = "No response from Roaring server";
-						res.status(204).send(resBody);
+						res.status(500).send(resBody);
 						res.body = resBody;
 					} else {
 						// Something happened in setting up the request that triggered an Error
