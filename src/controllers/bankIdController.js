@@ -1,8 +1,11 @@
 const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const cnf = require("../config");
-const { check, validationResult } = require("express-validator/check");
-const { sanitizeBody } = require("express-validator/filter");
+const { check, validationResult } = require("express-validator");
+const { sanitizeBody } = require("express-validator");
+const _ = require('lodash');
+const myResponse = require('./myResponse');
+const Constants = require("./Constants");
 
 exports.authenticate = [
   // Validate fields
@@ -17,19 +20,23 @@ exports.authenticate = [
     .trim()
     .escape(),
   (req, res, next) => {
+    let resBody = null;
+
     var errors = validationResult(req);
     if (!errors.isEmpty()) {
       //There are errors. send error result
-      return res.status(422).json({
+      resBody = {
         success: false,
         code: "INVALID_PERSONALNUMBER",
         errors: errors.array()
-      });
-      return;
+      };
+      res.status(422).json(resBody);
+      res.body = resBody;
+      return next();
     } else {
       var accessToken = process.env.ACCESS_TOKEN;
       if (!accessToken) {
-        res.status(500).json({
+        resBody = {
           success: false,
           code: "INVALID_BANKID_TOKEN",
           errors: [
@@ -40,8 +47,10 @@ exports.authenticate = [
               msg: "BankID access token not found."
             }
           ]
-        });
-        return;
+        };
+        res.status(500).json(resBody);
+        res.body = resBody;
+        return next();
       }
       var apiRoot = process.env.API_ROOT;
       if (!apiRoot) {
@@ -73,14 +82,16 @@ exports.authenticate = [
                   process.env.AUTHENTICATIONTOKEN_EXPIRE_TIME || 30 * 60 // expires in 30 minutes
               }
             );
+            resBody = {
+              access_token: token,
+              autoStartToken: response.data.autoStartToken
+            };
             res
               .status(200)
-              .send({
-                access_token: token,
-                autoStartToken: response.data.autoStartToken
-              });
+              .send(resBody);
+            res.body = resBody;
           } else {
-            res.status(500).json({
+            resBody = {
               success: false,
               code: "INVALID_BANKID_RESPONSE",
               errors: [
@@ -91,26 +102,33 @@ exports.authenticate = [
                   msg: "BankID response is invalid."
                 }
               ]
-            });
-            return;
+            };
+            res.status(500).json(resBody);
+            res.body = resBody;
           }
+          return next();
         })
         .catch(function(error) {
           if (error.response) {
             // The request was made and the server responded with a status code
             // that falls out of the range of 2xx
             res.status(error.response.status).send(error.response.data);
+            res.body = error.response.data;
           } else if (error.request) {
             // The request was made but no response was received
             // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
             // http.ClientRequest in node.js
-            res.status(204).send("No response from BankID server");
+            let msg = "No response from BankID server";
+            res.status(204).send(msg);
+            res.body = msg;
           } else {
             // Something happened in setting up the request that triggered an Error
             console.log("Error", error.message);
             res.status(500).send(error.message);
+            res.body = error.message;
           }
-          res.status(400).send(error.config);
+          // res.status(400).send(error.config);
+          return next();
         });
     }
   }
@@ -118,16 +136,23 @@ exports.authenticate = [
 exports.collect = [
   // Validate fields
   (req, res, next) => {
+    let resBody = null;
+
     if (!req.orderRef) {
-      return res.status(422).json({
+      resBody = {
         success: false,
         code: "INVALID_ORDERREF",
         errors: errors.array()
-      });
+      };
+      
+      res.status(422).json(resBody);
+      res.body = resBody();
+      return next();
     }
+    
     var accessToken = process.env.ACCESS_TOKEN;
     if (!accessToken) {
-      res.status(500).json({
+      resBody = {
         success: false,
         code: "INVALID_BANKID_TOKEN",
         errors: [
@@ -138,9 +163,12 @@ exports.collect = [
             msg: "BankID access token not found."
           }
         ]
-      });
-      return;
+      };
+      res.status(500).json(resBody);
+      res.body = resBody;
+      return next();
     }
+
     var apiRoot = process.env.API_ROOT;
     if (!apiRoot) {
       if (process.env.NODE_ENV == "production") {
@@ -159,9 +187,11 @@ exports.collect = [
     };
     axios(config)
       .then(function(response) {
-        if (response && response.data) res.status(200).send(response.data);
-        else {
-          res.status(500).json({
+        if (response && response.data){
+          res.status(200).send(response.data);
+          res.body = response.data;
+        } else {
+          resBody = {
             success: false,
             code: "INVALID_BANKID_RESPONSE",
             errors: [
@@ -172,27 +202,35 @@ exports.collect = [
                 msg: "BankID response is invalid."
               }
             ]
-          });
-          return;
+          };
+          
+          res.status(500).json(resBody);
+          res.body = resBody;
         }
+        return next();
       })
       .catch(function(error) {
         if (error.response) {
           // The request was made and the server responded with a status code
           // that falls out of the range of 2xx
           res.status(error.response.status).send(error.response.data);
+          res.body = error.response.data;
         } else if (error.request) {
           // The request was made but no response was received
           // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
           // http.ClientRequest in node.js
-          res.status(204).send("No response from BankID server");
+          let msg = "No response from BankID server";
+          res.status(204).send(msg);
+          res.body = msg;
         } else {
           // Something happened in setting up the request that triggered an Error
           console.log("Error", error.message);
           res.status(500).send(error.message);
+          res.body = error.message;
         }
-        console.log(error.config);
-        res.status(400).send(error.config);
+        // console.log(error.config);
+        // res.status(400).send(error.config);
+        return next();
       });
   }
 ];
@@ -310,16 +348,22 @@ exports.sign = [
 exports.cancel = [
   // Validate fields
   (req, res, next) => {
+    let resBody = null;
+
     if (!req.orderRef) {
-      return res.status(422).json({
+      resBody = {
         success: false,
         code: "INVALID_ORDERREF",
         errors: errors.array()
-      });
+      };
+      res.status(422).json(resBody);
+      res.body = resBody;
+
+      return next();
     }
     var accessToken = process.env.ACCESS_TOKEN;
     if (!accessToken) {
-      res.status(500).json({
+      resBody = {
         success: false,
         code: "INVALID_BANKID_TOKEN",
         errors: [
@@ -330,9 +374,13 @@ exports.cancel = [
             msg: "BankID access token not found."
           }
         ]
-      });
-      return;
+      };
+      
+      res.status(500).json(resBody);
+      res.body = resBody;
+      return next();
     }
+
     var apiRoot = process.env.API_ROOT;
     if (!apiRoot) {
       if (process.env.NODE_ENV == "production") {
@@ -352,9 +400,12 @@ exports.cancel = [
     };
     axios(config)
       .then(function(response) {
-        if (response && response.data) res.status(200).send(response.data);
+        if (response && response.data) {
+          res.status(200).send(response.data);
+          res.body = response.data;
+        }
         else {
-          res.status(500).json({
+          resBody = {
             success: false,
             code: "INVALID_BANKID_RESPONSE",
             errors: [
@@ -365,27 +416,86 @@ exports.cancel = [
                 msg: "BankID response is invalid."
               }
             ]
-          });
-          return;
+          };
+          res.status(500).json(resBody);
+          res.body = resBody;
         }
+        return next();
       })
       .catch(function(error) {
         if (error.response) {
           // The request was made and the server responded with a status code
           // that falls out of the range of 2xx
           res.status(error.response.status).send(error.response.data);
+          res.body = error.response.data;
         } else if (error.request) {
           // The request was made but no response was received
           // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
           // http.ClientRequest in node.js
-          res.status(204).send("No response from BankID server");
+          let msg = "No response from BankID server";
+          res.status(204).send(msg);
+          res.body = msg;
         } else {
           // Something happened in setting up the request that triggered an Error
           console.log("Error", error.message);
           res.status(500).send(error.message);
+          res.body = error.message;
         }
-        console.log(error.config);
-        res.status(400).send(error.config);
+
+        return next();
+        // console.log(error.config);
+        // res.status(400).send(error.config);
       });
   }
 ];
+
+
+exports.checkOppForBankIdVerificationController = function checkOppForBankIdVerificationController(inputObject) {
+	let bankIdRequired = true;
+	let resBody;
+
+	let stage = _.get(inputObject, 'stage');
+	let primaryContactVerified = _.get(inputObject, 'primaryContactVerified');
+	let amount = _.get(inputObject, 'amount');
+	let needs = _.get(inputObject, 'needs', []);
+	let legalForms = _.get(inputObject, 'legalForms', '').toLowerCase();
+	let turnOver = _.get(inputObject, 'turnOver');
+
+	if (primaryContactVerified == true) {
+		bankIdRequired = false;
+		resBody = myResponse(false, null, 403, 'Primary Contact of this opp was already verified.', null, "ALREADY_VERIFIED");
+	} else if (Constants.INVALID_OPP_STAGE_FOR_BANKID_CHECKING.includes(stage.toLowerCase())) {
+		bankIdRequired = false;
+		resBody = myResponse(false, null, 403, 'Opp stage is invalid and equal to: ' + stage, null, "INVALID_OPP_STAGE");
+	} else if (amount > Constants.MIN_AMOUNT_FOR_BANKID_BYPASS) {
+		bankIdRequired = false;
+		resBody = myResponse(false, null, 403, 'BankId Verification not needed, due to amount value: ' + amount, null, "VERIFICATION_NOT_NEEDED");
+	}
+	
+	if (bankIdRequired && amount > Constants.MIN_AMOUNT_FOR_NON_GENERAL_NEED_TO_BANKID_BYPASS) {
+		let allNeedsPassed = true;
+		
+		for (let need of needs) {
+			if (!Constants.NON_GENERAL_LIQUIDITY_NEEDS.includes(need)) {
+				allNeedsPassed = false;
+				break;
+			}
+		}
+		if (allNeedsPassed == true) {
+			bankIdRequired = false;
+			resBody = myResponse(false, null, 403, "This need and amount doesn't need bankId", null, "NEED_AMOUNT_BYPASS");
+		}
+	}
+	if (bankIdRequired && legalForms != null && legalForms.includes('ab') &&
+				turnOver != null && parseInt(turnOver) > Constants.MIN_TURNOVER_FOR_AB_COMPANY_TO_BANKID_BYPASS &&
+				amount > Constants.MIN_AMOUNT_FOR_AB_COMPANY_TO_BANKID_BYPASS) {
+					bankIdRequired = false;
+					resBody = myResponse(false, null, 403, "The company legal form and other conditions doesn't need bankId", null, "LEGAL_FORM_BYPASS");
+	}
+
+	if (bankIdRequired) {
+		return true;
+	} else {
+		return resBody;
+	}
+}

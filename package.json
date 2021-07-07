@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node ./src/bin/www",
-    "test": "mocha tests/bankIdTest.js"
+    "test": "jest --watchAll --verbose --coverage"
   },
   "repository": {
     "type": "git",
@@ -29,17 +29,30 @@
     "compression": "1.7.3",
     "cookie-parser": "1.4.3",
     "cors": "2.8.5",
+    "dotenv": "^8.2.0",
     "express": "4.16.4",
-    "express-validator": "5.3.1",
-    "helmet": "3.15.0",
+    "express-validator": "^6.2.0",
+    "helmet": "^3.21.2",
     "http": "0.0.0",
-    "jsforce": "1.9.1",
+    "jsforce": "^1.9.3",
     "jsonwebtoken": "8.4.0",
+    "lodash": "^4.17.15",
+    "mime-types": "^2.1.26",
+    "mongoose": "^5.8.1",
     "morgan": "1.9.1",
-    "qs": "6.7.0"
+    "multer": "^1.4.2",
+    "qs": "6.7.0",
+    "winston": "^3.2.1",
+    "winston-mongodb": "^5.0.1"
   },
   "devDependencies": {
-    "chai": "4.2.0",
-    "mocha": "6.1.4"
+    "@babel/core": "^7.7.5",
+    "@babel/node": "^7.7.4",
+    "@types/jest": "^24.0.23",
+    "babel-jest": "^24.9.0",
+    "eslint": "^6.8.0",
+    "jest": "^24.9.0",
+    "nock": "^11.7.0",
+    "supertest": "^4.0.2"
   }
 }
